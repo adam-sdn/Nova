@@ -14,7 +14,7 @@ const toB64 = (u: Uint8Array): string => {
   for (const b of u) s += String.fromCharCode(b);
   return btoa(s);
 };
-const fromB64 = (s: string): Uint8Array => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const fromB64 = (s: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 // Tune the iteration count to your devices; higher is slower and harder to brute-force.
 const PBKDF2_ITERATIONS = 600_000;
@@ -27,7 +27,7 @@ export interface ClientNotePayload {
   iter: number;
 }
 
-async function deriveKey(passphrase: string, salt: Uint8Array, iter: number): Promise<CryptoKey> {
+async function deriveKey(passphrase: string, salt: Uint8Array<ArrayBuffer>, iter: number): Promise<CryptoKey> {
   const base = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, [
     "deriveKey",
   ]);

@@ -23,13 +23,20 @@ check `docs/ACCEPTANCE.md`. Milestone prompts are in `docs/PROMPTS.md`.
 9. No "zero-knowledge" and no outcome claims in UI copy. Label demo screens "Demo data".
 10. Do not add dependencies, network calls outside `lib/ai.ts`, or secrets in the repo without asking first.
 
-## Stack (confirm in M0, then update this section)
+## Stack (confirmed in Stage 0)
 
-Default: Next.js (App Router) + TypeScript strict + Tailwind, SQLite via better-sqlite3 (local file),
-zod at API boundaries, Vitest for unit tests, Playwright for the end-to-end smoke test.
-Live state: each window polls `GET /api/state` every 1 to 2 seconds. Run locally for the demo.
+Next.js 16 (App Router, Turbopack) + React 19 + TypeScript 5 strict + Tailwind 4, SQLite via better-sqlite3
+(local file at `DB_PATH`), zod 4 at API boundaries, Vitest for unit tests, Playwright for the end-to-end smoke test.
+Live state: each window polls `GET /api/state` every 1 to 2 seconds (`usePoll` in `lib/ui`). Run locally for the demo.
+TypeScript stays on 5.x: TypeScript 7 has no JS API, which `next build` needs.
+The shared contract (endpoints, owners, types) is `docs/CONTRACT.md`.
 
-Commands (fill in during M0): `npm run dev`, `npm test`, `npm run test:e2e`, `npm run seed`, `npm run build`.
+Commands:
+
+- `npm run dev` (add `-- -p 3002` for another port) · `npm run build` · `npm start`
+- `npm test` (Vitest, in-memory DB) · `npm run test:e2e` (Playwright; starts its own dev server on port 3100 with `./care-loop-e2e.db`)
+- `npm run seed` (reset `DB_PATH` and fill it with synthetic patients) · `npm run privacy:selftest` · `npm run typecheck`
+- Setup: copy `.env.example` to `.env.local` and set `MASTER_KEY_BASE64`; `npx playwright install chromium` once for e2e.
 
 ## Layout
 
@@ -37,10 +44,14 @@ Commands (fill in during M0): `npm run dev`, `npm test`, `npm run test:e2e`, `np
 app/                 pages and API routes (/, /patient, /nurse, /doctor, /interpreter, /demo)
 lib/ai.ts            the only place that calls an AI provider (plus MOCK_AI fixtures)
 lib/privacy/         tested helpers: envelope encryption, pseudonymise, audit hash chain
-lib/state/           status machine, events, repositories
+lib/contracts/       shared zod schemas and types for every route and screen
+lib/state/           status machine (machine.ts), services, views, patient visibility gate, seed
 lib/rules/           safety checker, enquiry tiers, priority rules (pure functions, unit tested)
+lib/ui/              Button, Chip, Panel, Card, usePoll and the design tokens (app/globals.css)
 data/config.json     stages, tiers, thresholds, fixed wording (placeholders until a clinician fills them)
-docs/                SPEC.md, ACCEPTANCE.md, PROMPTS.md
+data/demo-defaults.json  DEMO-ONLY values used where config still says TODO(clinician); /demo shows a marker
+tests/, e2e/         Vitest service tests and Playwright smoke tests
+docs/                SPEC.md, ACCEPTANCE.md, PROMPTS.md, PARALLEL_PLAN.md, CONTRACT.md
 ```
 
 ## How to work

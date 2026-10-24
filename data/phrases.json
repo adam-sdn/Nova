@@ -1,0 +1,4 @@
+{
+  "_note": "Pre-verified patient phrases. Every entry needs a fluent verifier and a date before it is served. TODO(clinician): wording. TODO: translations verified by a fluent speaker. Owned by the patient worktree.",
+  "phrases": {}
+}

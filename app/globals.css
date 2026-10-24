@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Design tokens from docs/SPEC.md section 13 and the approved mockups in docs/design/. */
+@theme {
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --color-ground: #f3f5f4;
+  --color-surface: #ffffff;
+  --color-ink: #14201f;
+  --color-muted: #4a5a58;
+  --color-border: #cbd5d2;
+  --color-border-strong: #7f918d;
+  --color-column: #e6ecea;
+
+  --color-accent: #0b6b66;
+  --color-accent-tint: #d9efed;
+  --color-accent-ink: #0b4f4b;
+  --color-accent-border: #8cc8c3;
+
+  --color-urgent-ink: #8a2b0e;
+  --color-urgent-fill: #fde7dd;
+  --color-urgent-border: #e9ae96;
+
+  --color-high-ink: #6b4a00;
+  --color-high-fill: #fff1cc;
+  --color-high-border: #e8c873;
+
+  --color-routine-ink: #2f3e3c;
+  --color-routine-fill: #e6ecea;
+  --color-routine-border: #b9c5c1;
+
+  --color-demo-ink: #17406e;
+  --color-demo-fill: #e4eef9;
+  --color-demo-border: #b7cde8;
+
+  --radius-card: 10px;
+  --radius-column: 12px;
+  --radius-button: 8px;
+  --radius-chip: 6px;
+}
+
+html,
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,16 @@
+{
+  "_note": "DEMO-ONLY values. These are NOT clinical values. They are used only where data/config.json still says TODO(clinician), so the demo can run. A clinician must replace them in data/config.json before anything is relied on.",
+  "doneRetentionMinutes": 30,
+  "longWaitMinutes": 60,
+  "priorityScale": {
+    "min": 1,
+    "max": 5,
+    "_note": "DEMO-ONLY: 1 is most urgent. Placeholder until the clinician sets the real scale."
+  },
+  "idStart": 101,
+  "idPrefix": "A",
+  "enquiry": {
+    "redFlagPhrases": ["can't breathe", "cannot breathe", "chest pain", "fainted", "bleeding"],
+    "waitBumpMinutes": 30
+  }
+}

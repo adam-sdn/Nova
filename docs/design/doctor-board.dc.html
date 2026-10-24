@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Doctor board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="background: #F3F5F4; color: #14201F; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 20px 24px 32px; box-sizing: border-box">
+<main style="max-width: 1440px; margin: 0 auto">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 36px; height: 36px; border-radius: 10px; background: #0B6B66; display: flex; align-items: center; justify-content: center" aria-hidden="true">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12A8 8 0 0 1 17.7 6.4"/><path d="M18 3v4h-4"/><path d="M6 21v-4h4"/></svg>
+</div>
+<div>
+<h1 style="margin: 0; font-size: 18px; font-weight: 600; line-height: 1.2">Care Loop · Doctor board</h1>
+<div style="font-size: 13px; color: #4A5A58">Emergency department · Cubicle 4</div>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #17406E; background: #E4EEF9; border: 1px solid #B7CDE8; border-radius: 999px; padding: 6px 12px">Demo data</span>
+<span style="font-size: 13px; color: #2F3E3C; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 999px; padding: 6px 12px">Dr Okafor · <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600">D-05</span></span>
+</div>
+</header>
+
+<sc-if value="{{hasNotice}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; background: #E4EEF9; border: 1px solid #B7CDE8; color: #17406E; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px">
+<span>{{notice}}</span>
+<button type="button" onClick="{{dismissNotice}}" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #17406E; background: #FFFFFF; color: #17406E; font-size: 13px; font-weight: 600; cursor: pointer">Dismiss</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isQueue}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+
+<section aria-label="Ready to be seen" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">Ready to be seen</h2>
+<span style="font-size: 12px; font-weight: 600; background: #FFFFFF; border: 1px solid #B9C5C1; border-radius: 999px; padding: 2px 8px">{{queueCount}}</span>
+<span style="font-size: 13px; color: #4A5A58">Triaged patients waiting for a doctor · sorted by priority, then longest wait</span>
+</div>
+
+<sc-if value="{{queueEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 24px; font-size: 14px; color: #2F3E3C">No patients are ready to be seen right now.</div>
+</sc-if>
+
+<sc-for list="{{queue}}" as="p" hint-placeholder-count="4">
+<article style="{{p.cardStyle}}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 16px; font-weight: 600">{{p.id}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #14201F; background: #FFFFFF; border: 1px solid #7F918D; border-radius: 6px; padding: 1px 6px">Priority {{p.priority}}</span>
+<span style="font-size: 14px">{{p.initials}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border-radius: 6px; padding: 1px 6px">{{p.lang}}</span>
+<sc-if value="{{p.interpreter}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 1px 6px">Interpreter needed</span>
+</sc-if>
+<span style="font-size: 12px; color: #4A5A58">Waiting {{p.waited}}</span>
+<sc-if value="{{p.longWait}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #6B4A00; background: #FFF1CC; border: 1px solid #E8C873; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Long wait</span>
+</sc-if>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border: 1px solid #B9C5C1; border-radius: 6px; padding: 1px 6px">{{p.enquiry}}</span>
+</div>
+<div style="font-size: 14px; line-height: 1.5; color: #14201F"><span style="font-size: 12px; font-weight: 600; color: #4A5A58">AI summary · </span>{{p.summary}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" onClick="{{p.pick}}" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 14px; font-weight: 600; cursor: pointer">View profile</button>
+<button type="button" onClick="{{p.consult}}" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer">Consult now</button>
+</div>
+</article>
+</sc-for>
+</section>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<aside aria-label="Patient profile" style="flex: 1 1 380px; max-width: 440px; min-width: 0; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<h2 style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 20px; font-weight: 600">{{sel.id}}</h2>
+<span style="font-size: 14px">{{sel.initials}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border-radius: 6px; padding: 1px 6px">{{sel.lang}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #14201F; border: 1px solid #7F918D; border-radius: 6px; padding: 1px 6px">Priority {{sel.priority}}</span>
+</div>
+
+<div>
+<h3 style="margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #4A5A58">Reason for visit, in the patient’s words</h3>
+<div style="font-size: 14px; line-height: 1.5">“{{sel.reason}}”</div>
+<sc-if value="{{sel.hasFrom}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 12px; color: #4A5A58; margin-top: 4px">Translated from {{sel.fromLang}}</div>
+</sc-if>
+</div>
+
+<div style="background: #F3F5F4; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; font-weight: 600; color: #4A5A58">AI summary · from the triage note and enquiries · you decide</div>
+<div style="font-size: 14px; line-height: 1.5">{{sel.summary}}</div>
+<ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: #2F3E3C">
+<sc-for list="{{sel.points}}" as="pt" hint-placeholder-count="3">
+<li>{{pt.text}}</li>
+</sc-for>
+</ul>
+</div>
+
+<div>
+<h3 style="margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #4A5A58">Triage record · entered by the nurse</h3>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div style="border: 1px solid #CBD5D2; border-radius: 8px; padding: 8px 10px"><div style="font-size: 12px; color: #4A5A58">BP</div><div style="font-size: 13px">[from triage]</div></div>
+<div style="border: 1px solid #CBD5D2; border-radius: 8px; padding: 8px 10px"><div style="font-size: 12px; color: #4A5A58">Pulse</div><div style="font-size: 13px">[from triage]</div></div>
+<div style="border: 1px solid #CBD5D2; border-radius: 8px; padding: 8px 10px"><div style="font-size: 12px; color: #4A5A58">Temperature</div><div style="font-size: 13px">[from triage]</div></div>
+<div style="border: 1px solid #CBD5D2; border-radius: 8px; padding: 8px 10px"><div style="font-size: 12px; color: #4A5A58">Oxygen level</div><div style="font-size: 13px">[from triage]</div></div>
+</div>
+</div>
+
+<button type="button" onClick="{{sel.consult}}" style="min-height: 48px; padding: 0 16px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Consult now · bring to see now</button>
+</aside>
+</sc-if>
+
+</div>
+</sc-if>
+
+<sc-if value="{{isWaiting}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Session" style="max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">Session</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Patient ID</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">{{act.id}}</div></div>
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Doctor ID</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">D-05</div></div>
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Session no.</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">1</div></div>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 18px; font-weight: 600">{{waitingTitle}}</div>
+<div style="font-size: 14px; color: #2F3E3C">{{waitingNote}}</div>
+</div>
+
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px">
+<li style="font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 8px; padding: 6px 10px">Called · done</li>
+<li style="font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 8px; padding: 6px 10px">Nurse notified · done</li>
+<li style="{{arrivalStepStyle}}">Patient escorted · {{arrivalStepLabel}}</li>
+<li style="font-size: 13px; color: #4A5A58; background: #F3F5F4; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 10px">In session · not started</li>
+</ol>
+
+<div style="background: #F3F5F4; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-size: 14px; font-weight: 600">{{act.initials}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border-radius: 6px; padding: 1px 6px">{{act.lang}}</span>
+<sc-if value="{{act.interpreter}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 1px 6px">Interpreter needed</span>
+</sc-if>
+</div>
+<div style="font-size: 13px; line-height: 1.5; color: #2F3E3C"><span style="font-size: 12px; font-weight: 600; color: #4A5A58">AI summary · </span>{{act.summary}}</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" onClick="{{startSession}}" disabled="{{startDisabled}}" style="{{startStyle}}">Start session</button>
+<button type="button" onClick="{{backToQueue}}" style="min-height: 48px; padding: 0 16px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 14px; font-weight: 600; cursor: pointer">Return to queue</button>
+<button type="button" onClick="{{simulateArrival}}" style="min-height: 48px; padding: 0 16px; border-radius: 8px; border: 1px dashed #17406E; background: #FFFFFF; color: #17406E; font-size: 13px; font-weight: 600; cursor: pointer">Demo: nurse confirms patient is here</button>
+</div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isSession}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Session in progress" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">Session in progress</h2>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 999px; padding: 4px 10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>Notes capturing · 04:12</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Patient ID</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">{{act.id}}</div></div>
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Doctor ID</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">D-05</div></div>
+<div style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 8px; padding: 6px 12px"><div style="font-size: 12px; color: #4A5A58">Session no.</div><div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">1</div></div>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+<section aria-label="Conversation" style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<h3 style="margin: 0; font-size: 15px; font-weight: 600">Conversation</h3>
+<sc-for list="{{lines}}" as="ln" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 4px; background: #F3F5F4; border-radius: 10px; padding: 10px 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #4A5A58">{{ln.who}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 1px 6px">Translation verified</span>
+</div>
+<div style="font-size: 14px; line-height: 1.5">{{ln.text}}</div>
+</div>
+</sc-for>
+</section>
+
+<section aria-label="Draft note" style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+<h3 style="margin: 0; font-size: 15px; font-weight: 600">Draft note</h3>
+<span style="font-size: 12px; color: #4A5A58">Template: [your trust’s template]</span>
+</div>
+<sc-for list="{{noteSections}}" as="sec" hint-placeholder-count="5">
+<div style="border: 1px solid #CBD5D2; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 12px; font-weight: 600; color: #4A5A58">{{sec.title}}</div>
+<div style="font-size: 14px; line-height: 1.5">{{sec.body}}</div>
+<sc-if value="{{sec.fromAi}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 12px; color: #4A5A58">AI draft · from conversation {{sec.source}}</div>
+</sc-if>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 12px; font-weight: 600; color: #4A5A58">Tests to order</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<span style="font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 4px 8px">Bloods</span>
+<span style="font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 4px 8px">ECG</span>
+<button type="button" style="min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 13px; font-weight: 600; cursor: pointer">Add test</button>
+</div>
+</div>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" onClick="{{completeTests}}" style="min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer">Complete · send for tests</button>
+<button type="button" onClick="{{completeDecision}}" style="min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 14px; font-weight: 600; cursor: pointer">Complete · to decision</button>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const view = s.view || 'queue';
+const done = s.done || [];
+const arrived = s.arrived === true;
+const notice = s.notice || '';
+const self = this;
+
+const patients = [
+{ id: 'A-107', initials: 'D.R.', lang: 'EN', priority: '2', waited: '48m', longWait: false, enquiry: 'High enquiry open', interpreter: false, reason: 'My stomach pain started this morning.', fromLang: '', summary: 'Abdominal pain since this morning, worsening while waiting. An open enquiry about the pain.', points: ['Pain reported as increasing since triage', 'Open enquiry: High priority'] },
+{ id: 'A-102', initials: 'M.A.', lang: 'AR', priority: '2', waited: '34m', longWait: false, enquiry: 'Urgent enquiry open', interpreter: true, reason: 'I have felt dizzy and unwell since I arrived.', fromLang: 'Arabic', summary: 'Dizziness with nausea reported while waiting. Urgent enquiry open. Interpreter needed.', points: ['Dizziness and nausea reported in the waiting area', 'Open enquiry: Urgent', 'Interpreter needed (Arabic)'] },
+{ id: 'A-105', initials: 'L.W.', lang: 'PL', priority: '3', waited: '2h 05m', longWait: true, enquiry: 'Routine enquiry open', interpreter: true, reason: 'I twisted my ankle yesterday and cannot stand on it.', fromLang: 'Polish', summary: 'Ankle injury yesterday with difficulty putting weight on it. Waited over two hours. Routine enquiry about comfort.', points: ['Difficulty bearing weight reported', 'Waited over two hours', 'Interpreter needed (Polish)'] },
+{ id: 'A-103', initials: 'M.A.', lang: 'EN', priority: '3', waited: '1h 12m', longWait: false, enquiry: 'No open enquiry', interpreter: false, reason: 'I have had a cough for five days.', fromLang: '', summary: 'Cough for five days. No open enquiries.', points: ['No open enquiries'] }
+];
+
+const remaining = patients.filter(function (p) { return done.indexOf(p.id) === -1; });
+const selectedId = s.selected && remaining.some(function (p) { return p.id === s.selected; }) ? s.selected : (remaining.length ? remaining[0].id : null);
+
+const consult = function (id) {
+return function () { self.setState({ view: 'waiting', active: id, selected: id, arrived: false, notice: '' }); };
+};
+const queue = remaining.map(function (p) {
+const isSel = p.id === selectedId;
+return {
+id: p.id, initials: p.initials, lang: p.lang, priority: p.priority, waited: p.waited,
+longWait: p.longWait, enquiry: p.enquiry, interpreter: p.interpreter, summary: p.summary,
+cardStyle: isSel
+? 'background: #F4FAF9; border: 2px solid #0B6B66; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px'
+: 'background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 14px 15px; display: flex; flex-direction: column; gap: 10px',
+pick: function () { self.setState({ selected: p.id }); },
+consult: consult(p.id)
+};
+});
+
+const selRaw = remaining.filter(function (p) { return p.id === selectedId; })[0] || null;
+const sel = selRaw ? {
+id: selRaw.id, initials: selRaw.initials, lang: selRaw.lang, priority: selRaw.priority,
+reason: selRaw.reason, fromLang: selRaw.fromLang, hasFrom: selRaw.fromLang !== '',
+summary: selRaw.summary,
+points: selRaw.points.map(function (t) { return { text: t }; }),
+consult: consult(selRaw.id)
+} : { id: '', initials: '', lang: '', priority: '', reason: '', fromLang: '', hasFrom: false, summary: '', points: [], consult: function () {} };
+
+const activeRaw = patients.filter(function (p) { return p.id === s.active; })[0] || patients[1];
+const act = { id: activeRaw.id, initials: activeRaw.initials, lang: activeRaw.lang, interpreter: activeRaw.interpreter, summary: activeRaw.summary };
+
+const primary = 'min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer';
+const disabledBtn = 'min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid #B9C5C1; background: #E6ECEA; color: #4A5A58; font-size: 14px; font-weight: 600; cursor: not-allowed';
+const stepDone = 'font-size: 13px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 8px; padding: 6px 10px';
+const stepWait = 'font-size: 13px; font-weight: 600; color: #6B4A00; background: #FFF1CC; border: 1px solid #E8C873; border-radius: 8px; padding: 6px 10px';
+
+const finish = function (where) {
+return function () {
+self.setState({
+view: 'queue', active: null, arrived: false, selected: null,
+done: done.concat([act.id]),
+notice: 'Session 1 ended for ' + act.id + '. The card moved to ' + where + ' on the nurse board.'
+});
+};
+};
+
+return {
+isQueue: view === 'queue',
+isWaiting: view === 'waiting',
+isSession: view === 'session',
+hasNotice: notice !== '',
+notice: notice,
+dismissNotice: function () { self.setState({ notice: '' }); },
+queue: queue,
+queueCount: remaining.length,
+queueEmpty: remaining.length === 0,
+hasSel: selRaw !== null,
+sel: sel,
+act: act,
+waitingTitle: arrived ? 'Patient is here' : 'Waiting for the patient',
+waitingNote: arrived
+? 'The nurse confirmed the patient is with you in Cubicle 4. You can start the session.'
+: 'The nurse has been notified and will bring the patient to Cubicle 4. You can start once they arrive.',
+arrivalStepLabel: arrived ? 'done' : 'waiting',
+arrivalStepStyle: arrived ? stepDone : stepWait,
+startDisabled: !arrived,
+startStyle: arrived ? primary : disabledBtn,
+startSession: function () { self.setState({ view: 'session' }); },
+simulateArrival: function () { self.setState({ arrived: true }); },
+backToQueue: function () {
+self.setState({ view: 'queue', active: null, arrived: false, notice: 'Call cancelled. ' + act.id + ' is back in the queue.' });
+},
+lines: [
+{ who: 'Doctor · English', text: 'Can you tell me when the dizziness started?' },
+{ who: 'Patient · translated from Arabic', text: 'When I sat down in the waiting room.' },
+{ who: 'Doctor · English', text: 'Have you had anything to eat or drink today?' },
+{ who: 'Patient · translated from Arabic', text: 'Only some water this morning.' }
+],
+noteSections: [
+{ title: 'Presenting complaint', body: 'Dizziness since sitting in the waiting area.', fromAi: true, source: 'lines 1–2' },
+{ title: 'History', body: 'Only water taken this morning.', fromAi: true, source: 'lines 3–4' },
+{ title: 'Examination', body: '[Doctor to complete]', fromAi: false, source: '' },
+{ title: 'Impression', body: '[Doctor to complete]', fromAi: false, source: '' },
+{ title: 'Plan', body: '[Doctor to complete]', fromAi: false, source: '' }
+],
+completeTests: finish('Diagnostics In Progress'),
+completeDecision: finish('Awaiting Decision')
+};
+}
+}
+</script>
+</body>
+</html>

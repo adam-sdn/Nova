@@ -57,3 +57,5 @@ docs/                SPEC.md, ACCEPTANCE.md, PROMPTS.md
 - Fonts: IBM Plex Sans and IBM Plex Mono (IDs). Tokens are in SPEC.md section 13.
 - Status is always shown with text plus an icon, never colour alone. Touch targets are at least 44px.
 - Patients are shown by ID (A-102). Names are hidden on staff boards by default, with a "Show names" toggle.
+- Approved mockups for the Nurse and Doctor screens are in `docs/design/` (read `docs/design/README.md` first).
+  Match their layout, copy and styles. They are references, not code to import. Patient and Interpreter screens have no mockup: build them from SPEC section 6 in the same style.

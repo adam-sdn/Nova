@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nurse board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="background: #F3F5F4; color: #14201F; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 20px 24px 32px; box-sizing: border-box">
+<main style="max-width: 1760px; margin: 0 auto">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 36px; height: 36px; border-radius: 10px; background: #0B6B66; display: flex; align-items: center; justify-content: center" aria-hidden="true">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12A8 8 0 0 1 17.7 6.4"/><path d="M18 3v4h-4"/><path d="M6 21v-4h4"/></svg>
+</div>
+<div>
+<h1 style="margin: 0; font-size: 18px; font-weight: 600; line-height: 1.2">Care Loop · Nurse board</h1>
+<div style="font-size: 13px; color: #4A5A58">Emergency department · {{totalLabel}}</div>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #17406E; background: #E4EEF9; border: 1px solid #B7CDE8; border-radius: 999px; padding: 6px 12px">Demo data</span>
+<span style="font-size: 13px; color: #2F3E3C; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 999px; padding: 6px 12px">Nurse [name]</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px">
+<button type="button" onClick="{{toggleNames}}" aria-pressed="{{namesPressed}}" style="{{namesStyle}}">{{namesLabel}}</button>
+<button type="button" onClick="{{resetDemo}}" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 13px; font-weight: 600; cursor: pointer">Reset demo</button>
+<span style="font-size: 13px; color: #4A5A58">Sorted by priority, then time in stage · patients are tracked by ID</span>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+
+<div style="flex: 999 1 560px; min-width: 0; overflow-x: auto">
+
+<sc-if value="{{hasEscorts}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Escort requests" style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px">
+<div style="display: flex; align-items: center; gap: 8px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Escort requests</h2>
+<span style="font-size: 12px; font-weight: 600; background: #D9EFED; color: #0B4F4B; border: 1px solid #8CC8C3; border-radius: 999px; padding: 2px 8px">{{escortCount}}</span>
+</div>
+<sc-for list="{{escorts}}" as="e" hint-placeholder-count="1">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; background: #E8F4F3; border: 1px solid #8CC8C3; border-radius: 10px; padding: 10px 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">{{e.id}}</span>
+<span style="font-size: 14px">{{e.who}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #FFFFFF; border-radius: 6px; padding: 1px 6px">{{e.lang}}</span>
+</div>
+<div style="font-size: 13px; color: #2F3E3C">Called by {{e.doctor}} · {{e.room}} · requested {{e.ago}} ago</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 13px; font-weight: 600; cursor: pointer">Can’t find patient</button>
+<button type="button" onClick="{{markWithDoctor}}" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">Patient is with the doctor</button>
+</div>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<div style="display: grid; grid-template-columns: repeat(6, minmax(176px, 1fr)) minmax(150px, 0.8fr); gap: 12px; min-width: 1280px">
+<sc-for list="{{columns}}" as="col" hint-placeholder-count="7">
+<section aria-label="{{col.title}}" style="background: #E6ECEA; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; min-width: 0">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 2px 4px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600; line-height: 1.3">{{col.title}}</h2>
+<span style="font-size: 12px; font-weight: 600; background: #FFFFFF; border: 1px solid #B9C5C1; border-radius: 999px; padding: 2px 8px">{{col.count}}</span>
+</div>
+<div style="font-size: 12px; color: #4A5A58; padding: 0 4px">{{col.hint}}</div>
+<sc-for list="{{col.cards}}" as="card" hint-placeholder-count="3">
+<article style="background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 6px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">{{card.id}}</span>
+<sc-if value="{{card.hasPriority}}" hint-placeholder-val="{{ true }}">
+<span style="font-size: 12px; font-weight: 600; color: #14201F; background: #FFFFFF; border: 1px solid #7F918D; border-radius: 6px; padding: 1px 6px">Priority {{card.priority}}</span>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span style="font-size: 14px">{{card.who}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border-radius: 6px; padding: 1px 6px">{{card.lang}}</span>
+</div>
+<div style="font-size: 13px; color: #2F3E3C">{{card.status}}</div>
+<sc-if value="{{card.hasDoctor}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; font-weight: 600">with {{card.doctor}}</div>
+<div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #4A5A58">{{card.session}}</div>
+</div>
+</sc-if>
+<sc-if value="{{card.hasTests}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 4px">
+<sc-for list="{{card.tests}}" as="t" hint-placeholder-count="2">
+<span style="font-size: 12px; color: #2F3E3C; background: #F3F5F4; border: 1px solid #CBD5D2; border-radius: 6px; padding: 1px 6px">{{t.label}} · {{t.state}}</span>
+</sc-for>
+</div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span style="font-size: 12px; color: #4A5A58">{{card.time}}</span>
+<sc-if value="{{card.escort}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>Escort requested</span>
+</sc-if>
+<sc-if value="{{card.longWait}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #6B4A00; background: #FFF1CC; border: 1px solid #E8C873; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Long wait</span>
+</sc-if>
+<sc-if value="{{card.recording}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #0B4F4B; background: #D9EFED; border: 1px solid #8CC8C3; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>Notes capturing</span>
+</sc-if>
+<sc-if value="{{card.enquiryUrgent}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #8A2B0E; background: #FDE7DD; border: 1px solid #E9AE96; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>Urgent enquiry</span>
+</sc-if>
+<sc-if value="{{card.enquiryRoutine}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border: 1px solid #B9C5C1; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg>Enquiry</span>
+</sc-if>
+</div>
+</article>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</div>
+
+<aside aria-label="Patient enquiries" style="flex: 1 1 340px; max-width: 380px; min-width: 0; background: #FFFFFF; border: 1px solid #CBD5D2; border-radius: 12px; display: flex; flex-direction: column">
+<div style="padding: 14px 14px 12px; border-bottom: 1px solid #DDE4E1">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Enquiries</h2>
+<span style="font-size: 12px; font-weight: 600; background: #E6ECEA; border: 1px solid #B9C5C1; border-radius: 999px; padding: 2px 8px">{{inboxCount}} open</span>
+</div>
+<div style="font-size: 12px; color: #4A5A58; margin-top: 2px">Priority suggested by AI · nurse confirms</div>
+<div role="group" aria-label="Filter enquiries" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px">
+<button type="button" onClick="{{showAll}}" aria-pressed="{{allPressed}}" style="{{allStyle}}">All {{countAll}}</button>
+<button type="button" onClick="{{showUrgent}}" aria-pressed="{{urgentPressed}}" style="{{urgentStyle}}">Urgent {{countUrgent}}</button>
+<button type="button" onClick="{{showHigh}}" aria-pressed="{{highPressed}}" style="{{highStyle}}">High {{countHigh}}</button>
+<button type="button" onClick="{{showRoutine}}" aria-pressed="{{routinePressed}}" style="{{routineStyle}}">Routine {{countRoutine}}</button>
+</div>
+</div>
+
+<sc-for list="{{enquiries}}" as="q" hint-placeholder-count="4">
+<article style="padding: 12px 14px; border-bottom: 1px solid #E6ECEA; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600">{{q.id}}</span>
+<sc-if value="{{q.isUrgent}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #8A2B0E; background: #FDE7DD; border: 1px solid #E9AE96; border-radius: 6px; padding: 1px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>Urgent</span>
+</sc-if>
+<sc-if value="{{q.isHigh}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; color: #6B4A00; background: #FFF1CC; border: 1px solid #E8C873; border-radius: 6px; padding: 1px 6px">High</span>
+</sc-if>
+<sc-if value="{{q.isRoutine}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; color: #2F3E3C; background: #E6ECEA; border: 1px solid #B9C5C1; border-radius: 6px; padding: 1px 6px">Routine</span>
+</sc-if>
+<span style="font-size: 12px; color: #4A5A58">{{q.category}} · waiting {{q.waited}}</span>
+</div>
+<div style="font-size: 14px; line-height: 1.4">“{{q.text}}”</div>
+<sc-if value="{{q.hasFrom}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 12px; color: #4A5A58">Translated from {{q.fromLang}}</div>
+</sc-if>
+<div style="font-size: 13px; line-height: 1.4; color: #2F3E3C; background: #F3F5F4; border-radius: 8px; padding: 8px 10px">AI suggestion: {{q.why}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">Open card</button>
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 13px; font-weight: 600; cursor: pointer">Mark handled</button>
+</div>
+</article>
+</sc-for>
+</aside>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const showNames = s.showNames === true;
+const filter = s.filter || 'all';
+const escorted = s.escorted === true;
+
+const card = function (id, name, initials, lang, status, time, extra) {
+const e = extra || {};
+const tests = (e.tests || []).map(function (t) { return { label: t[0], state: t[1] }; });
+return {
+id: id,
+lang: lang,
+status: status,
+time: e.timeText || (time + ' in stage'),
+who: showNames ? name : initials,
+priority: e.priority || '',
+hasPriority: !!e.priority,
+doctor: e.doctor || '',
+session: e.session || '',
+hasDoctor: !!e.doctor,
+tests: tests,
+hasTests: tests.length > 0,
+escort: !!e.escort,
+longWait: !!e.longWait,
+recording: !!e.recording,
+enquiryUrgent: e.enquiry === 'urgent',
+enquiryRoutine: e.enquiry === 'routine'
+};
+};
+const col = function (title, hint, cards) {
+return { title: title, hint: hint, cards: cards, count: cards.length };
+};
+
+const a102 = escorted
+? card('A-102', 'Maryam Ali', 'M.A.', 'AR', 'Escorted · session not started', '2m', { priority: '2', doctor: 'Dr Okafor', session: 'D-05 · Session 1', enquiry: 'urgent' })
+: card('A-102', 'Maryam Ali', 'M.A.', 'AR', 'Waiting for a doctor', '34m', { priority: '2', enquiry: 'urgent', escort: true });
+
+const triaged = [
+a102,
+card('A-107', 'Daniel Reed', 'D.R.', 'EN', 'Waiting for a doctor', '48m', { priority: '2', enquiry: 'routine' }),
+card('A-105', 'Lena Wójcik', 'L.W.', 'PL', 'Waiting for a doctor', '2h 05m', { priority: '3', longWait: true, enquiry: 'routine' }),
+card('A-103', 'Mohamed Ali', 'M.A.', 'EN', 'Waiting for a doctor', '1h 12m', { priority: '3' })
+].filter(function (c) { return !(escorted && c.id === 'A-102'); });
+
+const consult = [
+card('A-099', 'Hana Saleh', 'H.S.', 'AR', 'In the cubicle', '14m', { priority: '2', doctor: 'Dr Haddad', session: 'D-03 · Session 1', recording: true }),
+card('A-101', 'Tom Bennett', 'T.B.', 'EN', 'In the cubicle', '6m', { priority: '3', doctor: 'Dr Patel', session: 'D-01 · Session 1', recording: true })
+];
+if (escorted) { consult.push(a102); }
+
+const columns = [
+col('To Do (Arrival)', 'At the front desk, checking in', [
+card('A-111', 'Sara Tesfaye', 'S.T.', 'EN', 'Checking in', '3m'),
+card('A-112', 'Peter Hall', 'P.H.', 'EN', 'Checking in', '1m')
+]),
+col('Triage Waiting', 'Registered, queued for triage', [
+card('A-108', 'Aisha Noor', 'A.N.', 'SO', 'Waiting for the triage nurse', '20m'),
+card('A-109', 'Nadia Karim', 'N.K.', 'AR', 'Waiting for the triage nurse', '12m'),
+card('A-110', 'James Moore', 'J.M.', 'EN', 'Waiting for the triage nurse', '6m', { enquiry: 'urgent' })
+]),
+col('Triaged (Awaiting Doctor)', 'Priority set, waiting for a doctor', triaged),
+col('Diagnostics In Progress', 'Tests under way or waiting for results', [
+card('A-094', 'Kamal Hussein', 'K.H.', 'SO', 'Scan under way', '25m', { priority: '2', tests: [['CT', 'in scanner']] }),
+card('A-096', 'Rosa Campbell', 'R.C.', 'EN', 'Ordered by Dr Patel', '18m', { priority: '3', tests: [['Bloods', 'in lab'], ['X-ray', 'done']] }),
+card('A-091', 'Fiona Dunn', 'F.D.', 'EN', 'Waiting for lab results', '1h 40m', { priority: '3', longWait: true, tests: [['Bloods', 'results pending']] })
+]),
+col('Doctor Consultation', 'In a cubicle with the doctor', consult),
+col('Awaiting Decision', 'Results back, team deciding next steps', [
+card('A-090', 'Ellis Grant', 'E.G.', 'EN', 'Results back · Dr Okafor reviewing', '22m', { priority: '2' }),
+card('A-089', 'Mina Patel', 'M.P.', 'EN', 'Results back · review pending', '41m', { priority: '3' })
+]),
+col('Done (Discharged/Admitted)', 'Leaves the board after [time]', [
+card('A-088', 'Grace Nolan', 'G.N.', 'EN', 'Discharged', '', { timeText: '5m ago' }),
+card('A-086', 'Omar Awad', 'O.A.', 'AR', 'Admitted to ward', '', { timeText: '9m ago' }),
+card('A-085', 'Victor Lang', 'V.L.', 'EN', 'Discharged', '', { timeText: '11m ago' })
+])
+];
+let total = 0;
+columns.forEach(function (c) { total += c.count; });
+
+const escorts = escorted ? [] : [{ id: 'A-102', who: showNames ? 'Maryam Ali' : 'M.A.', lang: 'AR', doctor: 'Dr Okafor (D-05)', room: 'Cubicle 4', ago: '2m' }];
+
+const allEnq = [
+{ id: 'A-110', tier: 'urgent', category: 'Breathing', waited: '6m', text: 'It is hard to breathe since I sat down.', fromLang: '', why: 'Breathing difficulty reported. Flagged for immediate nurse review.' },
+{ id: 'A-102', tier: 'urgent', category: 'Dizziness', waited: '34m', text: 'I feel dizzy and a little sick.', fromLang: 'Arabic', why: 'Dizziness with nausea while waiting. Nurse review suggested now.' },
+{ id: 'A-107', tier: 'high', category: 'Abdominal pain', waited: '48m', text: 'My stomach pain is getting worse.', fromLang: '', why: 'Pain increasing since triage. Suggest a re-check.' },
+{ id: 'A-105', tier: 'routine', category: 'Comfort', waited: '2h 05m', text: 'Could I have some water, please?', fromLang: 'Polish', why: 'Routine request after a long wait. Suggest a check-in; a nurse decides about water.' }
+];
+const count = function (t) { return allEnq.filter(function (q) { return q.tier === t; }).length; };
+const visible = allEnq.filter(function (q) { return filter === 'all' || q.tier === filter; }).map(function (q) {
+return {
+id: q.id,
+category: q.category,
+waited: q.waited,
+text: q.text,
+why: q.why,
+fromLang: q.fromLang,
+hasFrom: q.fromLang !== '',
+isUrgent: q.tier === 'urgent',
+isHigh: q.tier === 'high',
+isRoutine: q.tier === 'routine'
+};
+});
+
+const on = 'min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #0B6B66; background: #0B6B66; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer';
+const off = 'min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #7F918D; background: #FFFFFF; color: #14201F; font-size: 13px; font-weight: 600; cursor: pointer';
+const self = this;
+const setFilter = function (f) { return function () { self.setState({ filter: f }); }; };
+
+return {
+totalLabel: total + ' patients',
+columns: columns,
+escorts: escorts,
+hasEscorts: escorts.length > 0,
+escortCount: escorts.length,
+markWithDoctor: function () { self.setState({ escorted: true }); },
+resetDemo: function () { self.setState({ escorted: false, filter: 'all', showNames: false }); },
+enquiries: visible,
+inboxCount: allEnq.length,
+countAll: allEnq.length,
+countUrgent: count('urgent'),
+countHigh: count('high'),
+countRoutine: count('routine'),
+allStyle: filter === 'all' ? on : off,
+urgentStyle: filter === 'urgent' ? on : off,
+highStyle: filter === 'high' ? on : off,
+routineStyle: filter === 'routine' ? on : off,
+allPressed: filter === 'all' ? 'true' : 'false',
+urgentPressed: filter === 'urgent' ? 'true' : 'false',
+highPressed: filter === 'high' ? 'true' : 'false',
+routinePressed: filter === 'routine' ? 'true' : 'false',
+showAll: setFilter('all'),
+showUrgent: setFilter('urgent'),
+showHigh: setFilter('high'),
+showRoutine: setFilter('routine'),
+namesLabel: showNames ? 'Names shown' : 'Show names',
+namesPressed: showNames ? 'true' : 'false',
+namesStyle: showNames ? on : off,
+toggleNames: function () { self.setState({ showNames: !showNames }); }
+};
+}
+}
+</script>
+</body>
+</html>

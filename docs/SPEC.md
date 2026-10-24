@@ -221,3 +221,23 @@ M7 polish, accessibility, smoke test of the full demo script, rehearsal.
 Must have: M0 to M4, M5 with typed input, M6 with mock AI. Cut in this order if time slips: orders extractor,
 translation verification of the results pack (use pre-verified phrases), live speech (keep typed input),
 encryption toggle on the audit page, patient-side large-text toggle.
+
+## 17. Decisions log and open questions
+
+Decided (change here first, then tell Claude Code to re-read this file):
+
+- Four windows, including a separate Interpreter window, because the verification gate is the core safety claim.
+- Registration moves To Do to Triage Waiting automatically on check-in submission. Open: a reception step may be needed.
+- Only a doctor records the decision that moves a card to Done. A nurse may move cards between Diagnostics and Awaiting Decision.
+- Enquiries are closed during Doctor Consultation and replaced by the follow-up button after Done.
+- Cards may move backward (more tests, second session).
+- The AI never lowers an enquiry priority and never sets triage priority.
+- Gmail and Calendar integration, real calls or SMS, and the full follow-up loop are out of scope for this build.
+- A teach-back check (patient answers 2 to 3 questions in their language) was discussed as an optional extra. Not in scope unless time allows.
+
+Still open (a human must decide):
+
+- Which one or two languages the demo supports, and who verifies them.
+- The clinician-defined items listed in section 14.
+- Whether to show a labelled wait range to patients, or hide it.
+- Hosting: the demo runs locally. Any deployment needs a hosted database.

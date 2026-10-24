@@ -1,0 +1,46 @@
+{
+  "_note": "Copy to data/config.json. Every TODO(clinician) value must be confirmed by a clinician before it is relied on. Do not invent clinical content.",
+  "columns": [
+    "To Do (Arrival)",
+    "Triage Waiting",
+    "Triaged (Awaiting Doctor)",
+    "Diagnostics In Progress",
+    "Doctor Consultation",
+    "Awaiting Decision",
+    "Done (Discharged/Admitted)"
+  ],
+  "doneRetentionMinutes": "TODO(clinician): how long a Done card stays on the board",
+  "priorityScale": "TODO(clinician): the triage priority scale used here (the mockups show Priority 2 and 3 only as placeholders)",
+  "longWaitMinutes": "TODO(clinician)",
+  "enquiry": {
+    "redFlagPhrases": "TODO(clinician): list of phrases that always give Urgent (for example breathing, chest pain, fainting, bleeding)",
+    "categories": ["breathing", "pain", "dizziness", "bleeding", "comfort", "question", "other"],
+    "categoryToBaseTier": "TODO(clinician): table mapping each category to Urgent, High or Routine",
+    "waitBumpMinutes": "TODO(clinician): after this wait, raise the tier by one level",
+    "lowConfidenceBelow": 0.6
+  },
+  "urgentText": {
+    "en": "TODO(clinician): fixed wording shown when a patient presses I feel worse",
+    "otherLanguages": "TODO: translated by a fluent speaker and verified, stored in data/phrases.json"
+  },
+  "noteTemplate": {
+    "sections": [
+      "Presenting complaint",
+      "History",
+      "Examination",
+      "Impression",
+      "Plan"
+    ],
+    "_note": "TODO(clinician): replace with the template your doctors actually use"
+  },
+  "testCatalogue": "TODO(clinician): list of tests that can be ordered (the mockups use Bloods, ECG, X-ray and CT as examples only)",
+  "doctors": [
+    { "id": "D-01", "name": "Dr Patel", "cubicle": "Cubicle 2" },
+    { "id": "D-03", "name": "Dr Haddad", "cubicle": "Cubicle 3" },
+    { "id": "D-05", "name": "Dr Okafor", "cubicle": "Cubicle 4" }
+  ],
+  "resultsPack": {
+    "contents": ["results as entered", "doctor's advice as entered", "medicines or supplements the doctor listed"],
+    "whenToSeekHelpText": "TODO(clinician): fixed wording, never AI-generated"
+  }
+}

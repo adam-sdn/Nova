@@ -21,6 +21,14 @@ const snapshot = (ctx: ReturnType<typeof testCtx>) =>
   }));
 
 describe("demo Reset and Seed (A2)", () => {
+  it("issues unique IDs even when backdated arrivals cross midnight (B2)", async () => {
+    const ctx = testCtx({ start: "2026-10-25T00:30:00.000Z" });
+    await seedDemo(ctx);
+    const ids = staffState(ctx, "nurse", false).visits.map((v) => v.displayId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+
   it("gives the same starting board every time, with patients in all seven columns", async () => {
     const ctx = testCtx();
     await seedDemo(ctx);

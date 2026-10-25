@@ -24,6 +24,7 @@ const card = (p: Partial<VisitCard>): VisitCard => ({
   beingTriagedBy: null,
   escortFlag: false,
   decision: null,
+  packStatus: null,
   tests: [],
   activeSession: null,
   sessionCount: 0,

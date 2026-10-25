@@ -1,5 +1,8 @@
 // SQLite schema (SPEC section 10). Columns ending in _enc hold an EncryptedField as JSON.
 // Additions beyond SPEC are marked "guard" (needed by a section 5 guard) or "demo".
+/** Bump when a table changes shape. Older local demo databases are rebuilt (synthetic data only). */
+export const SCHEMA_VERSION = 2;
+
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS visits (
   id TEXT PRIMARY KEY,
@@ -58,8 +61,8 @@ CREATE TABLE IF NOT EXISTS messages (
   translation_enc TEXT,
   back_translation_enc TEXT,
   tier TEXT,                               -- routine | verify | held; null for patient lines
-  safety_json TEXT,                        -- rule checker result
-  ai_checks_json TEXT,                     -- AI verifier result
+  safety_json TEXT,                        -- rule checker result (encrypted)
+  ai_checks_json TEXT,                     -- AI verifier result (encrypted)
   trace_json TEXT,                         -- agent trace (steps, models, retries)
   status TEXT NOT NULL,
   confirmed_by TEXT,                       -- the doctor's Send

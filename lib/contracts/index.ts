@@ -308,6 +308,8 @@ export interface VisitCard {
   beingTriagedBy: string | null;
   escortFlag: boolean;
   decision: Decision | null;
+  /** Results pack status once a decision is recorded (draft, verified, released). */
+  packStatus: PackStatus | null;
   tests: TestView[];
   activeSession: SessionView | null;
   sessionCount: number;
@@ -346,6 +348,8 @@ export interface PatientState {
   role: "patient";
   now: string;
   visit: {
+    /** Needed to post enquiries (POST /api/enquiries takes visitId). */
+    visitId: string;
     displayId: string;
     language: string;
     status: VisitStatus;

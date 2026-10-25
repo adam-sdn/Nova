@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import { loadMasterKey } from "@/lib/privacy/crypto";
 import { appConfig } from "@/lib/config";
 import { createAi, type Ai, type AiAdapter } from "@/lib/ai";
-import { SCHEMA } from "./schema";
+import { RESET_TABLES, SCHEMA, SCHEMA_VERSION } from "./schema";
 
 export type DB = Database.Database;
 
@@ -13,6 +13,8 @@ export interface Ctx {
   now: () => Date;
   /** Returns the AI client for the current MOCK_AI setting. */
   ai: () => Ai;
+  /** Clock for the ID day. The seed backdates arrivals but still issues today's IDs. Defaults to now. */
+  idClock?: () => Date;
   /** Last time a decryption for each viewer was audited (throttles audit entries from polling). */
   decryptAuditAt: Map<string, number>;
 }
@@ -21,6 +23,13 @@ export function openDb(path: string): DB {
   const db = new Database(path);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
+  if ((db.pragma("user_version", { simple: true }) as number) < SCHEMA_VERSION) {
+    // Demo databases hold synthetic data only, so an old shape is dropped and rebuilt rather than migrated.
+    db.pragma("foreign_keys = OFF");
+    for (const t of RESET_TABLES) db.exec(`DROP TABLE IF EXISTS ${t}`);
+    db.pragma("foreign_keys = ON");
+    db.pragma(`user_version = ${SCHEMA_VERSION}`);
+  }
   db.exec(SCHEMA);
   const upsert = db.prepare(
     "INSERT INTO doctors (id, name, cubicle) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, cubicle = excluded.cubicle",

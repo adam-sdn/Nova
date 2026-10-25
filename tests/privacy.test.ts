@@ -100,4 +100,27 @@ describe("encryption at rest (H1)", () => {
     // The server can still decrypt for the right viewer.
     expect(patientState(ctx, c.token)?.messages[0]?.text).toContain(marks.message);
   });
+
+  it("rule and AI check results are stored encrypted but readable for the doctor", async () => {
+    const ctx = testCtx();
+    const c = await svc.checkin(ctx, checkinInput());
+    await svc.completeTriage(ctx, c.visitId, { actor: nurse, priority: 2, note: "n" });
+    const { session } = await svc.consultNow(ctx, c.visitId, doctor);
+    await svc.escorted(ctx, session.id, { actor: nurse, outcome: "with_doctor" });
+    await svc.startSession(ctx, session.id, { actor: doctor, transcriptionConsent: true });
+    const { message } = await svc.createMessage(ctx, session.id, { actor: doctor, direction: "doctor_to_patient", text: "Take one" });
+    const r = svc.recordTranslationResult(ctx, message.id, {
+      status: "held",
+      tier: "held",
+      translation: "t",
+      backTranslation: "b",
+      safety: { errors: [{ source: "DOSE-MARKER 100 mg" }] },
+      aiChecks: { errors: [{ detail: "DRUG-MARKER" }] },
+    });
+    expect(JSON.stringify(r.message.safety)).toContain("DOSE-MARKER");
+    expect(JSON.stringify(r.message.aiChecks)).toContain("DRUG-MARKER");
+    const raw = JSON.stringify(ctx.db.prepare("SELECT * FROM messages").all());
+    expect(raw).not.toContain("DOSE-MARKER");
+    expect(raw).not.toContain("DRUG-MARKER");
+  });
 });

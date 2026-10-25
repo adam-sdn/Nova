@@ -516,6 +516,7 @@ export function recordTranslationResult(ctx: Ctx, messageId: string, r: Translat
     const m = loadMessage(ctx, messageId);
     if (m.status === "delivered") throw new TransitionError("wrong_status", "This message was already delivered");
     const json = (x: unknown) => (x === undefined ? null : JSON.stringify(x));
+    const sealed = (field: string, x: unknown) => (x === undefined ? null : enc(ctx, "messages", m.id, field, JSON.stringify(x)));
     ctx.db
       .prepare(
         `UPDATE messages SET status = ?, tier = ?, translation_enc = ?, back_translation_enc = ?,
@@ -526,8 +527,9 @@ export function recordTranslationResult(ctx: Ctx, messageId: string, r: Translat
         r.tier,
         r.translation === null ? null : enc(ctx, "messages", m.id, "translation", r.translation),
         r.backTranslation === null ? null : enc(ctx, "messages", m.id, "back_translation", r.backTranslation),
-        json(r.safety),
-        json(r.aiChecks),
+        // Rule and AI check results quote doses and drug names from the message, so they are encrypted.
+        sealed("safety", r.safety),
+        sealed("ai_checks", r.aiChecks),
         json(r.trace),
         m.id,
       );

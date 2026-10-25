@@ -42,6 +42,7 @@ Owner = the worktree that builds the real behaviour on top of the stub. Shared r
 | `POST /api/sessions/:id/messages/:msgId/recheck` | `RecheckMessageReq` `{text}` | `{message}` | Edit and recheck: back to `drafted`, agent runs again | translation |
 | `POST /api/sessions/:id/messages/:msgId/escalate` | `EscalateMessageReq` `{reason?}` | `{message}` | `escalated` (still held); nurse card `interpreterNeeded`; audit | translation |
 | `POST /api/sessions/:id/messages/:msgId/attest` | `AttestMessageReq` `{kind, reason}` | `{message}` | attestation recorded; message never delivered; clears `interpreterNeeded` | translation |
+| `GET /api/visits/:id/profile` | (doctor) | reason for visit (original and English), AI summary, triage note | none; audits the decryption | doctor |
 | `POST /api/visits/:id/tests/:testId` | `TestUpdateReq` `{state}` | `{visit}` | T10 | nurse |
 | `POST /api/visits/:id/to-decision` | `ActorOnlyReq` (nurse or doctor) | `{visit}` | T10 Move to Awaiting Decision | nurse |
 | `POST /api/visits/:id/reopen` | `ReopenReq` `{kind: more_tests\|second_look, tests}` | `{visit, session}` | T13 | doctor |

@@ -5,6 +5,9 @@ const port = Number(process.env.E2E_PORT ?? 3100);
 export default defineConfig({
   testDir: "e2e",
   timeout: 30_000,
+  // Every spec shares one dev server and one database, and some reset it: run them one at a time.
+  workers: 1,
+  fullyParallel: false,
   use: { baseURL: `http://localhost:${port}` },
   webServer: {
     command: `npm run dev -- -p ${port}`,

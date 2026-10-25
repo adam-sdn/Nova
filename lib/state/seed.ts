@@ -77,10 +77,12 @@ async function walk(ctx: Ctx, p: SeedPatient) {
 export async function seedDemo(ctx: Ctx): Promise<void> {
   resetDemo(ctx);
   const now = ctx.now().getTime();
+  // Arrivals are backdated, but every ID comes from today's counter, even when that crosses midnight.
+  const idCtx: Ctx = { ...ctx, idClock: () => new Date(now) };
   for (const p of SEED_PATIENTS) {
     // Each patient's steps happen at their arrival time plus one minute per step.
     let t = now - p.arrivedAgo * 60_000;
-    await walk(withClock(ctx, () => new Date((t += 60_000))), p);
+    await walk(withClock(idCtx, () => new Date((t += 60_000))), p);
   }
   audit(ctx, DEMO, "demo.seed", "demo", { patients: SEED_PATIENTS.length });
 }

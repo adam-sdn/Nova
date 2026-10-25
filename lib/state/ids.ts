@@ -13,7 +13,7 @@ export function formatDisplayId(prefix: string, n: number): string {
 
 /** Call inside a transaction. Returns the next unused ID for today. */
 export function nextDisplayId(ctx: Ctx): { day: string; displayId: string } {
-  const day = dayOf(ctx.now());
+  const day = dayOf((ctx.idClock ?? ctx.now)());
   const prefix = appConfig.idPrefix;
   const row = ctx.db.prepare("SELECT next FROM id_counters WHERE day = ? AND prefix = ?").get(day, prefix) as
     | { next: number }

@@ -45,7 +45,7 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
             <Button
               key={f}
               aria-pressed={filter === f}
-              className={filter === f ? "border-accent bg-accent text-white hover:bg-accent-ink" : undefined}
+              variant={filter === f ? "primary" : "secondary"}
               onClick={() => setFilter(f)}
             >
               {FILTER_LABEL[f]} {count(f)}

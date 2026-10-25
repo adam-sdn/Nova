@@ -50,7 +50,6 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
 
   const visits = data?.visits ?? [];
   const escorts = escortRequests(visits);
-  const toggleOn = "border-accent bg-accent text-white hover:bg-accent-ink";
 
   return (
     <div className="min-h-screen bg-ground px-6 pb-8 pt-5 text-ink">
@@ -72,7 +71,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         </header>
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Button aria-pressed={showNames} className={showNames ? toggleOn : undefined} onClick={() => setShowNames(!showNames)}>
+          <Button aria-pressed={showNames} variant={showNames ? "primary" : "secondary"} onClick={() => setShowNames(!showNames)}>
             {showNames ? "Names shown" : "Show names"}
           </Button>
           <Button onClick={resetDemo}>Reset demo</Button>

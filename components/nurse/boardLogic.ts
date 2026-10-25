@@ -92,7 +92,7 @@ export function inboxItems(enquiries: EnquiryView[]): InboxItem[] {
   return enquiries
     .filter((e) => e.status === "open")
     .map((e) => {
-      const s = suggestEnquiryPriority(e.kind === "feel_worse" ? "" : e.text);
+      const s = e.kind === "feel_worse" ? { tier: "urgent" as const, reason: "" } : suggestEnquiryPriority(e.text);
       return {
         enquiry: e,
         tier: inboxTier(e.tier, s.tier),

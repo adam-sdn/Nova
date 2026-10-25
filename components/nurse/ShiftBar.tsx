@@ -67,6 +67,7 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
   const [code, setCode] = useState<string | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
 
   useEffect(() => {
     if (!code) return;
@@ -76,10 +77,13 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
 
   async function reveal() {
     setError(null);
+    setRevealing(true);
     try {
       setCode((await postJson<{ code: string }>("/api/shift/reveal", { actor })).code);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not reveal the code");
+    } finally {
+      setRevealing(false);
     }
   }
 
@@ -120,13 +124,14 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
           <button
             type="button"
             onClick={reveal}
-            className="pressable btn-glass min-h-11 rounded-btn px-3.5 text-[13px] font-medium"
+            disabled={revealing}
+            className="pressable btn-glass min-h-11 rounded-btn px-3.5 text-[13px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="reveal-code"
           >
             <span aria-hidden="true" className="mr-2 font-mono tracking-[0.2em]">
-              ••••••
+              {revealing ? "⏳" : "••••••"}
             </span>
-            Tap to reveal
+            {revealing ? "Loading…" : "Tap to reveal"}
           </button>
         )}
       </div>

@@ -16,13 +16,16 @@ export function EntranceDisplay() {
   const open = shift.data?.open === true;
   const openedAt = shift.data?.openedAt ?? null;
   const [code, setCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return setCode(null);
     let live = true;
+    setLoading(true);
     postJson<{ code: string }>("/api/shift/reveal", { actor: NURSE })
       .then((r) => live && setCode(r.code))
-      .catch(() => live && setCode(null));
+      .catch(() => live && setCode(null))
+      .finally(() => live && setLoading(false));
     return () => {
       live = false;
     };
@@ -44,6 +47,8 @@ export function EntranceDisplay() {
             Or open <Mono>/patient</Mono> and type <Mono className="text-[18px] tracking-[0.2em] text-ink">{code}</Mono>
           </div>
         </>
+      ) : loading ? (
+        <p className="m-0 text-[15px] text-muted">Generating QR code…</p>
       ) : (
         <p className="m-0 text-[15px] text-muted">{shift.data ? "Check-in is closed. Please ask at the desk." : "Loading…"}</p>
       )}

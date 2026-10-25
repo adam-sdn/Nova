@@ -71,7 +71,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
   return (
     <div className="min-h-screen px-4 pb-10 pt-4 text-ink sm:px-6">
       <main className="mx-auto max-w-[1760px]">
-        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
+        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[26px] px-4 py-3">
           <div className="flex items-center gap-3">
             <LoopMark />
             <div>
@@ -81,7 +81,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <DemoTag />
-            <span className="rounded-full border border-border bg-white/70 px-3 py-1.5 text-[13px] font-medium text-routine-ink">
+            <span className="btn-glass rounded-full px-3 py-1.5 text-[13px] font-medium text-routine-ink">
               Nurse {NURSE.id}
             </span>
           </div>
@@ -90,10 +90,12 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         {shiftStatus && <ShiftBar actor={NURSE} status={shiftStatus} onEnded={() => void shift.refresh()} />}
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <Button aria-pressed={showNames} variant={showNames ? "primary" : "secondary"} onClick={() => setShowNames(!showNames)}>
-            {showNames ? "Names shown" : "Show names"}
-          </Button>
-          <Button onClick={resetDemo}>Reset demo</Button>
+          <div className="glass inline-flex items-center gap-1.5 rounded-full p-1.5">
+            <Button aria-pressed={showNames} variant={showNames ? "primary" : "secondary"} onClick={() => setShowNames(!showNames)}>
+              {showNames ? "Names shown" : "Show names"}
+            </Button>
+            <Button onClick={resetDemo}>Reset demo</Button>
+          </div>
           <span className="text-[13px] text-muted">Sorted by priority, then time in stage · patients are tracked by ID</span>
         </div>
 
@@ -111,7 +113,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
                 const cards = columnCards(visits, col);
                 const grouped = col.statuses.length > 1;
                 return (
-                  <section key={col.id} aria-label={col.label} data-column={col.id} className="flex min-w-0 flex-col gap-2.5 rounded-[20px] border border-white/60 bg-column p-2.5 shadow-[0_1px_0_rgb(255_255_255/0.6)_inset]">
+                  <section key={col.id} aria-label={col.label} data-column={col.id} className="glass-well flex min-w-0 flex-col gap-2.5 rounded-[24px] p-2.5">
                     <div className="flex items-center justify-between gap-2 px-1.5 pt-1">
                       <h2 className="m-0 text-[14px] font-semibold leading-snug">{col.label}</h2>
                       <span className="min-w-6 rounded-full bg-white/85 px-2 py-0.5 text-center text-xs font-semibold tabular-nums shadow-[0_1px_2px_rgb(20_30_45/0.06)]">

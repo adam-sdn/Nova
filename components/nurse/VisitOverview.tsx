@@ -38,7 +38,7 @@ export function VisitOverview({
     <aside
       aria-label={`Overview ${c.displayId}`}
       data-testid="visit-overview"
-      className="glass appear flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-[22px] p-4 lg:sticky lg:top-24"
+      className="glass-strong appear flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-[22px] p-4 lg:sticky lg:top-24"
     >
       <div className="flex items-start justify-between gap-2">
         <div>

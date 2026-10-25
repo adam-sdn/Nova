@@ -33,7 +33,7 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
   const count = (f: InboxFilter) => items.filter((i) => matchesFilter(i, f)).length;
 
   return (
-    <aside aria-label="Patient enquiries" className="glass flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col overflow-hidden rounded-[22px] lg:sticky lg:top-24">
+    <aside aria-label="Patient enquiries" className="glass-strong flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col overflow-hidden rounded-[22px] lg:sticky lg:top-24">
       <div className="border-b border-border/70 px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="m-0 text-base font-semibold">Enquiries</h2>

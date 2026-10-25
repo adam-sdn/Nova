@@ -7,7 +7,7 @@ type Act = (url: string, body?: Record<string, unknown>) => Promise<void>;
 
 export function EscortStrip({ cards, now, act }: { cards: VisitCard[]; now: string; act: Act }) {
   return (
-    <section aria-label="Escort requests" className="glass appear mb-3 flex flex-col gap-2.5 rounded-[20px] px-4 py-3.5">
+    <section aria-label="Escort requests" className="glass-strong appear mb-3 flex flex-col gap-2.5 rounded-[20px] px-4 py-3.5">
       <div className="flex items-center gap-2">
         <h2 className="m-0 text-sm font-semibold">Escort requests</h2>
         <span className="rounded-full border border-accent-border bg-accent-tint px-2 py-0.5 text-xs font-semibold text-accent-ink">{cards.length}</span>

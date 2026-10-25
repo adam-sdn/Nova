@@ -14,10 +14,10 @@ const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean)
 
 type ButtonVariant = "primary" | "secondary" | "danger";
 
+// Primary: tinted glass (teal body, specular top rim, coloured glow). Secondary: clear glass chip.
 const buttonStyles: Record<ButtonVariant, string> = {
-  primary:
-    "border-accent-ink/20 bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.25)_inset,0_1px_2px_rgb(5_96_106/0.25),0_4px_12px_rgb(8_127_140/0.18)] hover:bg-accent-ink",
-  secondary: "border-border bg-white/80 text-ink shadow-[0_1px_2px_rgb(20_30_45/0.05)] hover:border-border-strong/60 hover:bg-white",
+  primary: "btn-primary border-transparent text-white",
+  secondary: "btn-glass border-transparent text-ink",
   danger: "border-urgent-border bg-urgent-fill text-urgent-ink hover:border-urgent-ink/40",
 };
 
@@ -31,7 +31,7 @@ export function Button({
     <button
       type={type}
       className={cx(
-        "pressable inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-[12px] border px-4 text-[13px] font-semibold",
+        "pressable inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-full border px-4.5 text-[13px] font-semibold",
         "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none",
         buttonStyles[variant],
         className,
@@ -114,7 +114,7 @@ export function DemoTag() {
 
 /** Opaque reading surface. Pass `glass` for chrome that floats over the page (bars, side panels, gates). */
 export function Panel({ className, glass, ...rest }: HTMLAttributes<HTMLElement> & { glass?: boolean }) {
-  return <section className={cx("rounded-[18px] p-4", glass ? "glass" : "surface", className)} {...rest} />;
+  return <section className={cx("rounded-[18px] p-4", glass ? "glass-strong" : "surface", className)} {...rest} />;
 }
 
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
@@ -123,7 +123,7 @@ export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
 
 /** A board column: a soft translucent well. */
 export function Column({ className, ...rest }: HTMLAttributes<HTMLElement>) {
-  return <section className={cx("flex min-w-0 flex-col gap-2.5 rounded-[18px] bg-column p-2.5", className)} {...rest} />;
+  return <section className={cx("glass-well flex min-w-0 flex-col gap-2.5 rounded-[22px] p-2.5", className)} {...rest} />;
 }
 
 /** Patient IDs and session numbers are set in IBM Plex Mono. */

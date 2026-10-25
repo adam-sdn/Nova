@@ -95,7 +95,7 @@ export function DoctorBoard(props: {
 
   return (
     <main className="mx-auto flex max-w-[1440px] flex-col gap-5 px-4 pb-10 pt-4" style={{ zoom }}>
-      <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[22px] px-4 py-3">
+      <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[26px] px-4 py-3">
         <div className="flex items-center gap-3">
           <div
             className="grid size-10 place-items-center rounded-[12px] bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.3)_inset,0_4px_12px_rgb(8_127_140/0.25)]"
@@ -111,15 +111,23 @@ export function DoctorBoard(props: {
           </div>
         </div>
 
-        <nav aria-label="Doctor" className="order-last flex w-full gap-1 rounded-full bg-black/[0.04] p-1 sm:order-none sm:w-auto" data-testid="doctor-nav">
+        <nav aria-label="Doctor" className="segmented order-last w-full sm:order-none sm:w-[360px]" data-testid="doctor-nav">
+          <span
+            aria-hidden="true"
+            className="segmented-thumb"
+            style={{
+              width: `calc((100% - 8px) / ${TABS.length})`,
+              transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
+            }}
+          />
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               aria-current={tab === t.id ? "page" : undefined}
               onClick={() => setTab(t.id)}
-              className={`pressable inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 text-[14px] font-semibold sm:flex-none ${
-                tab === t.id ? "bg-white text-accent-ink shadow-[0_1px_3px_rgb(20_30_45/0.1),0_0_0_0.5px_rgb(20_30_45/0.04)]" : "text-muted hover:text-ink"
+              className={`relative z-10 inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-[14px] font-semibold transition-colors duration-150 ${
+                tab === t.id ? "text-accent-ink" : "text-muted hover:text-ink"
               }`}
             >
               {t.label}
@@ -140,7 +148,7 @@ export function DoctorBoard(props: {
             <input type="checkbox" className="size-4" checked={showNames} onChange={(e) => setShowNames(e.target.checked)} /> Show names
           </label>
           <DemoTag />
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[13px] text-muted" data-testid="live-status">
+          <span className="btn-glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] text-muted" data-testid="live-status">
             <span aria-hidden="true" className={`size-2 rounded-full ${live ? "bg-accent shadow-[0_0_0_3px_rgb(8_127_140/0.18)]" : "bg-border-strong"}`} />
             {live ? "Live" : "Connecting…"}
           </span>

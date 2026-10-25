@@ -49,14 +49,22 @@ export function Settings({
         </div>
         <div className={row}>
           <span className="text-[14px] font-semibold">Text size</span>
-          <div className="flex gap-1 rounded-full bg-black/[0.04] p-1" role="radiogroup" aria-label="Text size">
+          <div className="segmented w-[300px] max-w-full" role="radiogroup" aria-label="Text size">
+            <span
+              aria-hidden="true"
+              className="segmented-thumb"
+              style={{
+                width: `calc((100% - 8px) / ${TEXT_SIZES.length})`,
+                transform: `translateX(${TEXT_SIZES.findIndex((t) => t.id === textSize) * 100}%)`,
+              }}
+            />
             {TEXT_SIZES.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 role="radio"
                 aria-checked={textSize === t.id}
-                className={`pressable min-h-11 rounded-full px-4 text-[13px] font-semibold ${textSize === t.id ? "bg-white text-accent-ink shadow-[0_1px_3px_rgb(20_30_45/0.1)]" : "text-muted hover:text-ink"}`}
+                className={`relative z-10 min-h-10 rounded-full px-3 text-[13px] font-semibold transition-colors duration-150 ${textSize === t.id ? "text-accent-ink" : "text-muted hover:text-ink"}`}
                 onClick={() => onTextSize(t.id)}
               >
                 {t.label}

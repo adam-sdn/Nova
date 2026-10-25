@@ -49,7 +49,7 @@ export function ProfilePanel({ v, doctorId, onConsult, busy }: { v: VisitCard; d
   }, [v.id, doctorId]);
   const translated = profile && profile.reason.language !== "en";
   return (
-    <aside aria-label="Patient profile" className="glass appear flex flex-col gap-4 rounded-[22px] p-5 lg:sticky lg:top-28 lg:self-start">
+    <aside aria-label="Patient profile" className="glass-strong appear flex flex-col gap-4 rounded-[24px] p-5 lg:sticky lg:top-28 lg:self-start">
       <h2 className="text-[17px] font-semibold">Patient overview</h2>
       <div className="flex flex-wrap items-center gap-2">
         <Mono className="text-[22px]">{v.displayId}</Mono>

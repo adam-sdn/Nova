@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { House, ListChecks, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
+import { DashboardBackdrop } from "@/components/ui/dashboard-backdrop";
 import { RailLabel, Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FollowUpView, StaffState } from "@/lib/contracts";
 import { Button, DemoTag, NovaLogo, NovaMark, Mono, postJson, usePoll } from "@/lib/ui";
@@ -96,6 +97,8 @@ export function DoctorBoard(props: {
   const zoom = TEXT_SIZES.find((t) => t.id === textSize)!.zoom;
 
   return (
+    <>
+    <DashboardBackdrop />
     <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="block" style={{ zoom }}>
       {/* Floating glass navigation: a compact sidebar on desktop, a tab bar at the bottom on phones. */}
       <aside className="glass fixed inset-x-3 bottom-3 z-30 rounded-panel p-1.5 lg:inset-x-auto lg:bottom-4 lg:left-4 lg:top-4 lg:flex lg:w-[216px] lg:flex-col lg:p-3">
@@ -231,5 +234,6 @@ export function DoctorBoard(props: {
       </div>
     </main>
     </Tabs>
+    </>
   );
 }

@@ -80,11 +80,12 @@ body {
 }
 
 /* Backdrop: alabaster grey with soft white light and a faint slate shadow, so the glass has depth to blur. */
+/* Layer -2: under the dashboards' moving waves (layer -1, components/ui/dashboard-backdrop.tsx). */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
   background:
     radial-gradient(50vw 40vw at 12% 0%, rgb(255 255 255 / 0.85), transparent 70%),

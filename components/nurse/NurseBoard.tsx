@@ -5,6 +5,7 @@ import type { ShiftStatus, StaffState } from "@/lib/contracts";
 import { Eye, EyeOff, RotateCcw } from "lucide-react";
 import { Button, DemoTag, Mono, NovaMark, postJson, usePoll } from "@/lib/ui";
 import { BOARD_COLUMNS, STEP_LABELS, columnCards, escortRequests } from "./boardLogic";
+import { DashboardBackdrop } from "@/components/ui/dashboard-backdrop";
 import { BoardCard } from "./BoardCard";
 import { BoardStats } from "./BoardStats";
 import { EnquiriesInbox } from "./EnquiriesInbox";
@@ -72,6 +73,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
 
   return (
     <div className="min-h-screen px-4 pb-10 pt-4 text-ink sm:px-6">
+      <DashboardBackdrop />
       <main className="mx-auto max-w-[1760px]">
         <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-panel px-4 py-3">
           <div className="flex items-center gap-3">

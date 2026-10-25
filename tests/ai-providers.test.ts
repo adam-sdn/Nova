@@ -53,6 +53,25 @@ describe("Gemini for the agent tasks", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("retries a failing model, then falls back to a sibling of the same family; a bad request is not retried", async () => {
+    const urls: string[] = [];
+    let n = 0;
+    const flaky = (async (url: string) => {
+      urls.push(String(url));
+      return ++n <= 2
+        ? new Response(JSON.stringify({ error: { message: "Internal error encountered." } }), { status: 500 })
+        : new Response(JSON.stringify(gemini({ text: "Not allergic" })), { status: 200 });
+    }) as unknown as typeof fetch;
+    const t = await real(flaky).backTranslate("x", "ar", "en", {}, { model: "gemini:gemini-3.5-flash-lite" });
+    expect(t).toBe("Not allergic");
+    expect(urls.map((u) => u.match(/models\/([^:]+)/)![1])).toEqual(["gemini-3.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]);
+
+    let calls = 0;
+    const bad = (async () => (calls++, new Response(JSON.stringify({ error: { message: "API key not valid" } }), { status: 400 }))) as unknown as typeof fetch;
+    await expect(real(bad).classifyEnquiry("hi")).rejects.toThrow(/400/);
+    expect(calls).toBe(1);
+  });
+
   it("calls Gemma without a system instruction or JSON mode, and reads JSON out of a fenced reply", async () => {
     const { f, calls } = fakeFetch(gemini('Here you go:\n```json\n{"passed": true, "errors": []}\n```'));
     const v = await real(f).verifyTranslation({ source: "a", translation: "b", backTranslation: "a", ruleErrors: [] }, {}, { model: "gemini:gemma-3-27b-it" });
@@ -101,7 +120,7 @@ describe("MyMemory as the translator", () => {
   it("the configured translator, back-translator and verifier are three different families (rule 11)", () => {
     const t = appConfig.translation;
     expect(() => assertDistinctFamilies(t)).not.toThrow();
-    expect([t.translator.model, t.backTranslator.model, t.aiVerifier.model]).toEqual(["mymemory", "gemini:gemini-3.5-flash-lite", "gemini:gemma-4-31b-it"]);
+    expect([t.translator.model, t.backTranslator.model, t.aiVerifier.model]).toEqual(["mymemory", "gemini:gemini-3.5-flash-lite", "demo-verifier"]);
   });
 });
 

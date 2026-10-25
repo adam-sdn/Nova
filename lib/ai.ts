@@ -39,6 +39,31 @@ type Fetch = typeof fetch;
 export async function callGemini(model: string, task: AiTask, input: string, f: Fetch = fetch): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("AI provider not configured: GEMINI_API_KEY is not set in .env.local");
+  // Google's models fail now and then (500, 503, overload, hangs): retry once, then try a sibling model of the
+  // same family, so the translator, back-translator and verifier stay three different families (rule 11).
+  const family = model.startsWith("gemma") ? "gemma" : "gemini";
+  const attempts = [model, model, ...GOOGLE_FALLBACKS[family].filter((m) => m !== model)];
+  let last = new Error("Gemini API unavailable");
+  for (const m of attempts) {
+    try {
+      return await callGoogleOnce(m, task, input, key, f);
+    } catch (e) {
+      last = e instanceof Error ? e : new Error(String(e));
+      const status = (e as { status?: number }).status;
+      // A bad key or bad request will not get better by retrying.
+      if (status !== undefined && !RETRYABLE.has(status)) throw last;
+    }
+  }
+  throw last;
+}
+
+const GOOGLE_FALLBACKS: Record<"gemini" | "gemma", string[]> = {
+  gemini: ["gemini-3.1-flash-lite", "gemini-flash-lite-latest"],
+  gemma: ["gemma-4-26b-a4b-it"],
+};
+const RETRYABLE = new Set([404, 408, 429, 500, 502, 503, 504]);
+
+async function callGoogleOnce(model: string, task: AiTask, input: string, key: string, f: Fetch): Promise<string> {
   // Gemma on this API takes no system instruction and no JSON mode, so the prompt goes in the message.
   const gemma = model.startsWith("gemma");
   const res = await f(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
@@ -49,15 +74,15 @@ export async function callGemini(model: string, task: AiTask, input: string, f: 
       contents: [{ role: "user", parts: [{ text: gemma ? `${systemPrompt(task)}\n\nInput:\n${input}` : input }] }],
       generationConfig: { temperature: 0.1, ...(gemma ? {} : { responseMimeType: "application/json" }) },
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-    throw new Error(`Gemini API ${res.status}: ${err?.error?.message?.slice(0, 200) ?? res.statusText}`);
+    throw Object.assign(new Error(`Gemini API ${res.status}: ${err?.error?.message?.slice(0, 200) ?? res.statusText}`), { status: res.status });
   }
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
-  if (!text) throw new Error("Gemini API returned no text");
+  if (!text) throw Object.assign(new Error("Gemini API returned no text"), { status: 500 });
   return gemma ? jsonOnly(text) : text;
 }
 

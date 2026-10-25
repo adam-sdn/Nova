@@ -6,7 +6,7 @@ import { Button, Chip, Mono } from "@/lib/ui";
 import { canComplete, canStartSession, sessionSteps } from "@/lib/agents/doctor/board";
 import { MessageCard } from "./MessageCard";
 import { summaryText } from "./Queue";
-import { langLabel, type DoctorInfo } from "./types";
+import { langLabel, languageName, type DoctorInfo } from "./types";
 import { VoiceConsultation } from "./VoiceConsultation";
 
 type Act = (path: string, body?: Record<string, unknown>) => Promise<unknown>;
@@ -101,8 +101,6 @@ export function InSession(props: {
   onCompleted: (next: "tests" | "decision", followUps: number) => void;
 }) {
   const { v, s, me, messages, act } = props;
-  const [line, setLine] = useState("");
-  const [asPatient, setAsPatient] = useState(false);
   const [sections, setSections] = useState<Record<string, string>>(() => Object.fromEntries(props.noteSections.map((k) => [k, ""])));
   const [signed, setSigned] = useState(false);
   const [tests, setTests] = useState<string[]>([]);
@@ -138,15 +136,6 @@ export function InSession(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcriptKey]);
 
-  const sendLine = async () => {
-    if (!line.trim()) return;
-    await act(`/api/sessions/${s.id}/messages`, {
-      direction: asPatient ? "patient_to_doctor" : "doctor_to_patient",
-      text: line,
-    });
-    setLine("");
-  };
-
   const complete = async (next: "tests" | "decision") => {
     const ok = canComplete(next, signed, tests.length);
     if (!ok.ok) return setError(ok.reason ?? null);
@@ -173,31 +162,16 @@ export function InSession(props: {
           <h3 className="text-[15px] font-semibold">Conversation</h3>
           {messages.length === 0 && <div className="text-[13px] text-muted">No lines yet.</div>}
           {messages.map((m, i) => (
-            <MessageCard key={m.id} m={m} index={i + 1} langLabel={langLabel(v.language)} act={async (p, b) => void (await act(p, b))} />
+            <MessageCard key={m.id} m={m} index={i + 1} lang={v.language} langLabel={langLabel(v.language)} act={async (p, b) => void (await act(p, b))} />
           ))}
           <VoiceConsultation
             sessionId={s.id}
+            doctorId={me.id}
             patientLanguage={v.language}
-            doctorLanguage="en"
+            patientLanguageLabel={languageName(v.language)}
+            busy={props.busy}
+            onSend={(direction, text) => act(`/api/sessions/${s.id}/messages`, { direction, text })}
           />
-          <div className="flex flex-col gap-2 rounded-card bg-black/[0.03] p-2.5">
-            <textarea
-              aria-label="Type a line"
-              className="min-h-16 rounded-btn border border-border-strong/50 p-2.5 text-[14px] leading-relaxed"
-              placeholder={asPatient ? "Patient line (demo)" : "Type what you want to say to the patient"}
-              value={line}
-              onChange={(e) => setLine(e.target.value)}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" disabled={props.busy || !line.trim()} onClick={sendLine}>
-                Check translation
-              </Button>
-              <label className="flex min-h-11 items-center gap-2 text-[13px] text-muted">
-                <input type="checkbox" checked={asPatient} onChange={(e) => setAsPatient(e.target.checked)} />
-                Demo: this is the patient speaking (fallback)
-              </label>
-            </div>
-          </div>
         </section>
         <section aria-label="Clinical Assessment" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

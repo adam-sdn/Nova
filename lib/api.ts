@@ -8,7 +8,7 @@ import { TransitionError } from "@/lib/state/service";
 
 export type Params<K extends string> = { params: Promise<Record<K, string>> };
 
-function errorResponse(e: unknown): NextResponse<ApiError> {
+export function errorResponse(e: unknown): NextResponse<ApiError> {
   if (e instanceof ZodError) {
     return NextResponse.json({ error: { code: "invalid_input", message: "Invalid request", issues: e.issues } }, { status: 400 });
   }

@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { MessageView } from "@/lib/contracts";
 import { Button, Chip, type ChipVariant } from "@/lib/ui";
 import { canSend, messageChip, PENDING_BACK_TRANSLATION, type MessageChipKind } from "@/lib/agents/doctor/board";
+import { PlayAloud } from "./PlayAloud";
+import { languageName } from "./types";
 
 const chipVariant: Record<MessageChipKind, ChipVariant> = {
   checking: "routine",
@@ -16,7 +18,7 @@ const chipVariant: Record<MessageChipKind, ChipVariant> = {
 
 type Act = (path: string, body?: Record<string, unknown>) => Promise<void>;
 
-export function MessageCard({ m, index, langLabel, act }: { m: MessageView; index: number; langLabel: string; act: Act }) {
+export function MessageCard({ m, index, lang, langLabel, act }: { m: MessageView; index: number; lang: string; langLabel: string; act: Act }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(m.source);
   const [attesting, setAttesting] = useState(false);
@@ -53,6 +55,12 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
       <div className="mt-2 rounded-btn border border-accent-border bg-accent-tint p-2.5 text-[14px] text-accent-ink">
         The patient will read: {m.backTranslation ?? PENDING_BACK_TRANSLATION}
       </div>
+      {m.translation && (
+        <div className="mt-1.5 text-[13px] text-muted" data-testid="message-translation">
+          In {languageName(lang)}: <span lang={lang}>{m.translation}</span>
+        </div>
+      )}
+      {m.status === "delivered" && m.translation && <PlayAloud text={m.translation} lang={lang} langLabel={languageName(lang)} />}
       <details className="mt-2 text-[12px] text-muted">
         <summary className="cursor-pointer">Checks and agent trace</summary>
         <pre className="overflow-x-auto whitespace-pre-wrap">{JSON.stringify({ safety: m.safety, aiChecks: m.aiChecks, trace: m.trace }, null, 1)}</pre>

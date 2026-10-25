@@ -3,8 +3,12 @@
 // so the adapter never receives a patient's name or other identifiers.
 // AI output here is a draft or a suggestion only. It never sets priority, urgency, diagnoses, doses,
 // test orders or outcomes (rule 3), and fixed clinical wording never comes from here (rule 5).
+import { execFile } from "node:child_process";
+import path from "node:path";
 import { pseudonymise, restore, type Identifiers } from "@/lib/privacy/crypto";
 import { mockAdapter } from "./ai.fixtures";
+import { systemPrompt } from "./ai.prompts";
+import type { SpeechLanguage } from "@/lib/voice/languages";
 
 export type AiTask =
   | "translate_intake"
@@ -26,12 +30,122 @@ export interface AiAdapter {
   complete(task: AiTask, input: string, model?: string): Promise<string>;
 }
 
-/** Placeholder for a real provider. Not wired up: adding one needs approval (CLAUDE.md rule 10). */
-const providerAdapter: AiAdapter = {
-  async complete() {
-    throw new Error("AI provider not configured. Set MOCK_AI=1 or add a provider in lib/ai.ts.");
-  },
-};
+export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const TRANSLATION_TASKS = new Set<AiTask>(["translate_message", "back_translate", "verify_translation"]);
+
+type Fetch = typeof fetch;
+
+/** Google Gemini (approved for the agent tasks). Receives pseudonymised text only; the key stays server-side. */
+export async function callGemini(model: string, task: AiTask, input: string, f: Fetch = fetch): Promise<string> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("AI provider not configured: GEMINI_API_KEY is not set in .env.local");
+  const res = await f(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt(task) }] },
+      contents: [{ role: "user", parts: [{ text: input }] }],
+      generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    throw new Error(`Gemini ${res.status}: ${err?.error?.message?.slice(0, 200) ?? res.statusText}`);
+  }
+  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+  if (!text) throw new Error("Gemini returned no text");
+  return text;
+}
+
+/** A local Ollama model, for config entries named "ollama:<model>". */
+export async function callOllama(model: string, task: AiTask, input: string, f: Fetch = fetch): Promise<string> {
+  // 127.0.0.1, not localhost: Node may resolve localhost to ::1, where Ollama does not listen by default.
+  const res = await f(`${process.env.OLLAMA_URL ?? "http://127.0.0.1:11434"}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      stream: false,
+      format: "json",
+      think: false,
+      options: { temperature: 0.1 },
+      messages: [
+        { role: "system", content: systemPrompt(task) },
+        { role: "user", content: input },
+      ],
+    }),
+    signal: AbortSignal.timeout(180_000),
+  });
+  if (!res.ok) throw new Error(`Ollama ${res.status} for ${model}`);
+  const data = (await res.json()) as { message?: { content?: string } };
+  if (!data.message?.content) throw new Error("Ollama returned no text");
+  return data.message.content;
+}
+
+/**
+ * The real provider. Translation-agent calls follow the model named in config.translation: "gemini:<model>" or
+ * "ollama:<model>"; any other name is a demo placeholder and gets the labelled mock fixture (demo translation).
+ * Every other task uses Gemini.
+ */
+export function providerAdapter(f: Fetch = fetch): AiAdapter {
+  return {
+    async complete(task, input, model) {
+      if (model?.startsWith("ollama:")) return callOllama(model.slice("ollama:".length), task, input, f);
+      if (model?.startsWith("gemini:")) return callGemini(model.slice("gemini:".length), task, input, f);
+      if (TRANSLATION_TASKS.has(task)) return mockAdapter.complete(task, input);
+      return callGemini(process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL, task, input, f);
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Speech-to-text: OpenWhispr's local models, through its CLI and the desktop app's local bridge.
+// Audio cannot be pseudonymised, so only a local provider is allowed here: --local never falls back to the cloud.
+// ---------------------------------------------------------------------------
+
+export { SPEECH_LANGUAGES, type SpeechLanguage } from "@/lib/voice/languages";
+
+export type RunCli = (cmd: string, args: string[]) => Promise<string>;
+
+const runCli: RunCli = (cmd, args) =>
+  new Promise((resolve, reject) => {
+    execFile(cmd, args, { timeout: 120_000, maxBuffer: 1024 * 1024, windowsHide: true }, (err, stdout, stderr) => {
+      if (err) {
+        const reason = String(stderr || err.message).split("\n")[0].slice(0, 200);
+        reject(new Error(err.killed ? "Speech-to-text timed out" : `OpenWhispr: ${reason}`));
+      } else resolve(stdout);
+    });
+  });
+
+/** node + the CLI's script, so no shell is involved (Windows npm shims are .cmd/.ps1 files). */
+function openWhisprCommand(): { cmd: string; prefix: string[] } {
+  const script =
+    process.env.OPENWHISPR_CLI ??
+    (process.platform === "win32" && process.env.APPDATA
+      ? path.join(process.env.APPDATA, "npm", "node_modules", "@openwhispr", "cli", "dist", "index.js")
+      : null);
+  return script ? { cmd: process.execPath, prefix: [script] } : { cmd: "openwhispr", prefix: [] };
+}
+
+export async function transcribe(wavPath: string, language: SpeechLanguage, run: RunCli = runCli): Promise<string> {
+  const { cmd, prefix } = openWhisprCommand();
+  const model = process.env.OPENWHISPR_MODEL;
+  const out = await run(cmd, [
+    ...prefix,
+    "--local",
+    "transcribe",
+    wavPath,
+    "--language",
+    language,
+    "--format",
+    "json",
+    ...(model ? ["--model", model] : []),
+  ]);
+  const parsed = JSON.parse(out) as { text?: unknown };
+  return typeof parsed.text === "string" ? parsed.text.trim() : "";
+}
 
 export interface IntakeTranslation {
   english: string;
@@ -108,7 +222,7 @@ export interface Ai {
 }
 
 export function createAi(opts: { mock: boolean; adapter?: AiAdapter }): Ai {
-  const adapter = opts.adapter ?? (opts.mock ? mockAdapter : providerAdapter);
+  const adapter = opts.adapter ?? (opts.mock ? mockAdapter : providerAdapter());
 
   async function call<T>(task: AiTask, payload: unknown, ids: Identifiers = {}, model?: string): Promise<T> {
     const { text, map } = pseudonymise(JSON.stringify(payload), ids);

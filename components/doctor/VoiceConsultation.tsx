@@ -1,228 +1,194 @@
 "use client";
 
-import { Mic, MicOff, Play, RotateCcw, X } from "lucide-react";
-import { useState } from "react";
-import { Button, Chip } from "@/lib/ui";
-import { useVoiceConsultation, type VoiceTurn } from "@/lib/hooks/useVoiceConsultation";
+import { Mic, Pause, Play } from "lucide-react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { SPEECH_LANGUAGES } from "@/lib/voice/languages";
+import { Button } from "@/lib/ui";
+import { useHoldToTalk, type Speaker } from "./useHoldToTalk";
 
-interface VoiceConsultationProps {
+type Direction = "doctor_to_patient" | "patient_to_doctor";
+
+const DOCTOR_LANGUAGE = "en";
+
+/**
+ * Speech and typed input for the consultation. Each turn is captured only while a button is held,
+ * turned into text locally (OpenWhispr), and shown for the doctor to correct before it goes through
+ * the normal translation checks. Nothing is sent, translated or filed without the doctor's click.
+ */
+export function VoiceConsultation(props: {
   sessionId: string;
+  doctorId: string;
   patientLanguage: string;
-  doctorLanguage: string;
-}
+  patientLanguageLabel: string;
+  busy: boolean;
+  onSend: (direction: Direction, text: string) => Promise<unknown>;
+}) {
+  const patientSpeech = (SPEECH_LANGUAGES as readonly string[]).includes(props.patientLanguage);
+  const talk = useHoldToTalk({
+    sessionId: props.sessionId,
+    doctorId: props.doctorId,
+    languageOf: (s) => (s === "doctor" ? DOCTOR_LANGUAGE : props.patientLanguage),
+  });
+  const [paused, setPaused] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [typedAsPatient, setTypedAsPatient] = useState(false);
+  const { state } = talk;
+  const active = state.phase === "starting" || state.phase === "recording" || state.phase === "processing";
+  const who = (s: Speaker) => (s === "doctor" ? "Doctor" : "Patient");
 
-const languageLabels: Record<string, string> = {
-  en: "English",
-  ar: "Arabic",
-  es: "Spanish",
-  zh: "Chinese",
-  ur: "Urdu",
-  pa: "Punjabi",
-  pl: "Polish",
-  ro: "Romanian",
-};
-
-export function VoiceConsultation({
-  sessionId,
-  patientLanguage,
-  doctorLanguage,
-}: VoiceConsultationProps) {
-  const voice = useVoiceConsultation(sessionId, patientLanguage, doctorLanguage);
-  const [speaker, setSpeaker] = useState<"doctor" | "patient">("doctor");
-
-  const handleStartRecording = async () => {
-    await voice.startRecording(speaker);
-  };
-
-  const handleStopRecording = async () => {
-    await voice.stopRecording();
-  };
-
-  const handleAccept = async (turnId: string) => {
-    const turn = voice.currentTurn;
-    if (!turn) return;
-
+  // A ref, not state: two clicks in the same frame would both see sending === false.
+  const inFlight = useRef(false);
+  const submit = async (direction: Direction, text: string) => {
+    if (inFlight.current || !text.trim()) return;
+    inFlight.current = true;
+    setSending(true);
     try {
-      const response = await fetch(`/api/sessions/${sessionId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          direction: turn.speaker === "doctor" ? "doctor_to_patient" : "patient_to_doctor",
-          text: turn.originalText,
-        }),
-      });
-
-      if (!response.ok) {
-        voice.clearError();
-        const err = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-        throw new Error((err.error as Record<string, unknown>)?.message as string ?? "Failed to add message");
-      }
-
-      voice.acceptTurn(turnId);
-    } catch (error) {
-      voice.clearError();
+      return await props.onSend(direction, text.trim());
+    } finally {
+      inFlight.current = false;
+      setSending(false);
     }
   };
 
-  const handleReject = (turnId: string) => {
-    voice.rejectTurn(turnId);
+  const sendReviewed = async () => {
+    if (state.phase !== "review") return;
+    const r = await submit(state.speaker === "doctor" ? "doctor_to_patient" : "patient_to_doctor", state.text);
+    if (r) talk.reset();
   };
 
-  const handlePlayback = (turnId: string) => {
-    const lang = speaker === "doctor" ? patientLanguage : doctorLanguage;
-    void voice.playback(turnId, lang);
+  const holdHandlers = (speaker: Speaker) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      void talk.start(speaker);
+    },
+    onPointerUp: () => talk.stop(),
+    onPointerCancel: () => talk.stop(),
+    onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
+      if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+        e.preventDefault();
+        void talk.start(speaker);
+      }
+    },
+    onKeyUp: (e: KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === " " || e.key === "Enter") talk.stop();
+    },
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+  });
+
+  const holdButton = (speaker: Speaker, label: string, disabledReason: string | null) => {
+    const live = (state.phase === "recording" || state.phase === "starting") && state.speaker === speaker;
+    const disabled = paused || props.busy || sending || !!disabledReason || state.phase === "review" || (active && !live);
+    return (
+      <button
+        type="button"
+        data-testid={`hold-${speaker}`}
+        aria-pressed={live}
+        disabled={disabled}
+        title={disabledReason ?? undefined}
+        className={`pressable flex min-h-14 flex-1 touch-none select-none items-center justify-center gap-2 rounded-btn border px-3 text-[14px] font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40 ${
+          live ? "border-urgent-border bg-urgent-fill text-urgent-ink" : speaker === "doctor" ? "border-transparent bg-onyx text-white" : "border-black/[0.12] bg-white text-ink"
+        }`}
+        {...holdHandlers(speaker)}
+      >
+        <Mic size={17} strokeWidth={1.9} aria-hidden="true" className={live ? "animate-pulse" : ""} />
+        <span>{live ? `Recording ${who(speaker).toLowerCase()}… release to stop` : `Hold to talk · ${label}`}</span>
+      </button>
+    );
   };
+
+  const status =
+    paused ? "Microphone paused. Typed input still works."
+    : state.phase === "starting" ? "Opening the microphone…"
+    : state.phase === "recording" ? `Recording the ${who(state.speaker).toLowerCase()}. Release the button to stop.`
+    : state.phase === "processing" ? "Turning speech into text on this computer…"
+    : state.phase === "review" ? `Check what was heard before sending.`
+    : state.phase === "idle" ? (state.notice ?? "Hold a button while that person speaks. Recording stops when you let go.")
+    : "";
 
   return (
-    <div className="flex flex-col gap-4 rounded-card bg-black/[0.03] p-3">
-      {/* Recording Controls */}
-      <div className="flex flex-col gap-3">
-        <div className="text-[13px] font-semibold">Voice Input</div>
-
-        {/* Speaker Toggle */}
-        <div className="flex items-center gap-2">
-          <label className="flex min-h-9 items-center gap-2 rounded-btn border border-border-strong/50 px-3 text-[13px]">
-            <input
-              type="radio"
-              name="speaker"
-              value="doctor"
-              checked={speaker === "doctor"}
-              onChange={(e) => setSpeaker(e.target.value as "doctor" | "patient")}
-              disabled={voice.isRecording}
-            />
-            Doctor
-          </label>
-          <label className="flex min-h-9 items-center gap-2 rounded-btn border border-border-strong/50 px-3 text-[13px]">
-            <input
-              type="radio"
-              name="speaker"
-              value="patient"
-              checked={speaker === "patient"}
-              onChange={(e) => setSpeaker(e.target.value as "doctor" | "patient")}
-              disabled={voice.isRecording}
-            />
-            Patient (demo)
-          </label>
-        </div>
-
-        {/* Record Button */}
-        <div className="flex items-center gap-2">
-          {voice.state === "recording" ? (
-            <Button variant="danger" onClick={handleStopRecording} className="flex-1">
-              <MicOff size={16} />
-              Recording…
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              disabled={voice.state === "processing" || voice.state === "playing"}
-              onClick={handleStartRecording}
-              className="flex-1"
-            >
-              <Mic size={16} />
-              Hold to record
-            </Button>
-          )}
-
-          {voice.currentTurn && voice.state !== "recording" && (
-            <Button variant="ghost" onClick={() => voice.rejectTurn(voice.currentTurn!.id)}>
-              <RotateCcw size={16} />
-            </Button>
-          )}
-        </div>
-
-        {/* State Indicator */}
-        {voice.state !== "idle" && (
-          <div className="text-[12px] text-muted">
-            {voice.state === "recording" && "Recording…"}
-            {voice.state === "processing" && "Processing (transcribing & translating)…"}
-            {voice.state === "ready" && "Ready to review"}
-            {voice.state === "playing" && "Playing back…"}
-            {voice.state === "error" && `Error: ${voice.error}`}
-          </div>
-        )}
-
-        {/* Error Display */}
-        {voice.error && (
-          <div className="rounded-btn border border-urgent-border bg-urgent-fill px-3 py-2 text-[12px] text-urgent-ink">
-            <div className="flex items-center justify-between">
-              <span>{voice.error}</span>
-              <button onClick={voice.clearError} aria-label="Dismiss error" className="ml-2">
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        )}
+    <div className="flex flex-col gap-3 rounded-card bg-black/[0.03] p-3" data-testid="voice-panel">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-semibold">Speak or type</span>
+        <Button
+          variant="ghost"
+          className="min-h-11 px-3 text-[12.5px]"
+          aria-pressed={paused}
+          disabled={active}
+          onClick={() => setPaused((p) => !p)}
+        >
+          {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
+          {paused ? "Resume microphone" : "Pause microphone"}
+        </Button>
       </div>
 
-      {/* Current Turn Review */}
-      {voice.currentTurn && voice.state === "ready" && (
-        <div className="rounded-btn border border-accent-border bg-accent-tint p-3">
-          <div className="mb-2 text-[12px] font-semibold text-accent-ink">Review before adding to conversation</div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {holdButton("doctor", "Doctor · English", null)}
+        {holdButton("patient", `Patient · ${props.patientLanguageLabel}`, patientSpeech ? null : `Speech-to-text is not set up for ${props.patientLanguageLabel}. Type instead.`)}
+      </div>
 
-          <div className="space-y-2">
-            <div>
-              <div className="text-[11px] text-muted">Original ({languageLabels[doctorLanguage] || "Doctor"})</div>
-              <div className="mt-1 text-[13px] leading-relaxed">{voice.currentTurn.originalText}</div>
-            </div>
+      <div role="status" aria-live="polite" className="min-h-5 text-[12.5px] text-muted" data-testid="voice-status">
+        {status}
+      </div>
 
-            <div>
-              <div className="text-[11px] text-muted">
-                Translated ({languageLabels[voice.currentTurn.speaker === "doctor" ? patientLanguage : doctorLanguage] || "Patient"})
-              </div>
-              <div className="mt-1 text-[13px] leading-relaxed">{voice.currentTurn.translatedText}</div>
-            </div>
+      {state.phase === "error" && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-btn border border-urgent-border bg-urgent-fill px-3 py-2 text-[13px] text-urgent-ink">
+          <span>{state.message}</span>
+          <span className="flex gap-2">
+            {state.canRetry && <Button className="min-h-11" onClick={talk.retry}>Retry</Button>}
+            <Button variant="ghost" className="min-h-11" onClick={() => talk.reset()}>Dismiss</Button>
+          </span>
+        </div>
+      )}
 
-            {voice.currentTurn.proposedUpdates && Object.keys(voice.currentTurn.proposedUpdates).length > 0 && (
-              <div>
-                <div className="text-[11px] text-muted">Proposed note updates</div>
-                <div className="mt-1 space-y-1">
-                  {Object.entries(voice.currentTurn.proposedUpdates).map(([field, text]) => (
-                    <div key={field} className="text-[12px]">
-                      <span className="font-semibold">{field}:</span> {text}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="primary" onClick={() => handleAccept(voice.currentTurn!.id)} className="flex-1">
-              Add to conversation
+      {state.phase === "review" && (
+        <div className="appear flex flex-col gap-2 rounded-btn border border-accent-border bg-accent-tint p-3" data-testid="voice-review">
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-semibold text-accent-ink">
+              Heard · {who(state.speaker)} · {state.speaker === "doctor" ? "English" : props.patientLanguageLabel} · correct any wrong words, especially medicines and doses
+            </span>
+            <textarea
+              className="min-h-16 rounded-btn border border-border-strong/50 bg-white p-2.5 text-[14px] leading-relaxed"
+              value={state.text}
+              onChange={(e) => talk.edit(e.target.value)}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" disabled={sending || props.busy || !state.text.trim()} onClick={sendReviewed}>
+              {sending ? "Checking…" : "Check translation"}
             </Button>
-            <Button variant="ghost" onClick={() => handleReject(voice.currentTurn!.id)}>
+            <Button variant="ghost" disabled={sending} onClick={() => talk.reset("Discarded. Nothing was sent.")}>
               Discard
             </Button>
-            <Button variant="secondary" onClick={() => handlePlayback(voice.currentTurn!.id)}>
-              <Play size={14} />
-              Play back
-            </Button>
           </div>
         </div>
       )}
 
-      {/* Conversation History */}
-      {voice.turns.length > 0 && (
-        <div className="space-y-2">
-          <div className="text-[12px] font-semibold">Conversation ({voice.turns.length} turns)</div>
-          {voice.turns.map((turn, idx) => (
-            <div key={turn.id} className="rounded-btn border border-border-strong/30 p-2.5 text-[12px]">
-              <div className="mb-1 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{turn.speaker === "doctor" ? "Doctor" : "Patient"}</span>
-                  <Chip variant="demo">{idx + 1}</Chip>
-                </div>
-                <span className="text-[11px] text-muted">{new Date(turn.timestamp).toLocaleTimeString()}</span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-muted">{turn.originalText}</div>
-                {turn.translatedText && <div className="text-[11px] italic text-border-strong">{turn.translatedText}</div>}
-              </div>
-            </div>
-          ))}
+      <div className="flex flex-col gap-2 border-t border-black/[0.06] pt-3">
+        <textarea
+          aria-label="Type a line"
+          className="min-h-16 rounded-btn border border-border-strong/50 bg-white p-2.5 text-[14px] leading-relaxed"
+          placeholder={typedAsPatient ? `What the patient said (${props.patientLanguageLabel})` : "Or type what you want to say to the patient"}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="primary"
+            disabled={props.busy || sending || !typed.trim()}
+            onClick={async () => {
+              if (await submit(typedAsPatient ? "patient_to_doctor" : "doctor_to_patient", typed)) setTyped("");
+            }}
+          >
+            Check translation
+          </Button>
+          <label className="flex min-h-11 items-center gap-2 text-[13px] text-muted">
+            <input type="checkbox" checked={typedAsPatient} onChange={(e) => setTypedAsPatient(e.target.checked)} />
+            This is the patient speaking
+          </label>
         </div>
-      )}
+      </div>
     </div>
   );
 }

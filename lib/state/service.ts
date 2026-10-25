@@ -597,15 +597,24 @@ const agentVisit = (ctx: Ctx, v: VisitRow) => ({
   name: dec(ctx, "visits", v.id, "name", v.name_enc),
 });
 
+/** Speech capture is allowed only for this session's doctor while the session is in progress. */
+export function requireCaptureAllowed(ctx: Ctx, sessionId: string, actor: Actor): void {
+  const s = loadSession(ctx, sessionId);
+  if (s.state !== "in_session") throw new TransitionError("wrong_status", "The session is not in progress");
+  if (actor.role !== "doctor" || actor.id !== s.doctor_id) {
+    throw new TransitionError("forbidden_role", "Only this session's doctor can record speech");
+  }
+}
+
 export async function createMessage(ctx: Ctx, sessionId: string, req: MessageReq): Promise<{ message: MessageView }> {
   const s = loadSession(ctx, sessionId);
   const v = loadVisit(ctx, s.visit_id);
   if (s.state !== "in_session") throw new TransitionError("wrong_status", "The session is not in progress");
+  const sessionDoctor = req.actor.role === "doctor" && req.actor.id === s.doctor_id;
   if (req.direction === "doctor_to_patient") {
-    if (req.actor.role !== "doctor" || req.actor.id !== s.doctor_id) {
-      throw new TransitionError("forbidden_role", "Only this session's doctor can send doctor lines");
-    }
-  } else {
+    if (!sessionDoctor) throw new TransitionError("forbidden_role", "Only this session's doctor can send doctor lines");
+  } else if (!sessionDoctor) {
+    // A patient line comes from the patient's phone, or is spoken in the room and captured on this doctor's device.
     requirePatient(v, req.actor);
   }
   const id = tx(ctx, () => {
@@ -613,7 +622,8 @@ export async function createMessage(ctx: Ctx, sessionId: string, req: MessageReq
     ctx.db
       .prepare("INSERT INTO messages (id, session_id, direction, source_enc, status, created_at) VALUES (?, ?, ?, ?, 'drafted', ?)")
       .run(id, sessionId, req.direction, enc(ctx, "messages", id, "source", req.text), iso(ctx));
-    audit(ctx, req.direction === "doctor_to_patient" ? req.actor : `patient:${v.display_id}`, "message.drafted", id, { sessionId });
+    const by = req.direction === "doctor_to_patient" || sessionDoctor ? req.actor : `patient:${v.display_id}`;
+    audit(ctx, by, "message.drafted", id, { sessionId, ...(req.direction === "patient_to_doctor" && sessionDoctor ? { capturedInRoom: true } : {}) });
     return id;
   });
   return messageAgent(ctx, id, req.text, req.direction, agentVisit(ctx, v));

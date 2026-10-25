@@ -72,6 +72,13 @@ describe("Gemini for the agent tasks", () => {
     expect(calls).toBe(1);
   });
 
+  it("accepts follow-ups as a bare list or under another key, and drops malformed items", async () => {
+    const asList = fakeFetch(gemini([{ text: "Review result: Bloods", fromSection: "Tests ordered" }, { nope: 1 }]));
+    expect(await real(asList.f).draftFollowUps({ sections: {}, tests: ["Bloods"] })).toEqual([{ text: "Review result: Bloods", fromSection: "Tests ordered" }]);
+    const otherKey = fakeFetch(gemini({ followUps: [{ text: "Recheck pain in 2 hours" }] }));
+    expect(await real(otherKey.f).draftFollowUps({ sections: {}, tests: [] })).toEqual([{ text: "Recheck pain in 2 hours", fromSection: "Note" }]);
+  });
+
   it("calls Gemma without a system instruction or JSON mode, and reads JSON out of a fenced reply", async () => {
     const { f, calls } = fakeFetch(gemini('Here you go:\n```json\n{"passed": true, "errors": []}\n```'));
     const v = await real(f).verifyTranslation({ source: "a", translation: "b", backTranslation: "a", ruleErrors: [] }, {}, { model: "gemini:gemma-3-27b-it" });

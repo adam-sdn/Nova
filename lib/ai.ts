@@ -273,7 +273,13 @@ export function createAi(opts: { mock: boolean; adapter?: AiAdapter }): Ai {
     verifyTranslation: (input, ids, opts) => call("verify_translation", input, ids, opts?.model),
     draftPack: (input, language, ids) => call("draft_pack", { ...input, language }, ids),
     async draftFollowUps(input, ids) {
-      return (await call<{ items: FollowUpDraft[] }>("draft_follow_ups", input, ids)).items;
+      // Real models do not always keep the exact shape: accept a bare list or the list under another key.
+      const r = await call<unknown>("draft_follow_ups", input, ids);
+      const obj = r as Record<string, unknown> | null;
+      const list = Array.isArray(r) ? r : (obj?.items ?? Object.values(obj ?? {}).find(Array.isArray) ?? []);
+      return (list as Partial<FollowUpDraft>[])
+        .filter((d) => d && typeof d.text === "string")
+        .map((d) => ({ text: d.text!, fromSection: typeof d.fromSection === "string" ? d.fromSection : "Note" }));
     },
   };
 }

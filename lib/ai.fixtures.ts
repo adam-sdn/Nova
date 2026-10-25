@@ -42,7 +42,12 @@ const handlers: Record<AiTask, Handler> = {
     return out;
   },
 
-  translate_message: ({ text, from, to }) => ({ text: from === to ? text : `[mock ${to}] ${text}` }),
+  translate_message: ({ text, from, to }: { text: string; from: string; to: string }) => {
+    // Demo only (rehearsal step 7): a line containing "(plant wrong dose)" is mistranslated with the first
+    // number doubled, so the rule checker has something real to catch. Remove the marker and recheck to pass.
+    const planted = /\(plant wrong dose\)/i.test(text) ? text.replace(/\d+/, (n) => String(Number(n) * 2)) : text;
+    return { text: from === to ? planted : `[mock ${to}] ${planted}` };
+  },
 
   back_translate: ({ text }: { text: string }) => ({ text: text.replace(/^\[mock [^\]]+\] /, "") }),
 

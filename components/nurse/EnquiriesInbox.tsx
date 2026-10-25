@@ -57,7 +57,7 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
       {visible.length === 0 && <div className="px-3.5 py-3 text-[13px] text-muted">No open enquiries.</div>}
 
       {visible.map(({ enquiry: q, tier, suggestion, reason }) => (
-        <article key={q.id} className="flex flex-col gap-2 border-b border-column px-3.5 py-3">
+        <article key={q.id} data-testid="inbox-item" className="flex flex-col gap-2 border-b border-column px-3.5 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <Mono className="text-[15px]">{q.displayId}</Mono>
             <Chip variant={TIER_CHIP[tier].variant}>{TIER_CHIP[tier].label}</Chip>

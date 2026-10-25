@@ -10,10 +10,11 @@ export default defineConfig({
   fullyParallel: false,
   use: { baseURL: `http://localhost:${port}` },
   webServer: {
-    command: `npm run dev -- -p ${port}`,
+    // E2E_PROD=1 runs against a production build, which has no first-request compile delay (use it to check A4).
+    command: process.env.E2E_PROD ? `npm run build && npm start -- -p ${port}` : `npm run dev -- -p ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 240_000,
     env: { DB_PATH: "./care-loop-e2e.db", MOCK_AI: "1" },
   },
 });

@@ -37,6 +37,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
   return (
     <article
       id={`card-${c.id}`}
+      data-testid={`card-${c.displayId}`}
       className={`flex flex-col gap-1.5 rounded-[10px] border bg-surface p-2.5 ${focused ? "border-accent ring-2 ring-accent" : "border-border"}`}
     >
       <div className="flex items-center justify-between gap-1.5">

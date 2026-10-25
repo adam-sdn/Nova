@@ -15,7 +15,7 @@ export function EscortStrip({ cards, now, act }: { cards: VisitCard[]; now: stri
       {cards.map((c) => {
         const s = c.activeSession!;
         return (
-          <div key={c.id} className="flex flex-wrap items-center justify-between gap-2.5 rounded-[10px] border border-accent-border bg-accent-tint px-3 py-2.5">
+          <div key={c.id} data-testid={`escort-${c.displayId}`} className="flex flex-wrap items-center justify-between gap-2.5 rounded-[10px] border border-accent-border bg-accent-tint px-3 py-2.5">
             <div className="flex flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Mono className="text-[15px]">{c.displayId}</Mono>

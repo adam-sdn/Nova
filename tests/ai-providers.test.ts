@@ -101,7 +101,7 @@ describe("MyMemory as the translator", () => {
   it("the configured translator, back-translator and verifier are three different families (rule 11)", () => {
     const t = appConfig.translation;
     expect(() => assertDistinctFamilies(t)).not.toThrow();
-    expect([t.translator.model, t.backTranslator.model, t.aiVerifier.model]).toEqual(["mymemory", "gemini:gemini-2.5-flash", "gemini:gemma-3-27b-it"]);
+    expect([t.translator.model, t.backTranslator.model, t.aiVerifier.model]).toEqual(["mymemory", "gemini:gemini-3.5-flash-lite", "gemini:gemma-4-31b-it"]);
   });
 });
 

@@ -27,7 +27,7 @@ export interface AiAdapter {
   complete(task: AiTask, input: string, model?: string): Promise<string>;
 }
 
-export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const TRANSLATION_TASKS = new Set<AiTask>(["translate_message", "back_translate", "verify_translation"]);
 
 type Fetch = typeof fetch;

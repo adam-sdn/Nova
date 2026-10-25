@@ -19,7 +19,7 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
     if (r?.pack) setPacks((p) => ({ ...p, [visitId]: r.pack! }));
   };
 
-  const pending = Object.entries(packs).filter(([, p]) => p.status !== "released");
+  const pending = Object.entries(packs);
   if (!visits.length && !pending.length) return null;
 
   return (
@@ -62,7 +62,7 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
       ))}
       {pending.map(([visitId, p]) => (
         <article key={visitId} className="rounded-[10px] border border-accent-border bg-accent-tint p-3 text-accent-ink">
-          <div className="text-[14px] font-semibold">Results pack · {p.status}</div>
+          <div className="text-[14px] font-semibold">Results pack · {p.status === "released" ? "released to the patient" : p.status}</div>
           <div className="text-[13px]">{p.content.results || "[no results entered]"}</div>
           <div className="mt-2 flex gap-2">
             <Button disabled={busy || p.status !== "draft"} onClick={() => run(`/api/visits/${visitId}/pack/verify`, visitId)}>

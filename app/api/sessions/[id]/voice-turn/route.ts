@@ -11,7 +11,7 @@ async function transcribeAudio(audioPath: string, language: string): Promise<str
   try {
     const { stdout } = await execAsync(
       `openwhispr transcribe "${audioPath}" --local --language ${language} --format json`,
-      { maxBuffer: 10 * 1024 * 1024 },
+      { maxBuffer: 10 * 1024 * 1024, timeout: 60_000 },
     );
     const result = JSON.parse(stdout);
     return result.text || "";
@@ -24,7 +24,9 @@ async function transcribeAudio(audioPath: string, language: string): Promise<str
 // Translate using Ollama (local LLM)
 async function translateText(text: string, _fromLang: string, toLang: string): Promise<string> {
   try {
-    const response = await fetch("http://localhost:11434/api/generate", {
+    // 127.0.0.1, not localhost: Node may resolve localhost to ::1, where Ollama is not listening.
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
+      signal: AbortSignal.timeout(60_000),
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

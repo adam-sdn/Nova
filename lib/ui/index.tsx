@@ -158,6 +158,50 @@ export interface LiveOptions {
 
 const LIVE_FALLBACK_MS = 10_000;
 
+// One EventSource per live URL per window, shared by every usePoll that asks for it. Browsers allow only six
+// HTTP/1.1 connections per origin across all windows, and each open stream holds one for good.
+interface LiveSub {
+  open: () => void;
+  change: () => void;
+  ended: () => void;
+  error: () => void;
+}
+const liveStreams = new Map<string, { es: EventSource; subs: Set<LiveSub>; open: boolean }>();
+
+function subscribeLive(url: string, sub: LiveSub): () => void {
+  let entry = liveStreams.get(url);
+  if (!entry) {
+    const es = new EventSource(url);
+    const e = { es, subs: new Set<LiveSub>(), open: false };
+    es.addEventListener("open", () => {
+      e.open = true;
+      e.subs.forEach((s) => s.open());
+    });
+    es.addEventListener("change", () => e.subs.forEach((s) => s.change()));
+    es.addEventListener("ended", () => {
+      es.close();
+      liveStreams.delete(url);
+      e.subs.forEach((s) => s.ended());
+    });
+    es.addEventListener("error", () => {
+      e.open = false;
+      e.subs.forEach((s) => s.error());
+    });
+    liveStreams.set(url, e);
+    entry = e;
+  }
+  entry.subs.add(sub);
+  if (entry.open) sub.open();
+  const mine = entry;
+  return () => {
+    mine.subs.delete(sub);
+    if (mine.subs.size === 0) {
+      mine.es.close();
+      if (liveStreams.get(url) === mine) liveStreams.delete(url);
+    }
+  };
+}
+
 export function usePoll<T>(url: string | null, ms = 1500, liveOpts?: LiveOptions): PollResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -205,17 +249,17 @@ export function usePoll<T>(url: string | null, ms = 1500, liveOpts?: LiveOptions
   const liveUrl = liveOpts?.url ?? null;
   useEffect(() => {
     if (!liveUrl || !url || typeof EventSource === "undefined") return;
-    const es = new EventSource(liveUrl);
-    es.addEventListener("open", () => setLive(true));
-    es.addEventListener("change", () => void refresh());
-    es.addEventListener("ended", () => {
-      es.close();
-      setLive(false);
-      onEnded.current?.();
+    const unsubscribe = subscribeLive(liveUrl, {
+      open: () => setLive(true),
+      change: () => void refresh(),
+      ended: () => {
+        setLive(false);
+        onEnded.current?.();
+      },
+      error: () => setLive(false),
     });
-    es.addEventListener("error", () => setLive(false));
     return () => {
-      es.close();
+      unsubscribe();
       setLive(false);
     };
   }, [liveUrl, url, refresh]);

@@ -33,21 +33,21 @@ export function VisitOverview({
   const open = enquiries.filter((e) => e.visitId === c.id && e.status === "open");
   const packReleased = c.packStatus === "released";
   const canEnd = c.status === "done" && (c.packStatus === null || packReleased);
-  const row = "flex items-start justify-between gap-3 border-b border-border/70 py-2.5 text-[13px] last:border-b-0";
+  const row = "flex items-start justify-between gap-3 border-b border-black/[0.06] py-2.5 text-[13px] last:border-b-0";
 
   return (
     <aside
       aria-label={`Overview ${c.displayId}`}
       data-testid="visit-overview"
-      className="glass-strong appear flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-[18px] p-4 lg:sticky lg:top-24"
+      className="surface enter-right flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-panel p-4 lg:sticky lg:top-24"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <Mono className="text-[20px]">{c.displayId}</Mono>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm">
             <span>{c.name ?? c.initials}</span>
-            <span className="rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-routine-ink">{c.language}</span>
-            {c.priority !== null && <span className="rounded-full border border-border-strong/50 bg-white px-2 py-0.5 text-xs font-semibold">Priority {c.priority}</span>}
+            <span className="rounded-ctl bg-black/[0.05] px-1.5 py-px text-[10.5px] font-semibold uppercase tracking-[0.04em] text-graphite">{c.language}</span>
+            {c.priority !== null && <span className="rounded-ctl border border-black/[0.14] px-1.5 py-0.5 text-[11.5px] font-medium leading-4">Priority {c.priority}</span>}
           </div>
         </div>
         <Button onClick={onClose} aria-label="Close overview">
@@ -62,7 +62,7 @@ export function VisitOverview({
             <li
               key={col.id}
               aria-current={state === "current" ? "step" : undefined}
-              className={`flex items-center gap-2 rounded-[12px] px-2.5 py-2 text-[13px] ${state === "current" ? "bg-onyx font-semibold text-white shadow-[0_8px_18px_-8px_rgb(10_10_10/0.5)]" : state === "done" ? "text-routine-ink" : "text-muted"}`}
+              className={`flex items-center gap-2 rounded-btn px-2.5 py-2 text-[13px] ${state === "current" ? "bg-onyx font-medium text-white" : state === "done" ? "text-routine-ink" : "text-muted"}`}
             >
               <span aria-hidden="true" className="w-4 text-center">
                 {state === "done" ? "✓" : state === "current" ? "●" : "○"}
@@ -75,7 +75,7 @@ export function VisitOverview({
         })}
       </ol>
 
-      <div className="rounded-[14px] bg-white/85 px-3 shadow-[0_1px_2px_rgb(20_30_45/0.05)]">
+      <div className="border-t border-black/[0.07]">
         <div className={row}>
           <span className="text-muted">Now</span>
           <span className="text-right font-semibold">{statusText(c)}</span>
@@ -136,13 +136,13 @@ export function VisitOverview({
       </div>
 
       {c.summary && (
-        <div className="rounded-[14px] bg-white/70 px-3 py-2 text-xs leading-relaxed text-routine-ink">
+        <div className="border-l-2 border-black/[0.12] pl-2.5 text-[12px] leading-relaxed text-routine-ink">
           <span className="font-semibold">AI summary:</span> {c.summary.summary}
         </div>
       )}
 
       {c.status === "done" && (
-        <div className="flex flex-col gap-2 rounded-[14px] border border-border bg-white/85 p-3.5" data-testid="end-visit">
+        <div className="flex flex-col gap-2.5 border-t border-black/[0.07] pt-3.5" data-testid="end-visit">
           {canEnd ? (
             <>
               <p className="m-0 text-[13px] text-muted">The patient has their summary. You can end the visit.</p>

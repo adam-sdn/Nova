@@ -50,7 +50,7 @@ export function PatientStatus({
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="glass sticky top-2 z-10 flex flex-col gap-2 rounded-[20px] p-3.5">
+      <header className="glass sticky top-2 z-10 flex flex-col gap-2 rounded-panel p-3.5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[1.25em]" data-testid="patient-id">
             Your ID: <Mono>{v.displayId}</Mono>
@@ -60,7 +60,7 @@ export function PatientStatus({
           <label className="flex min-w-0 max-w-full items-center gap-2">
             <span className="text-muted">Language</span>
             <select
-              className="min-h-11 min-w-0 max-w-full flex-1 rounded-[12px] border border-border-strong/60 bg-surface px-2.5 text-[1em]"
+              className="min-h-11 min-w-0 max-w-full flex-1 rounded-btn border border-border-strong/60 bg-surface px-2.5 text-[1em]"
               value={displayLang ?? v.language}
               onChange={(e) => setDisplayLang(e.target.value)}
               data-testid="language-switch"
@@ -139,7 +139,7 @@ function EscortAlert() {
   return (
     <section
       role="alert"
-      className="appear rounded-[20px] border border-accent-border bg-accent-tint p-4 text-accent-ink shadow-[0_4px_16px_rgb(8_127_140/0.12)]"
+      className="appear rounded-panel border border-accent-border bg-accent-tint p-4 text-accent-ink"
       data-testid="escort-alert"
     >
       <p className="flex items-center gap-2 text-[1.2em] font-semibold">
@@ -196,7 +196,7 @@ function FeelWorse({
       {wording && (
         <div
           role="alert"
-          className="appear mt-2 rounded-[20px] border border-urgent-border bg-urgent-fill p-4 text-urgent-ink"
+          className="appear mt-2 rounded-panel border border-urgent-border bg-urgent-fill p-4 text-urgent-ink"
           data-testid="urgent-wording"
         >
           <p className="flex items-center gap-2 font-semibold">
@@ -238,7 +238,7 @@ function EnquiryBox({ visitId, actor }: { visitId: string; actor: { role: "patie
         <label className="flex flex-col gap-1">
           <span className="font-semibold">Ask the nurses a question</span>
           <textarea
-            className="min-h-20 rounded-[14px] border border-border-strong/60 bg-surface p-3 text-[1em] leading-relaxed"
+            className="min-h-20 rounded-btn border border-border-strong/60 bg-surface p-3 text-[1em] leading-relaxed"
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -271,8 +271,8 @@ function Messages({ messages, pendingCount }: { messages: PatientState["messages
             key={m.id}
             className={
               m.direction === "doctor_to_patient"
-                ? "appear mr-6 rounded-[16px] rounded-bl-[6px] bg-ground p-3"
-                : "appear ml-8 rounded-[16px] rounded-br-[6px] bg-onyx p-3 text-white [&>span]:text-white/60"
+                ? "appear mr-6 rounded-card rounded-bl-[2px] bg-black/[0.045] p-3"
+                : "appear ml-8 rounded-card rounded-br-[2px] bg-onyx p-3 text-white [&>span]:text-white/60"
             }
           >
             <span className="block text-[0.85em] font-semibold text-muted">
@@ -312,7 +312,7 @@ function ResultsPack({ pack }: { pack: NonNullable<PatientState["pack"]> }) {
       ) : (
         <p className="mb-2">None</p>
       )}
-      <div className="mb-3 rounded-[14px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink">
+      <div className="mb-3 rounded-card border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink">
         <p className="flex items-center gap-2 font-semibold">
           <TriangleIcon size={16} /> When to get help
         </p>

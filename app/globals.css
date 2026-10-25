@@ -48,10 +48,11 @@
   --color-demo-fill: #f0f1f3;
   --color-demo-border: #d5d8dd;
 
-  --radius-card: 14px;
-  --radius-column: 20px;
-  --radius-button: 999px;
-  --radius-chip: 999px;
+  /* Radius system: architectural, never pill-shaped. Tailwind utilities: rounded-ctl / -btn / -card / -panel. */
+  --radius-ctl: 4px;   /* small controls, tags, chips, badges */
+  --radius-btn: 5px;   /* buttons, inputs, dropdowns, nav items */
+  --radius-card: 8px;  /* standard cards */
+  --radius-panel: 10px; /* large panels, bars, dialogs */
 
   /* Soft, diffuse depth */
   --shadow-soft: 0 1px 2px rgb(10 10 10 / 0.04), 0 8px 24px -12px rgb(10 10 10 / 0.12);
@@ -153,59 +154,69 @@ h3 {
     box-shadow: var(--shadow-soft);
   }
 
-  /* Buttons: onyx pill for the main action, white pill with a hairline for the rest. */
+  /*
+   * Buttons: crisp rectangles (5px). Primary is onyx with a faint top highlight; secondary is white with
+   * a fine border; ghost is transparent until hovered. Hover changes surface and border, never size.
+   */
   .btn-primary {
     background: var(--color-onyx);
-    box-shadow: 0 1px 2px rgb(10 10 10 / 0.2), 0 8px 18px -8px rgb(10 10 10 / 0.45);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(10 10 10 / 0.24);
+  }
+  .btn-glass {
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.13), 0 1px 1px rgb(10 10 10 / 0.03);
+  }
+  .btn-ghost {
+    background: transparent;
   }
   @media (hover: hover) and (pointer: fine) {
     .btn-primary:hover:not(:disabled) {
       background: var(--color-graphite);
     }
-  }
-  .btn-glass {
-    background: #fff;
-    box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.1), 0 1px 2px rgb(10 10 10 / 0.04);
-  }
-  @media (hover: hover) and (pointer: fine) {
     .btn-glass:hover:not(:disabled) {
-      box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.28), 0 2px 6px rgb(10 10 10 / 0.06);
+      background: #fafafa;
+      box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.32), 0 1px 2px rgb(10 10 10 / 0.06);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: rgb(10 10 10 / 0.05);
     }
   }
 
-  /* Segmented control: a recessed track with a sliding white thumb. */
+  /* Segmented control: a recessed rectangular track with a sliding white thumb. */
   .segmented {
     position: relative;
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
-    padding: 4px;
-    border-radius: 999px;
-    background: rgb(10 10 10 / 0.06);
+    padding: 3px;
+    border-radius: var(--radius-btn);
+    background: rgb(10 10 10 / 0.055);
   }
   .segmented-thumb {
     position: absolute;
-    top: 4px;
-    bottom: 4px;
-    left: 4px;
-    border-radius: 999px;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    border-radius: var(--radius-ctl);
     background: #fff;
-    box-shadow: 0 1px 2px rgb(10 10 10 / 0.08), 0 4px 10px -4px rgb(10 10 10 / 0.16);
-    transition: transform 260ms var(--ease-out);
+    box-shadow: 0 0 0 0.5px rgb(10 10 10 / 0.08), 0 1px 3px rgb(10 10 10 / 0.12);
+    transition: transform 280ms var(--ease-out);
     pointer-events: none;
   }
 
   /* Anything pressable: quick, quiet feedback. */
   .pressable {
     transition:
-      transform 160ms var(--ease-out),
-      background-color 160ms ease,
-      border-color 160ms ease,
-      box-shadow 200ms ease,
-      color 160ms ease;
+      transform 120ms var(--ease-out),
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      color 150ms ease;
   }
+  /* Feedback on pointer-down, instantly (Apple: respond on press, not release). */
   .pressable:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.98);
+    transition-duration: 60ms;
   }
 
   /* Cards that open something lift a little on hover (pointer devices only). */
@@ -219,12 +230,39 @@ h3 {
     .liftable:hover {
       transform: translateY(-1px);
       box-shadow: var(--shadow-lift);
+      border-color: rgb(10 10 10 / 0.16);
     }
+    /* A trailing arrow leans toward where the link goes. */
+    .group:hover .nudge {
+      transform: translateX(3px);
+    }
+  }
+  .nudge {
+    display: inline-block;
+    transition: transform 200ms var(--ease-out);
+  }
+
+  /* Live indicator: a soft ring that radiates from the dot. */
+  .live-dot {
+    position: relative;
+  }
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: live-ring 2.4s var(--ease-out) infinite;
+  }
+
+  /* Panels that open beside their trigger slide in from that side. */
+  .enter-right {
+    animation: enter-right 260ms var(--ease-out) both;
   }
 
   /* Panels and overlays settle in instead of popping. */
   .appear {
-    animation: appear 220ms var(--ease-out) both;
+    animation: appear 240ms var(--ease-out) both;
   }
 }
 
@@ -233,7 +271,7 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   background-color: var(--color-surface);
-  border-radius: 12px;
+  border-radius: var(--radius-btn);
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -242,8 +280,8 @@ input:not([type="checkbox"]):not([type="radio"]):focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 4px rgb(8 127 140 / 0.16);
+  border-color: var(--color-onyx);
+  box-shadow: 0 0 0 3px rgb(8 127 140 / 0.18);
 }
 input[type="checkbox"],
 input[type="radio"] {
@@ -267,7 +305,29 @@ input[type="radio"] {
 @keyframes dialog-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    transform: translateY(6px) scale(0.97);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes live-ring {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+@keyframes enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
   }
   to {
     opacity: 1;
@@ -278,7 +338,7 @@ input[type="radio"] {
 @keyframes appear {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.99);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -307,6 +367,15 @@ input[type="radio"] {
   }
   .segmented-thumb {
     transition: none;
+  }
+  .live-dot::after {
+    animation: none;
+  }
+  .nudge {
+    transition: none;
+  }
+  .enter-right {
+    animation: fade 160ms ease both;
   }
   .dialog-content[data-state] {
     animation: fade 140ms ease both;

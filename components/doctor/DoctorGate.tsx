@@ -94,10 +94,10 @@ function JoinForm({
     }
   }
 
-  const field = "min-h-12 w-full rounded-[12px] border border-border-strong/60 bg-surface px-3.5 text-ink";
+  const field = "min-h-12 w-full rounded-btn border border-border-strong/60 bg-surface px-3.5 text-ink";
   return (
     <main className="grid min-h-screen place-items-center p-4 text-ink">
-      <Panel glass className="appear w-full max-w-[420px] rounded-[20px] p-6">
+      <Panel glass className="appear w-full max-w-[420px] rounded-panel p-6">
         <form onSubmit={submit} className="flex flex-col gap-4" data-testid="doctor-join">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -108,7 +108,7 @@ function JoinForm({
           </div>
           <p className="text-[14px] text-muted">Ask the nurse in charge for the session code shown on the nurse board.</p>
           {notice && (
-            <div role="status" className="rounded-[14px] border border-high-border bg-high-fill p-3 text-[14px] text-high-ink">
+            <div role="status" className="rounded-card border border-high-border bg-high-fill p-3 text-[14px] text-high-ink">
               {notice}
             </div>
           )}

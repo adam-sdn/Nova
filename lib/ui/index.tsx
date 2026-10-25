@@ -12,15 +12,16 @@ export * from "./brand";
 const cx = cn;
 
 // ---------------------------------------------------------------------------
-// Button: min height 44px, radius 8px (SPEC section 13)
+// Button: 44px touch target, 5px corners (radius-btn). Never pill-shaped.
 // ---------------------------------------------------------------------------
 
-type ButtonVariant = "primary" | "secondary" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
-// Primary: tinted glass (teal body, specular top rim, coloured glow). Secondary: clear glass chip.
+// Primary: onyx. Secondary: white with a fine border. Ghost: transparent until hovered.
 const buttonStyles: Record<ButtonVariant, string> = {
   primary: "btn-primary border-transparent text-white",
   secondary: "btn-glass border-transparent text-ink",
+  ghost: "btn-ghost border-transparent text-graphite hover:text-ink",
   danger: "border-urgent-border bg-urgent-fill text-urgent-ink hover:border-urgent-ink/40",
 };
 
@@ -34,8 +35,8 @@ export function Button({
     <button
       type={type}
       className={cx(
-        "pressable inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-full border px-4.5 text-[13px] font-semibold",
-        "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none",
+        "pressable inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-btn border px-4 text-[13px] font-medium tracking-[-0.005em]",
+        "disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none",
         buttonStyles[variant],
         className,
       )}
@@ -90,7 +91,7 @@ export function Chip({ variant, children, className }: { variant: ChipVariant; c
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold",
+        "inline-flex items-center gap-1 rounded-ctl border px-1.5 py-0.5 text-[11.5px] font-medium leading-4",
         chipStyles[variant],
         className,
       )}
@@ -104,7 +105,7 @@ export function Chip({ variant, children, className }: { variant: ChipVariant; c
 /** The "Demo data" pill shown on every staff screen (I4). */
 export function DemoTag() {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-demo-border bg-demo-fill/80 px-3 py-1.5 text-[13px] font-semibold text-demo-ink">
+    <span className="inline-flex items-center gap-1.5 rounded-ctl border border-demo-border bg-white/70 px-2 py-1 text-[12px] font-medium text-demo-ink">
       <DotIcon />
       Demo data
     </span>
@@ -117,19 +118,19 @@ export function DemoTag() {
 
 /** Opaque reading surface. Pass `glass` for chrome that floats over the page (bars, side panels, gates). */
 export function Panel({ className, glass, ...rest }: HTMLAttributes<HTMLElement> & { glass?: boolean }) {
-  return <section className={cx("rounded-[16px] p-4", glass ? "glass-strong" : "surface", className)} {...rest} />;
+  return <section className={cx("rounded-panel p-4", glass ? "glass-strong" : "surface", className)} {...rest} />;
 }
 
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx("surface rounded-[14px] p-3", className)} {...rest} />;
+  return <div className={cx("surface rounded-card p-3", className)} {...rest} />;
 }
 
-/** A board column: a soft translucent well. */
+/** A board column: a quiet frosted tray. */
 export function Column({ className, ...rest }: HTMLAttributes<HTMLElement>) {
-  return <section className={cx("glass-well flex min-w-0 flex-col gap-2.5 rounded-[18px] p-2.5", className)} {...rest} />;
+  return <section className={cx("glass-well flex min-w-0 flex-col gap-2.5 rounded-panel p-2.5", className)} {...rest} />;
 }
 
-/** Patient IDs and session numbers are set in IBM Plex Mono. */
+/** Patient IDs and session numbers are set in the system monospace. */
 export function Mono({ className, ...rest }: HTMLAttributes<HTMLSpanElement>) {
   return <span className={cx("font-mono font-semibold", className)} {...rest} />;
 }

@@ -29,7 +29,7 @@ export function Settings({
   return (
     <section aria-label="Settings" className="flex max-w-[640px] flex-col gap-3" data-testid="doctor-settings">
       <h2 className="text-[20px] font-semibold">Settings</h2>
-      <div className="surface rounded-[18px] px-5">
+      <div className="surface rounded-panel px-5">
         <div className={row}>
           <span className="text-[14px] font-semibold">Doctor</span>
           <span className="text-[14px]">
@@ -40,7 +40,7 @@ export function Settings({
           <span className="text-[14px] font-semibold">Session code</span>
           <button
             type="button"
-            className="pressable min-h-11 rounded-[12px] border border-border bg-ground px-3.5 text-[14px] font-semibold hover:bg-white"
+            className="pressable btn-glass min-h-11 rounded-btn px-3.5 text-[13px] font-medium"
             onClick={() => setShown(!shown)}
             data-testid="doctor-code"
           >
@@ -64,7 +64,7 @@ export function Settings({
                 type="button"
                 role="radio"
                 aria-checked={textSize === t.id}
-                className={`relative z-10 min-h-10 rounded-full px-3 text-[13px] font-semibold transition-colors duration-150 ${textSize === t.id ? "text-accent-ink" : "text-muted hover:text-ink"}`}
+                className={`relative z-10 min-h-10 rounded-ctl px-3 text-[13px] font-medium transition-colors duration-150 ${textSize === t.id ? "text-ink" : "text-muted hover:text-ink"}`}
                 onClick={() => onTextSize(t.id)}
               >
                 {t.label}

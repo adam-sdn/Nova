@@ -15,17 +15,17 @@ const DialogClose = DialogPrimitive.Close;
 function DialogContent({ className, children, ...props }: ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-[rgb(16_32_48/0.18)] backdrop-blur-[6px]" />
+      <DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-[rgb(10_10_10/0.24)] backdrop-blur-[4px]" />
       <DialogPrimitive.Content
         className={cn(
-          "dialog-content glass-strong fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-[22px] p-6",
+          "dialog-content fixed border border-white/70 bg-white/[0.96] shadow-[0_24px_60px_-20px_rgb(10_10_10/0.35)] backdrop-blur-xl left-1/2 top-1/2 z-50 flex w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-panel p-6",
           className,
         )}
         {...props}
       >
         {children}
         <DialogPrimitive.Close
-          className="btn-glass absolute right-4 top-4 grid size-9 place-items-center rounded-full text-muted hover:text-ink"
+          className="btn-glass absolute right-4 top-4 grid size-9 place-items-center rounded-ctl text-muted hover:text-ink"
           aria-label="Close"
         >
           <X size={16} aria-hidden="true" />

@@ -95,7 +95,7 @@ export default function DemoControls() {
           {VISIT_STATUSES.map((s) => {
             const inCol = visits.filter((v) => v.status === s);
             return (
-              <div key={s} className="rounded-[10px] bg-column p-2.5" data-testid={`col-${s}`}>
+              <div key={s} className="rounded-btn bg-column p-2.5" data-testid={`col-${s}`}>
                 <p className="mb-1 text-xs font-semibold">
                   {COLUMN_LABELS[s]} <span className="text-muted">({inCol.length})</span>
                 </p>

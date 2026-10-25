@@ -10,14 +10,14 @@ export function BrandFilters() {
   return (
     <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute" }}>
       <filter id="nova-ink" colorInterpolationFilters="sRGB">
-        {/* RGB -> brand navy; alpha = 1.35 - 1.35 x luminance (near-white goes fully clear). */}
+        {/* RGB -> brand navy; alpha = 1.46 - 1.5 x luminance (near-white goes fully clear). */}
         <feColorMatrix
           type="matrix"
-          values="0 0 0 0 0.106  0 0 0 0 0.169  0 0 0 0 0.235  -0.45 -0.45 -0.45 0 1.35"
+          values="0 0 0 0 0.106  0 0 0 0 0.169  0 0 0 0 0.235  -0.5 -0.5 -0.5 0 1.46"
         />
       </filter>
       <filter id="nova-ink-white" colorInterpolationFilters="sRGB">
-        <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -0.45 -0.45 -0.45 0 1.35" />
+        <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -0.5 -0.5 -0.5 0 1.46" />
       </filter>
     </svg>
   );

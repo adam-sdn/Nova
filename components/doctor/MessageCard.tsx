@@ -27,7 +27,7 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
 
   if (m.direction === "patient_to_doctor") {
     return (
-      <div className="appear rounded-[14px] bg-ground p-3.5" data-testid="message-card">
+      <div className="appear rounded-card bg-black/[0.03] p-3.5" data-testid="message-card">
         <div className="flex items-center gap-2 text-xs font-semibold text-muted">
           <span>
             {index}. Patient · translated from {langLabel}
@@ -44,13 +44,13 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
   }
 
   return (
-    <div className="appear rounded-[14px] border border-border bg-surface p-3.5 shadow-[0_1px_2px_rgb(20_30_45/0.05)]" data-testid="message-card">
+    <div className="appear rounded-card border border-black/[0.08] bg-surface p-3.5" data-testid="message-card">
       <div className="flex items-center gap-2 text-xs font-semibold text-muted">
         <span>{index}. Doctor · English</span>
         <Chip variant={chipVariant[chip.kind]}>{m.status === "escalated" ? "Held · escalated" : chip.label}</Chip>
       </div>
       <div className="mt-1 text-[14px]">{m.source}</div>
-      <div className="mt-2 rounded-[12px] border border-accent-border bg-accent-tint p-2.5 text-[14px] text-accent-ink">
+      <div className="mt-2 rounded-btn border border-accent-border bg-accent-tint p-2.5 text-[14px] text-accent-ink">
         The patient will read: {m.backTranslation ?? PENDING_BACK_TRANSLATION}
       </div>
       <details className="mt-2 text-[12px] text-muted">
@@ -61,7 +61,7 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
       {m.attestation && <div className="mt-1 text-[13px] text-muted">Handled with interpreter service ({m.attestation.doctorId})</div>}
       {editing && (
         <div className="mt-2 flex gap-2">
-          <input aria-label="Edit message" className="min-h-11 flex-1 rounded-[12px] border border-border-strong/50 px-2.5" value={text} onChange={(e) => setText(e.target.value)} />
+          <input aria-label="Edit message" className="min-h-11 flex-1 rounded-btn border border-border-strong/50 px-2.5" value={text} onChange={(e) => setText(e.target.value)} />
           <Button variant="primary" disabled={!text.trim()} onClick={() => act(`${base}/recheck`, { text }).then(() => setEditing(false))}>
             Recheck
           </Button>
@@ -69,7 +69,7 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
       )}
       {attesting && (
         <div className="mt-2 flex gap-2">
-          <input aria-label="Attestation reason" placeholder="Reason" className="min-h-11 flex-1 rounded-[12px] border border-border-strong/50 px-2.5" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <input aria-label="Attestation reason" placeholder="Reason" className="min-h-11 flex-1 rounded-btn border border-border-strong/50 px-2.5" value={reason} onChange={(e) => setReason(e.target.value)} />
           <Button variant="primary" disabled={!reason.trim()} onClick={() => act(`${base}/attest`, { kind: "handled_with_interpreter_service", reason }).then(() => setAttesting(false))}>
             Record
           </Button>

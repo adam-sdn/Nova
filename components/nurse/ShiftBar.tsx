@@ -31,7 +31,7 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
   }
   return (
     <main className="grid min-h-screen place-items-center p-4 text-ink">
-      <Panel glass className="appear flex w-full max-w-[460px] flex-col gap-4 rounded-[20px] p-6" data-testid="start-session">
+      <Panel glass className="appear flex w-full max-w-[460px] flex-col gap-4 rounded-panel p-6" data-testid="start-session">
         <div className="flex items-center gap-3">
           <NovaMark />
           <h1 className="m-0 text-lg font-semibold">Start the shift session</h1>
@@ -102,25 +102,25 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
     <section
       aria-label="Shift session"
       data-testid="shift-bar"
-      className="glass mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[20px] px-4 py-3"
+      className="glass mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-panel px-4 py-2.5"
     >
       <div className="flex items-center gap-3">
-        <span className="text-[13px] font-semibold text-muted">Session code</span>
+        <span className="text-[12.5px] font-medium text-muted">Session code</span>
         {code ? (
           <button
             type="button"
             onClick={() => setCode(null)}
-            className="pressable min-h-11 rounded-[12px] border border-accent-border bg-accent-tint px-3.5 text-accent-ink"
+            className="pressable appear min-h-11 rounded-btn bg-onyx px-3.5 text-white"
             aria-label="Session code, tap to hide"
             data-testid="session-code"
           >
-            <Mono className="text-[20px] tracking-[0.2em]">{code}</Mono>
+            <Mono className="text-[19px] tracking-[0.22em]">{code}</Mono>
           </button>
         ) : (
           <button
             type="button"
             onClick={reveal}
-            className="pressable min-h-11 rounded-[12px] border border-border bg-white/80 px-3.5 text-[14px] font-semibold shadow-[0_1px_2px_rgb(20_30_45/0.05)] hover:bg-white"
+            className="pressable btn-glass min-h-11 rounded-btn px-3.5 text-[13px] font-medium"
             data-testid="reveal-code"
           >
             <span aria-hidden="true" className="mr-2 font-mono tracking-[0.2em]">
@@ -142,14 +142,14 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
       )}
 
       <div className="flex flex-wrap items-center gap-2 text-[13px]" data-testid="connected">
-        <span className="font-semibold text-muted">Connected</span>
+        <span className="font-medium text-muted sm:border-l sm:border-black/[0.08] sm:pl-4">Connected</span>
         {[...nurses, ...doctors].map((p) => (
-          <span key={`${p.role}:${p.id}`} className="appear inline-flex items-center gap-1.5 rounded-full border border-accent-border bg-accent-tint px-2.5 py-1 text-accent-ink">
-            <span aria-hidden="true" className="size-2 rounded-full bg-accent" />
+          <span key={`${p.role}:${p.id}`} className="appear inline-flex items-center gap-1.5 rounded-ctl border border-black/[0.09] bg-white px-2 py-1 text-ink">
+            <span aria-hidden="true" className="live-dot size-2 rounded-full bg-accent" />
             {p.role === "nurse" ? "Nurse" : "Doctor"} <Mono>{p.id}</Mono>
           </span>
         ))}
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/60 px-2.5 py-1">
+        <span className="inline-flex items-center gap-1.5 rounded-ctl border border-black/[0.09] bg-white/60 px-2 py-1">
           <span aria-hidden="true" className={`size-2 rounded-full ${patients.length ? "bg-accent" : "bg-border-strong"}`} />
           {patients.length} {patients.length === 1 ? "patient" : "patients"} online
         </span>

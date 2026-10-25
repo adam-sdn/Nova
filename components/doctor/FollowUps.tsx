@@ -27,7 +27,7 @@ export function FollowUps({ items, now, act, busy }: { items: FollowUpView[]; no
           <div key={g.status} className="flex flex-col gap-2">
             <div className="flex flex-wrap items-baseline gap-2">
               <h3 className="text-[16px] font-semibold">{g.title}</h3>
-              <span className="rounded-full bg-column px-2 text-[13px] font-semibold">{list.length}</span>
+              <span className="rounded-ctl bg-onyx px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white">{list.length}</span>
               <span className="text-[13px] text-muted">{g.hint}</span>
             </div>
             {list.map((f) => (
@@ -44,7 +44,7 @@ function FollowUpRow({ f, now, act, busy }: { f: FollowUpView; now: string; act:
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(f.text);
   return (
-    <article data-testid={`follow-up-${f.id}`} className="surface appear flex flex-col gap-2.5 rounded-[16px] p-4">
+    <article data-testid={`follow-up-${f.id}`} className="surface appear liftable flex flex-col gap-2.5 rounded-card p-4">
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <Mono className="text-[15px]">{f.displayId}</Mono>
         <span className="text-muted">Session {f.sessionNumber} · {sinceLabel(f.createdAt, now)} ago</span>
@@ -55,7 +55,7 @@ function FollowUpRow({ f, now, act, busy }: { f: FollowUpView; now: string; act:
       {editing ? (
         <textarea
           aria-label="Follow-up wording"
-          className="min-h-16 rounded-[12px] border border-border-strong/60 p-2.5 text-[14px] leading-relaxed"
+          className="min-h-16 rounded-btn border border-border-strong/60 p-2.5 text-[14px] leading-relaxed"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

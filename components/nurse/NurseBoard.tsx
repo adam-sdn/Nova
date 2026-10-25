@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { ShiftStatus, StaffState } from "@/lib/contracts";
-import { Button, DemoTag, NovaMark, postJson, usePoll } from "@/lib/ui";
+import { Eye, EyeOff, RotateCcw } from "lucide-react";
+import { Button, DemoTag, Mono, NovaMark, postJson, usePoll } from "@/lib/ui";
 import { BOARD_COLUMNS, STEP_LABELS, columnCards, escortRequests } from "./boardLogic";
 import { BoardCard } from "./BoardCard";
 import { BoardStats } from "./BoardStats";
@@ -72,7 +73,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
   return (
     <div className="min-h-screen px-4 pb-10 pt-4 text-ink sm:px-6">
       <main className="mx-auto max-w-[1760px]">
-        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
+        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-panel px-4 py-3">
           <div className="flex items-center gap-3">
             <NovaMark />
             <div>
@@ -80,10 +81,10 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
               <div className="text-[13px] text-muted">Nova Systems · Emergency department · {visits.length} patients</div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <DemoTag />
-            <span className="btn-glass rounded-full px-3 py-1.5 text-[13px] font-medium text-routine-ink">
-              Nurse {NURSE.id}
+            <span className="border-l border-black/[0.08] pl-3 text-[12.5px] font-medium text-muted">
+              Nurse <Mono className="text-ink">{NURSE.id}</Mono>
             </span>
           </div>
         </header>
@@ -91,11 +92,16 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         {shiftStatus && <ShiftBar actor={NURSE} status={shiftStatus} onEnded={() => void shift.refresh()} />}
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="glass inline-flex items-center gap-1.5 rounded-full p-1.5">
-            <Button aria-pressed={showNames} variant={showNames ? "primary" : "secondary"} onClick={() => setShowNames(!showNames)}>
+          <div role="toolbar" aria-label="Board" className="glass inline-flex items-center gap-1 rounded-panel p-1">
+            <Button aria-pressed={showNames} variant={showNames ? "primary" : "ghost"} onClick={() => setShowNames(!showNames)}>
+              {showNames ? <EyeOff size={15} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={15} strokeWidth={1.75} aria-hidden="true" />}
               {showNames ? "Names shown" : "Show names"}
             </Button>
-            <Button onClick={resetDemo}>Reset demo</Button>
+            <span aria-hidden="true" className="h-5 w-px bg-black/[0.1]" />
+            <Button variant="ghost" onClick={resetDemo}>
+              <RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" />
+              Reset demo
+            </Button>
           </div>
           <span className="text-[13px] text-muted">Sorted by priority, then time in stage · patients are tracked by ID</span>
         </div>
@@ -103,7 +109,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         {data && <BoardStats visits={visits} enquiries={data.enquiries} now={data.now} longWaitMinutes={longWaitMinutes} />}
 
         {(error || actionError) && (
-          <div role="alert" className="appear mb-3 rounded-[14px] border border-urgent-border bg-urgent-fill px-3.5 py-2.5 text-[13px] text-urgent-ink">
+          <div role="alert" className="appear mb-3 rounded-card border border-urgent-border bg-urgent-fill px-3.5 py-2.5 text-[13px] text-urgent-ink">
             {actionError ?? error}
           </div>
         )}
@@ -116,14 +122,16 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
                 const cards = columnCards(visits, col);
                 const grouped = col.statuses.length > 1;
                 return (
-                  <section key={col.id} aria-label={col.label} data-column={col.id} className="glass-well flex min-w-0 flex-col gap-2.5 rounded-[20px] p-2.5">
-                    <div className="flex items-center justify-between gap-2 px-1.5 pt-1">
-                      <h2 className="m-0 text-[14px] font-semibold leading-snug">{col.label}</h2>
-                      <span className="min-w-6 rounded-full bg-white/85 px-2 py-0.5 text-center text-xs font-semibold tabular-nums shadow-[0_1px_2px_rgb(20_30_45/0.06)]">
-                        {cards.length}
-                      </span>
+                  <section key={col.id} aria-label={col.label} data-column={col.id} className="glass-well flex min-w-0 flex-col gap-2 rounded-panel p-2">
+                    <div className="flex flex-col gap-0.5 border-b border-black/[0.06] px-2 pb-2.5 pt-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <h2 className="m-0 text-[13.5px] font-semibold leading-snug tracking-[-0.01em]">{col.label}</h2>
+                        <span className="min-w-6 rounded-ctl bg-onyx px-1.5 py-0.5 text-center text-[11px] font-semibold tabular-nums text-white">
+                          {cards.length}
+                        </span>
+                      </div>
+                      <div className="text-[12px] text-muted">{col.hint}</div>
                     </div>
-                    <div className="px-1.5 pb-0.5 text-xs text-muted">{col.hint}</div>
                     {cards.map((c) => (
                       <BoardCard
                         stepLabel={grouped ? STEP_LABELS[c.status] : undefined}

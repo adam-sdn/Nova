@@ -31,7 +31,7 @@ export default function Onboarding() {
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10 sm:px-6">
       <div className="w-full max-w-[920px]">
-        <div className="glass-strong appear flex flex-col gap-8 rounded-[32px] p-6 sm:p-10">
+        <div className="glass-strong appear flex flex-col gap-8 rounded-panel p-6 sm:p-10">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3.5">
               <div className="flex flex-col gap-2">
@@ -59,18 +59,18 @@ export default function Onboarding() {
                       const w = window.open(r.href, `care-loop-${r.title.toLowerCase()}`, r.size);
                       if (w) e.preventDefault();
                     }}
-                    className="liftable pressable surface flex h-full min-h-[220px] flex-col gap-3 rounded-[18px] p-5"
+                    className="group liftable surface flex h-full min-h-[200px] flex-col gap-3 rounded-card p-5"
                   >
                     <div
-                      className="grid size-11 place-items-center rounded-full bg-onyx text-white"
+                      className="grid size-9 place-items-center rounded-btn border border-black/[0.1] text-ink transition-colors duration-200 group-hover:border-onyx group-hover:bg-onyx group-hover:text-white"
                       aria-hidden="true"
                     >
-                      <Icon size={20} />
+                      <Icon size={17} />
                     </div>
                     <span className="text-[17px] font-semibold tracking-tight">{r.title}</span>
                     <span className="text-sm leading-relaxed text-muted">{r.body}</span>
                     <span className="mt-auto inline-flex items-center gap-1 text-[13px] font-semibold text-accent-ink">
-                      Open in a new window →
+                      Open in a new window <span className="nudge" aria-hidden="true">→</span>
                     </span>
                   </a>
                 </li>

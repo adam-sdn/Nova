@@ -5,7 +5,7 @@ import { Button, Panel, postJson } from "@/lib/ui";
 import type { CheckinResult } from "@/lib/contracts";
 import { checkinFormErrors, LANGUAGES, type CheckinForm as Form } from "./logic";
 
-const field = "min-h-12 w-full rounded-[14px] border border-border-strong/60 bg-surface px-3.5 text-[1em] text-ink";
+const field = "min-h-12 w-full rounded-btn border border-border-strong/60 bg-surface px-3.5 text-[1em] text-ink";
 
 export function CheckinForm({
   sessionCode,
@@ -44,7 +44,7 @@ export function CheckinForm({
     <Panel>
       <form onSubmit={submit} className="flex flex-col gap-4" data-testid="checkin-form" noValidate>
         <h1 className="text-[1.4em] font-semibold">Check in</h1>
-        <p className="rounded-[14px] border border-accent-border bg-accent-tint p-3.5 text-accent-ink" data-testid="ai-notice">
+        <p className="rounded-card border border-accent-border bg-accent-tint p-3.5 text-accent-ink" data-testid="ai-notice">
           You are talking to an automated assistant, not a person. Staff read what you write and make every decision
           about your care.
         </p>
@@ -93,7 +93,7 @@ export function CheckinForm({
           <span>I understand I am talking to an automated assistant.</span>
         </label>
         {errors.length > 0 && (
-          <ul role="alert" className="appear rounded-[14px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink" data-testid="checkin-errors">
+          <ul role="alert" className="appear rounded-card border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink" data-testid="checkin-errors">
             {errors.map((e) => (
               <li key={e}>{e}</li>
             ))}

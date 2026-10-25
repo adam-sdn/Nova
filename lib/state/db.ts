@@ -1,4 +1,5 @@
 // Database connection and the per-request context shared by every service function.
+import path from "node:path";
 import Database from "better-sqlite3";
 import { loadMasterKey } from "@/lib/privacy/crypto";
 import { appConfig } from "@/lib/config";
@@ -59,9 +60,16 @@ export interface CtxOptions {
   adapter?: AiAdapter;
 }
 
+function defaultDbPath(): string {
+  // Railway: the attached volume, which survives restarts and redeploys.
+  if (process.env.RAILWAY_VOLUME_MOUNT_PATH) return path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "care-loop.db");
+  // Vercel: only /tmp is writable; it is per server instance and wiped when the instance is recycled.
+  if (process.env.VERCEL) return "/tmp/care-loop.db";
+  return "./care-loop.db";
+}
+
 export function createCtx(opts: CtxOptions = {}): Ctx {
-  // On Vercel only /tmp is writable. It is per server instance and is wiped when the instance is recycled.
-  const db = openDb(opts.dbPath ?? process.env.DB_PATH ?? (process.env.VERCEL ? "/tmp/care-loop.db" : "./care-loop.db"));
+  const db = openDb(opts.dbPath ?? process.env.DB_PATH ?? defaultDbPath());
   return {
     db,
     masterKey: opts.masterKey ?? loadMasterKey(),

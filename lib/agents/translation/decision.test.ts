@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { decide, CONSENT_KEYWORDS } from "./steps/decision";
 
 const cfg = { consentRequiresInterpreter: true, weakLanguages: ["xx"] };
-const ok = { passed: true, errors: [] };
+const ok: { passed: boolean; errors: unknown[] } = { passed: true, errors: [] };
 const bad = { passed: false, errors: [{ kind: "number_unit", source: "1 mg", found: null, severity: "critical" as const }] };
 const run = (source: string, targetLang = "fr", ruleCheck = ok, aiVerify: { passed: boolean; errors: unknown[] } = ok) =>
   decide({ source, targetLang, ruleCheck, aiVerify, config: cfg });

@@ -1,3 +1,4 @@
+import "@/lib/agents/translation/register";
 import { post } from "@/lib/api";
 import { AttestMessageReq } from "@/lib/contracts";
 import { attestMessage } from "@/lib/state/service";

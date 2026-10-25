@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as svc from "@/lib/state/service";
 import { patientState, staffState } from "@/lib/state/views";
-import { loadChain, verifyAudit } from "@/lib/state/audit";
+import { verifyAudit } from "@/lib/state/audit";
 import { checkinInput, doctor, nurse, testCtx, type TestCtx } from "@/tests/helpers";
 import { registerTranslationAgent } from "./index";
 
@@ -26,11 +26,11 @@ describe("registered translation agent (F3, F4)", () => {
     expect(message.safety).toMatchObject({ passed: true });
     expect(message.aiChecks).toMatchObject({ passed: true });
     expect(message.trace).toMatchObject({ messageId: message.id, finalState: "ready_for_doctor" });
-    expect(patientState(ctx, c.token).messages).toHaveLength(0);
+    expect(patientState(ctx, c.token)!.messages).toHaveLength(0);
     const sent = await svc.sendMessage(ctx, c.sessionId, message.id, doctor);
     expect(sent.message.status).toBe("delivered");
-    expect(patientState(ctx, c.token).messages).toHaveLength(1);
-    expect(verifyAudit(loadChain(ctx)).ok).toBe(true);
+    expect(patientState(ctx, c.token)!.messages).toHaveLength(1);
+    expect(verifyAudit(ctx.db).ok).toBe(true);
   });
 
   it("a consent message is held, cannot be sent, and escalation flags the nurse card", async () => {
@@ -40,8 +40,8 @@ describe("registered translation agent (F3, F4)", () => {
     expect(message.status).toBe("held");
     await expect(svc.sendMessage(ctx, c.sessionId, message.id, doctor)).rejects.toMatchObject({ code: "wrong_status" });
     await svc.escalateMessage(ctx, c.sessionId, message.id, { actor: doctor, reason: "" });
-    expect(staffState(ctx, "nurse").visits.find((v) => v.id === c.visitId)?.interpreterNeeded).toBe(true);
-    expect(patientState(ctx, c.token).messages).toHaveLength(0);
+    expect(staffState(ctx, "nurse", false).visits.find((v) => v.id === c.visitId)?.interpreterNeeded).toBe(true);
+    expect(patientState(ctx, c.token)!.messages).toHaveLength(0);
   });
 
   it("a patient line is ai_checked", async () => {

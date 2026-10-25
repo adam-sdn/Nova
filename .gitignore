@@ -35,3 +35,6 @@ pnpm-debug.log*
 # Next.js
 next-env.d.ts
 *.tsbuildinfo
+
+# Recorded demo videos (scripts/demo-video.ts)
+demo-video/

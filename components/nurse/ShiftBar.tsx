@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import type { PresenceView, ShiftStatus } from "@/lib/contracts";
-import { Button, LoopMark, Mono, Panel, postJson } from "@/lib/ui";
+import { Button, DemoTag, LoopMark, Mono, Panel, postJson } from "@/lib/ui";
+import { QrCode, openEntranceWindow } from "./QrCode";
 
 type Actor = { role: "nurse"; id: string };
 
@@ -15,6 +15,8 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function start() {
+    // Open the entrance window inside the click, so the browser does not block it.
+    openEntranceWindow();
     setBusy(true);
     setError(null);
     try {
@@ -34,8 +36,8 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
           <h1 className="m-0 text-lg font-semibold">Start the shift session</h1>
         </div>
         <p className="text-[14px] text-muted">
-          Starting a session creates a code. Doctors type it to join the board, and patients check in with it. The
-          session stays open until a nurse ends it.
+          Starting a session creates a code. Doctors type it to join the board, and patients scan the check-in QR
+          at the entrance, which opens in its own window. The session stays open until a nurse ends it.
         </p>
         {error && (
           <div role="alert" className="text-[14px] font-semibold text-urgent-ink">
@@ -45,7 +47,10 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
         <Button variant="primary" disabled={busy} onClick={start}>
           Start session
         </Button>
-        <span className="text-[13px] text-muted">Nurse {actor.id}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] text-muted">Nurse {actor.id}</span>
+          <DemoTag />
+        </div>
       </Panel>
     </main>
   );
@@ -91,15 +96,6 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
 
   const { nurses, doctors, patients } = presenceSummary(status.connected);
   const patientLink = code && typeof window !== "undefined" ? `${window.location.origin}/patient?s=${code}` : null;
-  const [qr, setQr] = useState<string | null>(null);
-  useEffect(() => {
-    if (!patientLink) return setQr(null);
-    let live = true;
-    QRCode.toString(patientLink, { type: "svg", margin: 1, errorCorrectionLevel: "M" }).then((svg) => live && setQr(svg));
-    return () => {
-      live = false;
-    };
-  }, [patientLink]);
 
   return (
     <section
@@ -133,16 +129,7 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
           </button>
         )}
       </div>
-      {qr && (
-        <div
-          className="size-[120px] rounded-[8px] border border-border bg-white p-1"
-          role="img"
-          aria-label="QR code for the patient check-in link"
-          data-testid="patient-qr"
-          // Generated locally by the qrcode package from our own link; contains no user input.
-          dangerouslySetInnerHTML={{ __html: qr }}
-        />
-      )}
+      {patientLink && <QrCode text={patientLink} className="size-[120px]" testId="patient-qr" />}
       {patientLink && (
         <div className="text-[13px]">
           <span className="text-muted">Patient check-in link · </span>
@@ -183,7 +170,10 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
             <Button onClick={() => setConfirmEnd(false)}>Keep running</Button>
           </>
         ) : (
-          <Button onClick={() => setConfirmEnd(true)}>End session</Button>
+          <>
+            <Button onClick={openEntranceWindow}>Entrance QR</Button>
+            <Button onClick={() => setConfirmEnd(true)}>End session</Button>
+          </>
         )}
       </div>
     </section>

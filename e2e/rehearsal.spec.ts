@@ -23,7 +23,11 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
 
   // The nurse starts the shift session and taps to reveal its code.
   const nurse = await windowFor(browser, "/nurse");
+  const entrancePopup = nurse.waitForEvent("popup");
   await nurse.getByTestId("start-session").getByRole("button", { name: "Start session" }).click();
+  // Starting the session opens the entrance check-in window with its own QR.
+  const entrance = await entrancePopup;
+  await expect(entrance.getByTestId("entrance-qr").locator("svg")).toBeVisible(A4);
   await expect(nurse.getByTestId("session-code"), "the code is hidden until tapped").toHaveCount(0);
   await nurse.getByTestId("reveal-code").click();
   const code = (await nurse.getByTestId("session-code").innerText()).trim();
@@ -159,6 +163,7 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   await nurse.getByRole("button", { name: "End session" }).click();
   await nurse.getByRole("button", { name: "Confirm end" }).click();
   await expect(nurse.getByTestId("start-session")).toBeVisible(A4);
+  await expect(entrance.getByTestId("entrance"), "entrance closes check-in").toContainText("Check-in is closed", A4);
   await expect(doctor.getByTestId("doctor-join"), "doctor is logged out when the session ends").toBeVisible(A4);
   await expect(doctor.getByTestId("doctor-join").getByRole("status")).toContainText("session has ended");
   expect((await request.post("/api/shift/join", { data: { code } })).status()).toBe(403);

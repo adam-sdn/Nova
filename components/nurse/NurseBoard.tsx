@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { COLUMN_LABELS, VISIT_STATUSES, type ShiftStatus, type StaffState } from "@/lib/contracts";
+import type { ShiftStatus, StaffState } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, postJson, usePoll } from "@/lib/ui";
-import { COLUMN_HINTS, escortRequests, sortCards } from "./boardLogic";
+import { BOARD_COLUMNS, STEP_LABELS, columnCards, escortRequests } from "./boardLogic";
 import { BoardCard } from "./BoardCard";
 import { EnquiriesInbox } from "./EnquiriesInbox";
 import { EscortStrip } from "./EscortStrip";
@@ -103,18 +103,20 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0 flex-[999_1_560px] overflow-x-auto">
             {escorts.length > 0 && <EscortStrip cards={escorts} now={data!.now} act={act} />}
-            <div className="grid min-w-[1280px] grid-cols-[repeat(6,minmax(176px,1fr))_minmax(150px,0.8fr)] gap-3">
-              {VISIT_STATUSES.map((status) => {
-                const cards = sortCards(visits.filter((v) => v.status === status));
+            <div className="grid min-w-[960px] grid-cols-[minmax(200px,1fr)_minmax(200px,1fr)_minmax(280px,1.6fr)_minmax(180px,0.9fr)] gap-3">
+              {BOARD_COLUMNS.map((col) => {
+                const cards = columnCards(visits, col);
+                const grouped = col.statuses.length > 1;
                 return (
-                  <section key={status} aria-label={COLUMN_LABELS[status]} className="flex min-w-0 flex-col gap-2.5 rounded-[12px] bg-column p-2.5">
+                  <section key={col.id} aria-label={col.label} data-column={col.id} className="flex min-w-0 flex-col gap-2.5 rounded-[12px] bg-column p-2.5">
                     <div className="flex items-start justify-between gap-2 px-1 pt-0.5">
-                      <h2 className="m-0 text-sm font-semibold leading-snug">{COLUMN_LABELS[status]}</h2>
+                      <h2 className="m-0 text-sm font-semibold leading-snug">{col.label}</h2>
                       <span className="rounded-full border border-routine-border bg-surface px-2 py-0.5 text-xs font-semibold">{cards.length}</span>
                     </div>
-                    <div className="px-1 text-xs text-muted">{COLUMN_HINTS[status]}</div>
+                    <div className="px-1 text-xs text-muted">{col.hint}</div>
                     {cards.map((c) => (
                       <BoardCard
+                        stepLabel={grouped ? STEP_LABELS[c.status] : undefined}
                         key={c.id}
                         card={c}
                         now={data!.now}

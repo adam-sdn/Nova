@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { VisitCard } from "@/lib/contracts";
-import { cardChips, escortRequests, inboxItems, statusText } from "@/components/nurse/boardLogic";
+import { BOARD_COLUMNS, cardChips, columnCards, escortRequests, inboxItems, statusText } from "@/components/nurse/boardLogic";
+import { VISIT_STATUSES } from "@/lib/contracts";
 import { checkin, createEnquiry } from "@/lib/state/service";
 import { staffState } from "@/lib/state/views";
 import { checkinInput, testCtx } from "./helpers";
@@ -116,5 +117,24 @@ describe('"I feel worse" card flag', () => {
     const inbox = inboxItems(state.enquiries);
     expect(inbox[0].enquiry.visitId).toBe(b.visitId);
     expect(inbox[0].tier).toBe("urgent");
+  });
+});
+
+describe("board columns", () => {
+  it("four columns cover every status exactly once, in flow order", () => {
+    expect(BOARD_COLUMNS.map((c) => c.label)).toEqual(["Arrival", "Triage", "Assessment / Consultation", "Disposition"]);
+    expect(BOARD_COLUMNS.flatMap((c) => c.statuses).sort()).toEqual([...VISIT_STATUSES].sort());
+  });
+
+  it("assessment lists ready-for-doctor first, then tests, consultation, decision", () => {
+    const col = BOARD_COLUMNS.find((c) => c.id === "assessment")!;
+    const cards = [
+      card({ id: "d", status: "awaiting_decision" }),
+      card({ id: "c", status: "consultation" }),
+      card({ id: "b", status: "diagnostics" }),
+      card({ id: "a", status: "triaged" }),
+      card({ id: "x", status: "done" }),
+    ];
+    expect(columnCards(cards, col).map((c) => c.id)).toEqual(["a", "b", "c", "d"]);
   });
 });

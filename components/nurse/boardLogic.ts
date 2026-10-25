@@ -3,15 +3,41 @@ import type { ChipVariant } from "@/lib/ui";
 import type { EnquiryTier, EnquiryView, TestState, VisitCard, VisitStatus } from "@/lib/contracts";
 import { inboxTier, suggestEnquiryPriority, tierRank, type SuggestedTier } from "@/lib/rules/enquiry/priority";
 
-export const COLUMN_HINTS: Record<VisitStatus, string> = {
-  arrival: "At the front desk, checking in",
-  triage_waiting: "Registered, queued for triage",
-  triaged: "Priority set, waiting for a doctor",
-  diagnostics: "Tests under way or waiting for results",
-  consultation: "In a cubicle with the doctor",
-  awaiting_decision: "Results back, team deciding next steps",
-  done: "Leaves the board after [time]",
+/** The board shows four columns; each groups one or more statuses. The status machine is unchanged. */
+export interface BoardColumn {
+  id: "arrival" | "triage" | "assessment" | "disposition";
+  label: string;
+  hint: string;
+  statuses: VisitStatus[];
+}
+
+export const BOARD_COLUMNS: BoardColumn[] = [
+  { id: "arrival", label: "Arrival", hint: "Checked in, not yet registered", statuses: ["arrival"] },
+  { id: "triage", label: "Triage", hint: "Registered, queued for triage", statuses: ["triage_waiting"] },
+  {
+    id: "assessment",
+    label: "Assessment / Consultation",
+    hint: "Ready for a doctor, tests, consultation, decision",
+    statuses: ["triaged", "diagnostics", "consultation", "awaiting_decision"],
+  },
+  { id: "disposition", label: "Disposition", hint: "Admitted or discharged · leaves the board after [time]", statuses: ["done"] },
+];
+
+/** Short label for the step inside a grouped column. */
+export const STEP_LABELS: Record<VisitStatus, string> = {
+  arrival: "Just arrived",
+  triage_waiting: "Waiting for triage",
+  triaged: "Ready for doctor",
+  diagnostics: "Tests",
+  consultation: "With doctor",
+  awaiting_decision: "Awaiting decision",
+  done: "Disposition",
 };
+
+/** Cards in a column: earlier step first, then priority and time in stage. */
+export function columnCards(cards: VisitCard[], col: BoardColumn): VisitCard[] {
+  return col.statuses.flatMap((s) => sortCards(cards.filter((c) => c.status === s)));
+}
 
 export const TEST_STATE_LABELS: Record<TestState, string> = {
   ordered: "ordered",

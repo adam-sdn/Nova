@@ -14,9 +14,11 @@ interface Props {
   priorityScale: { min: number; max: number };
   focused: boolean;
   act: Act;
+  /** Step within a grouped column, e.g. "Ready for doctor". */
+  stepLabel?: string;
 }
 
-export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focused, act }: Props) {
+export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focused, act, stepLabel }: Props) {
   const [triageOpen, setTriageOpen] = useState(false);
   const [priority, setPriority] = useState("");
   const [note, setNote] = useState("");
@@ -42,6 +44,11 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
     >
       <div className="flex items-center justify-between gap-1.5">
         <Mono className="text-[15px]">{c.displayId}</Mono>
+        {stepLabel && (
+          <span data-testid="step-label" className="rounded-[6px] border border-accent-border bg-accent-tint px-1.5 py-px text-xs font-semibold text-accent-ink">
+            {stepLabel}
+          </span>
+        )}
         {c.priority !== null && (
           <span className="rounded-[6px] border border-border-strong bg-surface px-1.5 py-px text-xs font-semibold">Priority {c.priority}</span>
         )}

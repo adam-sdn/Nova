@@ -7,6 +7,7 @@ import { canComplete, canStartSession, sessionSteps } from "@/lib/agents/doctor/
 import { MessageCard } from "./MessageCard";
 import { summaryText } from "./Queue";
 import { langLabel, type DoctorInfo } from "./types";
+import { VoiceConsultation } from "./VoiceConsultation";
 
 type Act = (path: string, body?: Record<string, unknown>) => Promise<unknown>;
 
@@ -174,7 +175,11 @@ export function InSession(props: {
           {messages.map((m, i) => (
             <MessageCard key={m.id} m={m} index={i + 1} langLabel={langLabel(v.language)} act={async (p, b) => void (await act(p, b))} />
           ))}
-          {/* TODO(speech): live speech capture with typed fallback (Stage 3). Typed input only for now. */}
+          <VoiceConsultation
+            sessionId={s.id}
+            patientLanguage={v.language}
+            doctorLanguage="en"
+          />
           <div className="flex flex-col gap-2 rounded-card bg-black/[0.03] p-2.5">
             <textarea
               aria-label="Type a line"
@@ -189,7 +194,7 @@ export function InSession(props: {
               </Button>
               <label className="flex min-h-11 items-center gap-2 text-[13px] text-muted">
                 <input type="checkbox" checked={asPatient} onChange={(e) => setAsPatient(e.target.checked)} />
-                Demo: this is the patient speaking
+                Demo: this is the patient speaking (fallback)
               </label>
             </div>
           </div>

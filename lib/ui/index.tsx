@@ -173,11 +173,18 @@ function subscribeLive(url: string, sub: LiveSub): () => void {
   if (!entry) {
     const es = new EventSource(url);
     const e = { es, subs: new Set<LiveSub>(), open: false };
-    es.addEventListener("open", () => {
+    // Live only once an event actually arrives (the server sends one at once): a proxy that holds the stream
+    // back would otherwise leave the window on the slow fallback poll.
+    const arrived = () => {
+      if (e.open) return;
       e.open = true;
       e.subs.forEach((s) => s.open());
+    };
+    es.addEventListener("ping", arrived);
+    es.addEventListener("change", () => {
+      arrived();
+      e.subs.forEach((s) => s.change());
     });
-    es.addEventListener("change", () => e.subs.forEach((s) => s.change()));
     es.addEventListener("ended", () => {
       es.close();
       liveStreams.delete(url);

@@ -70,6 +70,8 @@ export async function GET(req: Request) {
         cleanup = () => {};
       };
       req.signal.addEventListener("abort", () => cleanup());
+      // A comment line of padding first: some proxies (for example tunnels) hold a stream until a few KB arrive.
+      controller.enqueue(encoder.encode(`: ${" ".repeat(2048)}\n\n`));
       send("change", String(liveVersion()));
     },
     cancel() {

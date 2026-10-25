@@ -60,7 +60,8 @@ export interface CtxOptions {
 }
 
 export function createCtx(opts: CtxOptions = {}): Ctx {
-  const db = openDb(opts.dbPath ?? process.env.DB_PATH ?? "./care-loop.db");
+  // On Vercel only /tmp is writable. It is per server instance and is wiped when the instance is recycled.
+  const db = openDb(opts.dbPath ?? process.env.DB_PATH ?? (process.env.VERCEL ? "/tmp/care-loop.db" : "./care-loop.db"));
   return {
     db,
     masterKey: opts.masterKey ?? loadMasterKey(),

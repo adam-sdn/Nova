@@ -3,12 +3,9 @@
 // so the adapter never receives a patient's name or other identifiers.
 // AI output here is a draft or a suggestion only. It never sets priority, urgency, diagnoses, doses,
 // test orders or outcomes (rule 3), and fixed clinical wording never comes from here (rule 5).
-import { execFile } from "node:child_process";
-import path from "node:path";
 import { pseudonymise, restore, type Identifiers } from "@/lib/privacy/crypto";
 import { mockAdapter } from "./ai.fixtures";
 import { systemPrompt } from "./ai.prompts";
-import type { SpeechLanguage } from "@/lib/voice/languages";
 
 export type AiTask =
   | "translate_intake"
@@ -35,28 +32,76 @@ const TRANSLATION_TASKS = new Set<AiTask>(["translate_message", "back_translate"
 
 type Fetch = typeof fetch;
 
-/** Google Gemini (approved for the agent tasks). Receives pseudonymised text only; the key stays server-side. */
+/**
+ * Google's Gemini API (approved for the agent tasks): Gemini models, and Gemma models through the same key.
+ * Receives pseudonymised text only; the key stays server-side.
+ */
 export async function callGemini(model: string, task: AiTask, input: string, f: Fetch = fetch): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("AI provider not configured: GEMINI_API_KEY is not set in .env.local");
+  // Gemma on this API takes no system instruction and no JSON mode, so the prompt goes in the message.
+  const gemma = model.startsWith("gemma");
   const res = await f(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt(task) }] },
-      contents: [{ role: "user", parts: [{ text: input }] }],
-      generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
+      ...(gemma ? {} : { systemInstruction: { parts: [{ text: systemPrompt(task) }] } }),
+      contents: [{ role: "user", parts: [{ text: gemma ? `${systemPrompt(task)}\n\nInput:\n${input}` : input }] }],
+      generationConfig: { temperature: 0.1, ...(gemma ? {} : { responseMimeType: "application/json" }) },
     }),
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-    throw new Error(`Gemini ${res.status}: ${err?.error?.message?.slice(0, 200) ?? res.statusText}`);
+    throw new Error(`Gemini API ${res.status}: ${err?.error?.message?.slice(0, 200) ?? res.statusText}`);
   }
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
-  if (!text) throw new Error("Gemini returned no text");
-  return text;
+  if (!text) throw new Error("Gemini API returned no text");
+  return gemma ? jsonOnly(text) : text;
+}
+
+/** The JSON object inside a reply that may be wrapped in a ```json fence or prose. */
+function jsonOnly(text: string): string {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("The model did not return JSON");
+  return text.slice(start, end + 1);
+}
+
+/** MyMemory codes where they differ from ours. */
+const MYMEMORY_LANG: Record<string, string> = { zh: "zh-CN" };
+
+/**
+ * MyMemory (api.mymemory.translated.net), a free machine-translation service: the translator step only.
+ * The text goes in the POST body, never in the URL. MYMEMORY_EMAIL raises the free daily limit.
+ */
+export async function callMyMemory(task: AiTask, input: string, f: Fetch = fetch): Promise<string> {
+  if (task !== "translate_message" && task !== "back_translate") throw new Error(`MyMemory cannot do ${task}`);
+  const { text, from, to } = JSON.parse(input) as { text: string; from: string; to: string };
+  if (from === to) return JSON.stringify({ text });
+  const form = new URLSearchParams({ q: text, langpair: `${MYMEMORY_LANG[from] ?? from}|${MYMEMORY_LANG[to] ?? to}` });
+  if (process.env.MYMEMORY_EMAIL) form.set("de", process.env.MYMEMORY_EMAIL);
+  const res = await f("https://api.mymemory.translated.net/get", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`MyMemory ${res.status}`);
+  const data = (await res.json()) as { responseStatus?: number | string; quotaFinished?: boolean; responseData?: { translatedText?: string } };
+  const out = data.responseData?.translatedText ?? "";
+  if (data.quotaFinished || /^MYMEMORY WARNING/i.test(out)) throw new Error("MyMemory daily limit reached");
+  if (Number(data.responseStatus) !== 200 || !out) throw new Error("MyMemory could not translate this text");
+  return JSON.stringify({ text: decodeEntities(out) });
+}
+
+function decodeEntities(s: string): string {
+  return s.replace(/&(#\d+|#x[0-9a-f]+|amp|lt|gt|quot|apos);/gi, (m, e: string) => {
+    const named: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+    if (e[0] !== "#") return named[e.toLowerCase()] ?? m;
+    return String.fromCodePoint(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10));
+  });
 }
 
 /** A local Ollama model, for config entries named "ollama:<model>". */
@@ -85,66 +130,20 @@ export async function callOllama(model: string, task: AiTask, input: string, f: 
 }
 
 /**
- * The real provider. Translation-agent calls follow the model named in config.translation: "gemini:<model>" or
- * "ollama:<model>"; any other name is a demo placeholder and gets the labelled mock fixture (demo translation).
- * Every other task uses Gemini.
+ * The real provider. Translation-agent calls follow the model named in config.translation: "mymemory",
+ * "gemini:<model>" (Gemini or Gemma) or "ollama:<model>"; any other name is a demo placeholder and gets the
+ * labelled mock fixture. Every other task uses Gemini.
  */
 export function providerAdapter(f: Fetch = fetch): AiAdapter {
   return {
     async complete(task, input, model) {
+      if (model === "mymemory") return callMyMemory(task, input, f);
       if (model?.startsWith("ollama:")) return callOllama(model.slice("ollama:".length), task, input, f);
       if (model?.startsWith("gemini:")) return callGemini(model.slice("gemini:".length), task, input, f);
       if (TRANSLATION_TASKS.has(task)) return mockAdapter.complete(task, input);
       return callGemini(process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL, task, input, f);
     },
   };
-}
-
-// ---------------------------------------------------------------------------
-// Speech-to-text: OpenWhispr's local models, through its CLI and the desktop app's local bridge.
-// Audio cannot be pseudonymised, so only a local provider is allowed here: --local never falls back to the cloud.
-// ---------------------------------------------------------------------------
-
-export { SPEECH_LANGUAGES, type SpeechLanguage } from "@/lib/voice/languages";
-
-export type RunCli = (cmd: string, args: string[]) => Promise<string>;
-
-const runCli: RunCli = (cmd, args) =>
-  new Promise((resolve, reject) => {
-    execFile(cmd, args, { timeout: 120_000, maxBuffer: 1024 * 1024, windowsHide: true }, (err, stdout, stderr) => {
-      if (err) {
-        const reason = String(stderr || err.message).split("\n")[0].slice(0, 200);
-        reject(new Error(err.killed ? "Speech-to-text timed out" : `OpenWhispr: ${reason}`));
-      } else resolve(stdout);
-    });
-  });
-
-/** node + the CLI's script, so no shell is involved (Windows npm shims are .cmd/.ps1 files). */
-function openWhisprCommand(): { cmd: string; prefix: string[] } {
-  const script =
-    process.env.OPENWHISPR_CLI ??
-    (process.platform === "win32" && process.env.APPDATA
-      ? path.join(process.env.APPDATA, "npm", "node_modules", "@openwhispr", "cli", "dist", "index.js")
-      : null);
-  return script ? { cmd: process.execPath, prefix: [script] } : { cmd: "openwhispr", prefix: [] };
-}
-
-export async function transcribe(wavPath: string, language: SpeechLanguage, run: RunCli = runCli): Promise<string> {
-  const { cmd, prefix } = openWhisprCommand();
-  const model = process.env.OPENWHISPR_MODEL;
-  const out = await run(cmd, [
-    ...prefix,
-    "--local",
-    "transcribe",
-    wavPath,
-    "--language",
-    language,
-    "--format",
-    "json",
-    ...(model ? ["--model", model] : []),
-  ]);
-  const parsed = JSON.parse(out) as { text?: unknown };
-  return typeof parsed.text === "string" ? parsed.text.trim() : "";
 }
 
 export interface IntakeTranslation {

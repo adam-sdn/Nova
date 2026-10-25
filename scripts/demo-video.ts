@@ -1,17 +1,15 @@
 // Records a captioned demo video of the full Nova Systems loop: patient phone, nurse board and doctor, driven
 // through the real app (synthetic data, MOCK_AI). Usage, with a production server running on DEMO_URL:
 //   npx tsx scripts/demo-video.ts [out.webm]
-// Optional DEMO_VOICE_WAV: a 16-bit PCM WAV of the doctor saying VOICE_LINE, fed to Chromium as the microphone.
-import { chromium, type FrameLocator, type Locator, type Page } from "@playwright/test";
+import { chromium, type FrameLocator, type Locator } from "@playwright/test";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 const BASE = process.env.DEMO_URL ?? "http://localhost:3101";
 const OUT = path.resolve(process.argv[2] ?? "demo-video/nova-systems-demo.webm");
-const VOICE_WAV = process.env.DEMO_VOICE_WAV;
-const VOICE_LINE = "How long have you had the pain?";
+const FIRST_LINE = "How long have you had the pain?";
 const W = 1920;
 const H = 1080;
 const FPS = 25;
@@ -24,11 +22,6 @@ function playwrightFfmpeg(): string {
   if (!dir) throw new Error(`No Playwright ffmpeg in ${root}`);
   const exe = readdirSync(path.join(root, dir)).find((f) => f.startsWith("ffmpeg"));
   return path.join(root, dir, exe!);
-}
-
-function wavSeconds(file: string): number {
-  const b = readFileSync(file);
-  return b.readUInt32LE(40) / b.readUInt32LE(28);
 }
 
 const STAGE = `<!doctype html><html><head><meta charset="utf-8"><title>Nova Systems demo</title><style>
@@ -73,13 +66,8 @@ header{position:absolute;left:48px;right:48px;top:22px;height:44px;display:flex;
 
 async function main() {
   mkdirSync(path.dirname(OUT), { recursive: true });
-  const voiceArgs =
-    VOICE_WAV && existsSync(VOICE_WAV)
-      ? ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${VOICE_WAV}%noloop`]
-      : [];
-  const browser = await chromium.launch({ args: voiceArgs });
+  const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
-  await context.grantPermissions(["microphone"], { origin: BASE });
   const page = await context.newPage();
   // The nurse's Start session opens the entrance window as a popup; the stage shows the entrance in the phone instead.
   context.on("page", (p) => {
@@ -258,36 +246,10 @@ async function main() {
     await tap(D.getByLabel("The patient was informed and agreed to transcription"), 500);
     await tap(D.getByRole("button", { name: "Start session" }), 1800);
 
-    // ---------------------------------------------------------------- 6. voice
-    await caption("In the consultation, the doctor holds a button and speaks.", "Speech is turned into text on this computer (OpenWhispr, local). The microphone is only on while the button is held.");
-    const hold = D.getByTestId("hold-doctor");
-    await seen(hold);
-    let typedInstead = !VOICE_WAV;
-    if (VOICE_WAV) {
-      await point(hold, 500);
-      const b = (await hold.boundingBox())!;
-      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
-      await page.mouse.down();
-      await sleep(wavSeconds(VOICE_WAV) * 1000 + 700);
-      await page.mouse.up();
-      const review = D.getByTestId("voice-review");
-      const failed = D.getByTestId("voice-panel").getByRole("alert");
-      await Promise.race([seen(review, 90_000), seen(failed, 90_000)]);
-      if (await review.isVisible()) {
-        const heard = review.locator("textarea");
-        await point(heard, 1800);
-        if ((await heard.inputValue()).trim() !== VOICE_LINE) {
-          await caption("Nothing is sent until the doctor has read it. Here a missed word is fixed.", "Medicine names and doses get extra care at this step.", false);
-          await type(heard, VOICE_LINE);
-          await sleep(800);
-        }
-        await tap(review.getByRole("button", { name: "Check translation" }), 600);
-      } else typedInstead = true;
-    }
-    if (typedInstead) {
-      await type(D.getByLabel("Type a line"), VOICE_LINE);
-      await tap(D.getByRole("button", { name: "Check translation" }), 600);
-    }
+    // ---------------------------------------------------------------- 6. consultation line
+    await caption("In the consultation, the doctor types what they want to say.");
+    await type(D.getByLabel("Type a line"), FIRST_LINE);
+    await tap(D.getByRole("button", { name: "Check translation" }), 600);
     await caption("Every line is translated and checked before the doctor can send it.", "Translation, back-translation and an AI verifier from three different model families, plus fixed safety rules.", false);
     const firstMsg = D.getByTestId("message-card").last();
     await seen(firstMsg.getByRole("button", { name: "Send" }));

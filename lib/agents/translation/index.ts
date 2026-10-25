@@ -66,8 +66,22 @@ export async function runPatientTranslationPipeline(
 
 export const translationAgent: MessageAgent = async (ctx, messageId, text, direction, visit) => {
   const ids = { name: visit.name };
-  if (direction === "doctor_to_patient") await runTranslationPipeline(ctx, messageId, text, "en", visit.language, { ids });
-  else await runPatientTranslationPipeline(ctx, messageId, text, visit.language, { ids });
+  try {
+    if (direction === "doctor_to_patient") await runTranslationPipeline(ctx, messageId, text, "en", visit.language, { ids });
+    else await runPatientTranslationPipeline(ctx, messageId, text, visit.language, { ids });
+  } catch (e) {
+    // A translation service failed (offline, quota, bad reply). Never deliverable: a doctor line is held and a
+    // patient line needs checking. The doctor can "Edit and recheck" to try again.
+    const reason = e instanceof Error ? e.message.slice(0, 200) : "Translation service unavailable";
+    recordTranslationResult(ctx, messageId, {
+      status: direction === "doctor_to_patient" ? "held" : "needs_checking",
+      tier: direction === "doctor_to_patient" ? "held" : null,
+      translation: null,
+      backTranslation: null,
+      safety: { passed: false, errors: [{ kind: "translation_unavailable", detail: reason, severity: "critical" }] },
+    });
+    audit(ctx, "system:translation-agent", "message.agent_failed", messageId, { direction });
+  }
   return { message: messageView(ctx, getMessage(ctx.db, messageId)!) };
 };
 

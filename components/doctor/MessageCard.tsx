@@ -18,6 +18,13 @@ const chipVariant: Record<MessageChipKind, ChipVariant> = {
 
 type Act = (path: string, body?: Record<string, unknown>) => Promise<void>;
 
+/** The reason a translation service failed, if that is why the line was held. */
+function failureReason(safety: unknown): string | null {
+  const errors = (safety as { errors?: { kind?: string; detail?: string }[] } | null)?.errors ?? [];
+  const e = errors.find((x) => x.kind === "translation_unavailable");
+  return e ? (e.detail ?? "unavailable") : null;
+}
+
 export function MessageCard({ m, index, lang, langLabel, act }: { m: MessageView; index: number; lang: string; langLabel: string; act: Act }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(m.source);
@@ -26,6 +33,7 @@ export function MessageCard({ m, index, lang, langLabel, act }: { m: MessageView
   const chip = messageChip(m.status);
   const base = `/api/sessions/${m.sessionId}/messages/${m.id}`;
   const heldish = m.status === "held" || m.status === "escalated" || m.status === "flagged";
+  const serviceFailure = failureReason(m.safety);
 
   if (m.direction === "patient_to_doctor") {
     return (
@@ -39,7 +47,9 @@ export function MessageCard({ m, index, lang, langLabel, act }: { m: MessageView
         <div className="mt-1 text-[14px]">{m.translation ?? "…"}</div>
         <div className="mt-1 text-[13px] text-muted">Original: {m.source}</div>
         {m.status === "needs_checking" && (
-          <div className="mt-1 text-[13px] text-high-ink">Ask a clarifying question to confirm this line.</div>
+          <div className="mt-1 text-[13px] text-high-ink">
+            {serviceFailure ? `Translation service failed (${serviceFailure}). ` : ""}Ask a clarifying question to confirm this line.
+          </div>
         )}
       </div>
     );
@@ -65,7 +75,13 @@ export function MessageCard({ m, index, lang, langLabel, act }: { m: MessageView
         <summary className="cursor-pointer">Checks and agent trace</summary>
         <pre className="overflow-x-auto whitespace-pre-wrap">{JSON.stringify({ safety: m.safety, aiChecks: m.aiChecks, trace: m.trace }, null, 1)}</pre>
       </details>
-      {heldish && <div className="mt-2 text-[13px] font-semibold text-urgent-ink">Use the hospital interpreter service</div>}
+      {serviceFailure ? (
+        <div className="mt-2 text-[13px] font-semibold text-urgent-ink" data-testid="translation-failed">
+          Translation service failed ({serviceFailure}). Use Edit and recheck to try again.
+        </div>
+      ) : (
+        heldish && <div className="mt-2 text-[13px] font-semibold text-urgent-ink">Use the hospital interpreter service</div>
+      )}
       {m.attestation && <div className="mt-1 text-[13px] text-muted">Handled with interpreter service ({m.attestation.doctorId})</div>}
       {editing && (
         <div className="mt-2 flex gap-2">

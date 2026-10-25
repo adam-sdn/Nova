@@ -45,9 +45,9 @@
   },
   "translation": {
     "_note": "Translator, backTranslator and aiVerifier must be three different model families; the app rejects config where two share a family. Held messages are never delivered.",
-    "translator": { "model": "TranslateGemma", "family": "gemma" },
-    "backTranslator": { "model": "TODO: choose a model", "family": "TODO: a family different from the translator and the verifier" },
-    "aiVerifier": { "model": "TODO: choose a model", "family": "TODO: a third family, different from the other two" },
+    "translator": { "model": "mymemory", "family": "mymemory" },
+    "backTranslator": { "model": "gemini:gemini-2.5-flash", "family": "gemini" },
+    "aiVerifier": { "model": "gemini:gemma-3-27b-it", "family": "gemma" },
     "consentRequiresInterpreter": true,
     "weakLanguages": "TODO(clinician): languages whose messages are always held and escalated to the hospital interpreter service",
     "maxRetries": 2

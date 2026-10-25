@@ -7,7 +7,7 @@ import { canComplete, canStartSession, sessionSteps } from "@/lib/agents/doctor/
 import { MessageCard } from "./MessageCard";
 import { summaryText } from "./Queue";
 import { langLabel, languageName, type DoctorInfo } from "./types";
-import { VoiceConsultation } from "./VoiceConsultation";
+import { LineComposer } from "./LineComposer";
 
 type Act = (path: string, body?: Record<string, unknown>) => Promise<unknown>;
 
@@ -164,10 +164,7 @@ export function InSession(props: {
           {messages.map((m, i) => (
             <MessageCard key={m.id} m={m} index={i + 1} lang={v.language} langLabel={langLabel(v.language)} act={async (p, b) => void (await act(p, b))} />
           ))}
-          <VoiceConsultation
-            sessionId={s.id}
-            doctorId={me.id}
-            patientLanguage={v.language}
+          <LineComposer
             patientLanguageLabel={languageName(v.language)}
             busy={props.busy}
             onSend={(direction, text) => act(`/api/sessions/${s.id}/messages`, { direction, text })}

@@ -597,15 +597,6 @@ const agentVisit = (ctx: Ctx, v: VisitRow) => ({
   name: dec(ctx, "visits", v.id, "name", v.name_enc),
 });
 
-/** Speech capture is allowed only for this session's doctor while the session is in progress. */
-export function requireCaptureAllowed(ctx: Ctx, sessionId: string, actor: Actor): void {
-  const s = loadSession(ctx, sessionId);
-  if (s.state !== "in_session") throw new TransitionError("wrong_status", "The session is not in progress");
-  if (actor.role !== "doctor" || actor.id !== s.doctor_id) {
-    throw new TransitionError("forbidden_role", "Only this session's doctor can record speech");
-  }
-}
-
 export async function createMessage(ctx: Ctx, sessionId: string, req: MessageReq): Promise<{ message: MessageView }> {
   const s = loadSession(ctx, sessionId);
   const v = loadVisit(ctx, s.visit_id);

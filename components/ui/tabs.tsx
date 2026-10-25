@@ -29,12 +29,13 @@ const triggerStyles: Record<Variant, string> = {
     "data-[state=active]:bg-white data-[state=active]:text-accent-ink",
     "data-[state=active]:shadow-[inset_0_1px_0_#fff,0_1px_2px_rgb(16_32_48/0.1),0_4px_12px_-2px_rgb(16_32_48/0.14)]",
   ),
+  // Phones: icon only, the active item grows into an onyx pill with its label.
+  // Desktop: a compact sidebar list, icon + label, active item as an onyx pill.
   rail: cn(
-    "relative flex min-h-11 items-center justify-center gap-1 rounded-[16px] px-3 text-[12px] font-semibold text-muted",
-    "transition-[color,background-color,box-shadow] duration-200 hover:bg-white/50 hover:text-ink",
-    "flex-col whitespace-nowrap py-2 lg:min-h-[64px] lg:w-[88px]",
-    "data-[state=active]:bg-white data-[state=active]:text-accent-ink",
-    "data-[state=active]:shadow-[inset_0_1px_0_#fff,0_1px_2px_rgb(16_32_48/0.1),0_6px_16px_-4px_rgb(16_32_48/0.16)]",
+    "group relative flex min-h-12 items-center justify-center gap-2.5 whitespace-nowrap rounded-full px-4 text-[14px] font-medium text-graphite",
+    "transition-[color,background-color,box-shadow,flex-grow] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-black/[0.04]",
+    "lg:justify-start lg:px-4",
+    "data-[state=active]:bg-onyx data-[state=active]:text-white data-[state=active]:shadow-[0_8px_18px_-8px_rgb(10_10_10/0.55)] data-[state=active]:hover:bg-onyx",
   ),
 };
 

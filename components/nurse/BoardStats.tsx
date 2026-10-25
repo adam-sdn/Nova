@@ -32,7 +32,7 @@ export function BoardStats({ visits, enquiries, now, longWaitMinutes }: { visits
           <li key={s.label} className="surface flex items-center gap-3 rounded-[20px] px-4 py-3.5 last:col-span-2 sm:last:col-span-1">
             <span
               aria-hidden="true"
-              className={`grid size-10 shrink-0 place-items-center rounded-[14px] ${hot ? "bg-high-fill text-high-ink" : "bg-accent-tint text-accent-ink"}`}
+              className={`grid size-10 shrink-0 place-items-center rounded-[14px] ${hot ? "bg-high-fill text-high-ink" : "bg-routine-fill text-graphite"}`}
             >
               <s.icon size={19} strokeWidth={1.9} />
             </span>

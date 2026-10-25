@@ -1,29 +1,35 @@
 @import "tailwindcss";
 
 /*
- * Care Loop design system: Liquid Glass.
- * Translucent glass is for chrome (headers, navigation, session bar, side panels, popovers).
- * Content people read or act on (cards, forms, messages) stays on opaque surfaces.
+ * Nova Systems design system: monochrome luxury with restrained Liquid Glass.
+ * Onyx and white carry the contrast; teal is an accent for indicators and focus, not a fill colour.
+ * Translucent glass is for chrome (navigation, toolbars, floating controls, overlays).
+ * Patient data, notes and transcripts sit on solid white surfaces.
  * Status colours are reserved for meaning and always paired with text and an icon.
  */
 @theme {
-  --font-sans: var(--font-plex-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
+  /* System font stack: no font files to load. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
-  /* Neutrals: cool off-whites, near-black ink, low-contrast hairlines */
-  --color-ground: #f2f4f7;
+  /* Monochrome base */
+  --color-ground: #e5e4e2;
   --color-surface: #ffffff;
-  --color-ink: #1b1f24;
-  --color-muted: #5a6370;
-  --color-border: #e1e5ea;
-  --color-border-strong: #8b95a1;
-  --color-column: rgb(228 233 239 / 0.62);
+  --color-ink: #0a0a0a;
+  --color-onyx: #0a0a0a;
+  --color-graphite: #24282d;
+  --color-navy: #182230;
+  --color-slate: #536878;
+  --color-muted: #667085;
+  --color-border: #e4e6ea;
+  --color-border-strong: #9297a1;
+  --color-column: rgb(255 255 255 / 0.4);
 
-  /* Accent: restrained teal */
+  /* Accent: restrained teal, used selectively */
   --color-accent: #087f8c;
-  --color-accent-tint: #e2f2f4;
-  --color-accent-ink: #05606a;
-  --color-accent-border: #a3d4da;
+  --color-accent-tint: #e6f2f3;
+  --color-accent-ink: #066a75;
+  --color-accent-border: #b3d8dc;
 
   /* Semantic states only */
   --color-urgent-ink: #9a2b12;
@@ -34,35 +40,29 @@
   --color-high-fill: #fff4d6;
   --color-high-border: #ecd18a;
 
-  --color-routine-ink: #3a434e;
-  --color-routine-fill: #edf0f3;
-  --color-routine-border: #cfd5dc;
+  --color-routine-ink: #3d4450;
+  --color-routine-fill: #f0f1f3;
+  --color-routine-border: #d5d8dd;
 
-  --color-demo-ink: #1f4a7a;
-  --color-demo-fill: #e8f0fa;
-  --color-demo-border: #c3d5ec;
+  --color-demo-ink: #24282d;
+  --color-demo-fill: #f0f1f3;
+  --color-demo-border: #d5d8dd;
 
   --radius-card: 14px;
-  --radius-column: 18px;
-  --radius-button: 12px;
+  --radius-column: 20px;
+  --radius-button: 999px;
   --radius-chip: 999px;
 
-  /* Content surfaces: opaque, gently lifted */
-  --shadow-soft: 0 1px 1px rgb(16 32 48 / 0.04), 0 2px 6px rgb(16 32 48 / 0.05), 0 8px 24px -10px rgb(16 32 48 / 0.12);
-  --shadow-lift: 0 1px 2px rgb(16 32 48 / 0.05), 0 6px 14px rgb(16 32 48 / 0.08), 0 18px 40px -12px rgb(16 32 48 / 0.18);
+  /* Soft, diffuse depth */
+  --shadow-soft: 0 1px 2px rgb(10 10 10 / 0.04), 0 8px 24px -12px rgb(10 10 10 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(10 10 10 / 0.05), 0 18px 40px -16px rgb(10 10 10 / 0.22);
 
-  /*
-   * Glass material (after the "regular" frosted material of 21st.dev's Apple Tahoe Liquid Glass Button):
-   * light blur + saturation, a translucent white fill with a top sheen, a bright specular rim on the
-   * upper edge, a faint lower rim, and a two-layer shadow so the pane floats.
-   */
-  --glass-blur: 22px;
-  --glass-fill: rgb(255 255 255 / 0.5);
-  --glass-fill-strong: rgb(255 255 255 / 0.72);
-  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0.12) 42%, rgb(255 255 255 / 0) 60%);
-  --glass-edge: rgb(255 255 255 / 0.62);
-  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.28), inset 0 0 0 1px rgb(255 255 255 / 0.16);
-  --glass-shadow: 0 1px 2px rgb(16 32 48 / 0.06), 0 10px 30px -8px rgb(16 32 48 / 0.18);
+  /* Frosted white glass: controlled blur, translucent edge, no shine */
+  --glass-blur: 20px;
+  --glass-fill: rgb(255 255 255 / 0.55);
+  --glass-fill-strong: rgb(255 255 255 / 0.78);
+  --glass-edge: rgb(255 255 255 / 0.7);
+  --glass-shadow: 0 1px 2px rgb(10 10 10 / 0.04), 0 16px 40px -18px rgb(10 10 10 / 0.22);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -71,19 +71,14 @@ html {
   color: var(--color-ink);
   background-color: var(--color-ground);
 }
-/* Transparent so the ambient backdrop (body::before) shows through. */
+/* Transparent so the backdrop (body::before) shows through. */
 body {
   background: transparent;
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
 }
 
-/*
- * The ambient backdrop. Glass only reads as glass when there is soft colour and tone behind it,
- * so a fixed field of blurred teal, sky and mint light sits under every screen.
- */
-body {
-  font-feature-settings: "kern", "liga";
-  letter-spacing: -0.003em;
-}
+/* Backdrop: alabaster grey with soft white light and a faint slate shadow, so the glass has depth to blur. */
 body::before {
   content: "";
   position: fixed;
@@ -91,17 +86,17 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(42vw 38vw at 6% 4%, rgb(8 127 140 / 0.26), transparent 70%),
-    radial-gradient(38vw 34vw at 96% 8%, rgb(110 160 230 / 0.24), transparent 70%),
-    radial-gradient(46vw 40vw at 78% 92%, rgb(70 190 170 / 0.2), transparent 70%),
-    radial-gradient(36vw 32vw at 14% 96%, rgb(170 160 230 / 0.16), transparent 70%),
-    linear-gradient(180deg, #f6f8fb 0%, #eef2f6 100%);
+    radial-gradient(50vw 40vw at 12% 0%, rgb(255 255 255 / 0.85), transparent 70%),
+    radial-gradient(45vw 38vw at 100% 12%, rgb(83 104 120 / 0.18), transparent 70%),
+    radial-gradient(55vw 45vw at 70% 105%, rgb(146 151 161 / 0.22), transparent 70%),
+    linear-gradient(180deg, #ecebe9 0%, #e5e4e2 100%);
 }
 
 h1,
 h2,
 h3 {
-  letter-spacing: -0.012em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
 :focus-visible {
@@ -115,74 +110,70 @@ h3 {
 }
 
 @layer components {
-  /* Liquid Glass chrome: bars, navigation, toolbars, floating controls. */
+  /* Frosted white glass: navigation, toolbars, floating controls. */
   .glass {
-    background: var(--glass-sheen), var(--glass-fill);
+    background: var(--glass-fill);
     border: 1px solid var(--glass-edge);
-    box-shadow: var(--glass-rim), var(--glass-shadow);
-    backdrop-filter: blur(var(--glass-blur)) saturate(180%) brightness(1.04);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) brightness(1.04);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   }
 
-  /* Glass that holds reading content (side panels, gates): more fill, same rim. */
+  /* Glass that holds some reading content (side panels, gates, dialogs): more fill. */
   .glass-strong {
-    background: var(--glass-sheen), var(--glass-fill-strong);
+    background: var(--glass-fill-strong);
     border: 1px solid var(--glass-edge);
-    box-shadow: var(--glass-rim), var(--glass-shadow);
-    backdrop-filter: blur(28px) saturate(170%);
-    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), var(--glass-shadow);
+    backdrop-filter: blur(28px) saturate(140%);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
   }
 
-  /* A frosted tray that holds cards (board columns). Quieter than chrome. */
+  /* Dark glass for a few prominent areas. Text on it is white. */
+  .glass-dark {
+    background: rgb(10 10 10 / 0.86);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 18px 40px -16px rgb(10 10 10 / 0.45);
+    backdrop-filter: blur(24px) saturate(120%);
+    -webkit-backdrop-filter: blur(24px) saturate(120%);
+    color: #fff;
+  }
+
+  /* A quiet frosted tray that holds cards (board columns). */
   .glass-well {
-    background: rgb(255 255 255 / 0.3);
-    border: 1px solid rgb(255 255 255 / 0.5);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), inset 0 0 0 1px rgb(255 255 255 / 0.1);
-    backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    background: rgb(255 255 255 / 0.36);
+    border: 1px solid rgb(255 255 255 / 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
-  /* Opaque reading surface with gentle depth. */
+  /* Solid reading surface. */
   .surface {
     background: var(--color-surface);
-    border: 1px solid rgb(16 32 48 / 0.07);
+    border: 1px solid rgb(10 10 10 / 0.06);
     box-shadow: var(--shadow-soft);
   }
 
-  /* Buttons. Primary is tinted glass; secondary is a clear glass chip that sits on any layer. */
+  /* Buttons: onyx pill for the main action, white pill with a hairline for the rest. */
   .btn-primary {
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 55%), var(--color-accent);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.45),
-      inset 0 -1px 0 rgb(0 0 0 / 0.08),
-      0 1px 2px rgb(5 96 106 / 0.3),
-      0 6px 16px -4px rgb(8 127 140 / 0.45);
+    background: var(--color-onyx);
+    box-shadow: 0 1px 2px rgb(10 10 10 / 0.2), 0 8px 18px -8px rgb(10 10 10 / 0.45);
   }
   @media (hover: hover) and (pointer: fine) {
     .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgb(255 255 255 / 0.26), rgb(255 255 255 / 0) 55%), #0a8f9d;
+      background: var(--color-graphite);
     }
   }
   .btn-glass {
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.72));
-    box-shadow:
-      inset 0 1px 0 #fff,
-      inset 0 0 0 1px rgb(16 32 48 / 0.08),
-      0 1px 2px rgb(16 32 48 / 0.06),
-      0 4px 12px -4px rgb(16 32 48 / 0.12);
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.1), 0 1px 2px rgb(10 10 10 / 0.04);
   }
   @media (hover: hover) and (pointer: fine) {
     .btn-glass:hover:not(:disabled) {
-      background: #fff;
-      box-shadow:
-        inset 0 1px 0 #fff,
-        inset 0 0 0 1px rgb(16 32 48 / 0.12),
-        0 1px 2px rgb(16 32 48 / 0.08),
-        0 6px 16px -4px rgb(16 32 48 / 0.16);
+      box-shadow: inset 0 0 0 1px rgb(10 10 10 / 0.28), 0 2px 6px rgb(10 10 10 / 0.06);
     }
   }
 
-  /* Segmented control: a recessed track with a sliding glass thumb (pattern from 21st.dev Segmented Tabs). */
+  /* Segmented control: a recessed track with a sliding white thumb. */
   .segmented {
     position: relative;
     display: grid;
@@ -190,8 +181,7 @@ h3 {
     grid-auto-flow: column;
     padding: 4px;
     border-radius: 999px;
-    background: rgb(16 32 48 / 0.06);
-    box-shadow: inset 0 1px 2px rgb(16 32 48 / 0.08);
+    background: rgb(10 10 10 / 0.06);
   }
   .segmented-thumb {
     position: absolute;
@@ -199,8 +189,8 @@ h3 {
     bottom: 4px;
     left: 4px;
     border-radius: 999px;
-    background: linear-gradient(180deg, #fff, rgb(255 255 255 / 0.92));
-    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgb(16 32 48 / 0.1), 0 4px 12px -2px rgb(16 32 48 / 0.14);
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(10 10 10 / 0.08), 0 4px 10px -4px rgb(10 10 10 / 0.16);
     transition: transform 260ms var(--ease-out);
     pointer-events: none;
   }
@@ -298,6 +288,9 @@ input[type="radio"] {
 
 /* Glass needs blur support; fall back to a near-opaque surface. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-dark {
+    background: #0a0a0a;
+  }
   .glass,
   .glass-strong {
     background: rgb(255 255 255 / 0.96);

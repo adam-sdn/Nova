@@ -99,7 +99,7 @@ export const StethoscopeIcon = (p: { size?: number }) => (
 
 /** The Care Loop mark from the mockup header. */
 export const LoopMark = () => (
-  <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent" aria-hidden="true">
+  <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-onyx shadow-[0_6px_16px_-6px_rgb(10_10_10/0.5)]" aria-hidden="true">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 12a8 8 0 0 1-13.7 5.6" />
       <path d="M4 12A8 8 0 0 1 17.7 6.4" />

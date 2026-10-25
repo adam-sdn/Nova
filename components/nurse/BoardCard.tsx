@@ -47,7 +47,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
       onClick={(e) => {
         if (onOpen && !(e.target as HTMLElement).closest(INTERACTIVE)) onOpen();
       }}
-      className={`liftable flex cursor-pointer flex-col gap-2 rounded-[16px] border bg-surface p-3 shadow-[0_1px_2px_rgb(20_30_45/0.05),0_3px_10px_rgb(20_30_45/0.04)] ${focused ? "border-accent ring-[3px] ring-accent/25" : "border-border hover:border-border-strong/50"}`}
+      className={`liftable flex cursor-pointer flex-col gap-2 rounded-[14px] border bg-surface p-3 shadow-[0_1px_2px_rgb(20_30_45/0.05),0_3px_10px_rgb(20_30_45/0.04)] ${focused ? "border-accent ring-[3px] ring-accent/25" : "border-border hover:border-border-strong/50"}`}
     >
       <div className="flex items-center justify-between gap-1.5">
         <button

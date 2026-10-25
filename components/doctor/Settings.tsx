@@ -29,7 +29,7 @@ export function Settings({
   return (
     <section aria-label="Settings" className="flex max-w-[640px] flex-col gap-3" data-testid="doctor-settings">
       <h2 className="text-[20px] font-semibold">Settings</h2>
-      <div className="surface rounded-[22px] px-5">
+      <div className="surface rounded-[18px] px-5">
         <div className={row}>
           <span className="text-[14px] font-semibold">Doctor</span>
           <span className="text-[14px]">

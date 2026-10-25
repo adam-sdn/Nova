@@ -97,7 +97,7 @@ function JoinForm({
   const field = "min-h-12 w-full rounded-[12px] border border-border-strong/60 bg-surface px-3.5 text-ink";
   return (
     <main className="grid min-h-screen place-items-center p-4 text-ink">
-      <Panel glass className="appear w-full max-w-[420px] rounded-[24px] p-6">
+      <Panel glass className="appear w-full max-w-[420px] rounded-[20px] p-6">
         <form onSubmit={submit} className="flex flex-col gap-4" data-testid="doctor-join">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">

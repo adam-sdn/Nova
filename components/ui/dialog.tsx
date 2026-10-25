@@ -18,7 +18,7 @@ function DialogContent({ className, children, ...props }: ComponentProps<typeof 
       <DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-[rgb(16_32_48/0.18)] backdrop-blur-[6px]" />
       <DialogPrimitive.Content
         className={cn(
-          "dialog-content glass-strong fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-[28px] p-6",
+          "dialog-content glass-strong fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-[22px] p-6",
           className,
         )}
         {...props}

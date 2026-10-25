@@ -27,7 +27,7 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
 
   if (m.direction === "patient_to_doctor") {
     return (
-      <div className="appear rounded-[16px] bg-ground p-3.5" data-testid="message-card">
+      <div className="appear rounded-[14px] bg-ground p-3.5" data-testid="message-card">
         <div className="flex items-center gap-2 text-xs font-semibold text-muted">
           <span>
             {index}. Patient · translated from {langLabel}
@@ -44,7 +44,7 @@ export function MessageCard({ m, index, langLabel, act }: { m: MessageView; inde
   }
 
   return (
-    <div className="appear rounded-[16px] border border-border bg-surface p-3.5 shadow-[0_1px_2px_rgb(20_30_45/0.05)]" data-testid="message-card">
+    <div className="appear rounded-[14px] border border-border bg-surface p-3.5 shadow-[0_1px_2px_rgb(20_30_45/0.05)]" data-testid="message-card">
       <div className="flex items-center gap-2 text-xs font-semibold text-muted">
         <span>{index}. Doctor · English</span>
         <Chip variant={chipVariant[chip.kind]}>{m.status === "escalated" ? "Held · escalated" : chip.label}</Chip>

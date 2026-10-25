@@ -44,7 +44,7 @@ function FollowUpRow({ f, now, act, busy }: { f: FollowUpView; now: string; act:
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(f.text);
   return (
-    <article data-testid={`follow-up-${f.id}`} className="surface appear flex flex-col gap-2.5 rounded-[18px] p-4">
+    <article data-testid={`follow-up-${f.id}`} className="surface appear flex flex-col gap-2.5 rounded-[16px] p-4">
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <Mono className="text-[15px]">{f.displayId}</Mono>
         <span className="text-muted">Session {f.sessionNumber} · {sinceLabel(f.createdAt, now)} ago</span>

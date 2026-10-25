@@ -58,10 +58,10 @@ export default function Onboarding() {
                       const w = window.open(r.href, `care-loop-${r.title.toLowerCase()}`, r.size);
                       if (w) e.preventDefault();
                     }}
-                    className="liftable pressable surface flex h-full min-h-[220px] flex-col gap-3 rounded-[22px] p-5"
+                    className="liftable pressable surface flex h-full min-h-[220px] flex-col gap-3 rounded-[18px] p-5"
                   >
                     <div
-                      className="grid size-11 place-items-center rounded-[14px] bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.3)_inset,0_4px_12px_rgb(8_127_140/0.25)]"
+                      className="grid size-11 place-items-center rounded-full bg-onyx text-white"
                       aria-hidden="true"
                     >
                       <Icon size={20} />

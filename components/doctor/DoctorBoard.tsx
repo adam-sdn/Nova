@@ -97,15 +97,20 @@ export function DoctorBoard(props: {
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="block" style={{ zoom }}>
-      {/* Floating glass rail (Glassmorphism Navigation pattern): left edge on desktop, bottom bar on phones. */}
+      {/* Floating glass navigation: a compact sidebar on desktop, a pill bar at the bottom on phones. */}
+      <aside className="glass fixed inset-x-3 bottom-3 z-30 rounded-[22px] p-1.5 lg:inset-x-auto lg:bottom-4 lg:left-4 lg:top-4 lg:flex lg:w-[200px] lg:flex-col lg:gap-8 lg:p-3">
+        <div className="hidden items-center gap-2.5 px-1.5 pt-1.5 lg:flex">
+          <LoopMark />
+          <span className="text-[15px] font-semibold tracking-tight">Care Loop</span>
+        </div>
       <TabsList
         variant="rail"
         aria-label="Doctor"
         data-testid="doctor-nav"
-        className="glass fixed inset-x-3 bottom-3 z-30 justify-around rounded-[26px] p-1.5 lg:inset-x-auto lg:bottom-auto lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:flex-col lg:justify-start"
+        className="justify-between lg:flex-col lg:justify-start lg:gap-1.5"
       >
         {TABS.map((t) => (
-          <TabsTrigger key={t.id} value={t.id} variant="rail" className="flex-1 lg:flex-none">
+          <TabsTrigger key={t.id} value={t.id} variant="rail" aria-label={t.label} className="lg:w-full">
             <span className="relative">
               <t.icon size={20} strokeWidth={1.9} aria-hidden="true" />
               {t.id === "follow-ups" && toConfirm > 0 && (
@@ -120,20 +125,18 @@ export function DoctorBoard(props: {
                 <span className="absolute -right-1.5 -top-0.5 size-2.5 rounded-full bg-accent shadow-[0_0_0_2px_#fff]" aria-label="in session" />
               )}
             </span>
-            {t.label}
+            <span className="hidden group-data-[state=active]:inline lg:inline">{t.label}</span>
           </TabsTrigger>
         ))}
       </TabsList>
+      </aside>
 
-    <main className="mx-auto flex max-w-[1440px] flex-col gap-5 px-4 pb-28 pt-4 lg:pb-10 lg:pl-[132px]">
-      <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[26px] px-4 py-3">
+    <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-4 pb-28 pt-4 lg:pb-10 lg:pl-[232px]">
+      <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
         <div className="flex items-center gap-3">
-          <div
-            className="grid size-10 place-items-center rounded-[12px] bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.3)_inset,0_4px_12px_rgb(8_127_140/0.25)]"
-            aria-hidden="true"
-          >
+          <span className="lg:hidden">
             <LoopMark />
-          </div>
+          </span>
           <div>
             <h1 className="text-[17px] font-semibold leading-tight">{me.name}</h1>
             <div className="text-[13px] text-muted">
@@ -156,7 +159,7 @@ export function DoctorBoard(props: {
       </header>
 
       {(error || actionError) && (
-        <div role="alert" className="appear rounded-[16px] border border-urgent-border bg-urgent-fill p-3.5 text-[14px] text-urgent-ink">
+        <div role="alert" className="appear rounded-[14px] border border-urgent-border bg-urgent-fill p-3.5 text-[14px] text-urgent-ink">
           {actionError ?? error}
         </div>
       )}
@@ -168,7 +171,7 @@ export function DoctorBoard(props: {
       {/* Home stays mounted while another tab is open, so an assessment in progress is not lost. */}
       <div hidden={tab !== "home"} className="flex flex-col gap-4">
       {notice && (
-        <div role="status" className="appear flex items-center justify-between gap-3 rounded-[16px] border border-accent-border bg-accent-tint p-3.5 text-[14px] text-accent-ink">
+        <div role="status" className="appear flex items-center justify-between gap-3 rounded-[14px] border border-accent-border bg-accent-tint p-3.5 text-[14px] text-accent-ink">
           <span>{notice}</span>
           <Button onClick={() => setNotice(null)}>Dismiss</Button>
         </div>

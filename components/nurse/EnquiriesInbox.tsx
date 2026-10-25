@@ -34,7 +34,7 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
   const count = (f: InboxFilter) => items.filter((i) => matchesFilter(i, f)).length;
 
   return (
-    <aside aria-label="Patient enquiries" className="glass-strong flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col overflow-hidden rounded-[22px] lg:sticky lg:top-24">
+    <aside aria-label="Patient enquiries" className="glass-strong flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col overflow-hidden rounded-[18px] lg:sticky lg:top-24">
       <div className="border-b border-border/70 px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="m-0 text-base font-semibold">Enquiries</h2>
@@ -57,7 +57,7 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
       <div className="h-2" aria-hidden="true" />
 
       {visible.map(({ enquiry: q, tier, suggestion, reason }) => (
-        <article key={q.id} data-testid="inbox-item" className="appear mx-2 my-1.5 flex flex-col gap-2 rounded-[16px] bg-white/90 px-3.5 py-3 shadow-[0_1px_2px_rgb(20_30_45/0.05)]">
+        <article key={q.id} data-testid="inbox-item" className="appear mx-2 my-1.5 flex flex-col gap-2 rounded-[14px] bg-white/90 px-3.5 py-3 shadow-[0_1px_2px_rgb(20_30_45/0.05)]">
           <div className="flex flex-wrap items-center gap-2">
             <Mono className="text-[15px]">{q.displayId}</Mono>
             <Chip variant={TIER_CHIP[tier].variant}>{TIER_CHIP[tier].label}</Chip>

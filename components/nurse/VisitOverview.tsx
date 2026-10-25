@@ -39,7 +39,7 @@ export function VisitOverview({
     <aside
       aria-label={`Overview ${c.displayId}`}
       data-testid="visit-overview"
-      className="glass-strong appear flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-[22px] p-4 lg:sticky lg:top-24"
+      className="glass-strong appear flex min-w-0 max-w-[380px] flex-[1_1_340px] flex-col gap-3.5 rounded-[18px] p-4 lg:sticky lg:top-24"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -62,7 +62,7 @@ export function VisitOverview({
             <li
               key={col.id}
               aria-current={state === "current" ? "step" : undefined}
-              className={`flex items-center gap-2 rounded-[12px] px-2.5 py-2 text-[13px] ${state === "current" ? "border border-accent-border bg-accent-tint font-semibold text-accent-ink shadow-[0_1px_0_rgb(255_255_255/0.7)_inset]" : state === "done" ? "text-routine-ink" : "text-muted"}`}
+              className={`flex items-center gap-2 rounded-[12px] px-2.5 py-2 text-[13px] ${state === "current" ? "bg-onyx font-semibold text-white shadow-[0_8px_18px_-8px_rgb(10_10_10/0.5)]" : state === "done" ? "text-routine-ink" : "text-muted"}`}
             >
               <span aria-hidden="true" className="w-4 text-center">
                 {state === "done" ? "✓" : state === "current" ? "●" : "○"}
@@ -75,7 +75,7 @@ export function VisitOverview({
         })}
       </ol>
 
-      <div className="rounded-[16px] bg-white/85 px-3 shadow-[0_1px_2px_rgb(20_30_45/0.05)]">
+      <div className="rounded-[14px] bg-white/85 px-3 shadow-[0_1px_2px_rgb(20_30_45/0.05)]">
         <div className={row}>
           <span className="text-muted">Now</span>
           <span className="text-right font-semibold">{statusText(c)}</span>
@@ -142,7 +142,7 @@ export function VisitOverview({
       )}
 
       {c.status === "done" && (
-        <div className="flex flex-col gap-2 rounded-[16px] border border-border bg-white/85 p-3.5" data-testid="end-visit">
+        <div className="flex flex-col gap-2 rounded-[14px] border border-border bg-white/85 p-3.5" data-testid="end-visit">
           {canEnd ? (
             <>
               <p className="m-0 text-[13px] text-muted">The patient has their summary. You can end the visit.</p>

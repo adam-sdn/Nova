@@ -31,7 +31,7 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
   }
   return (
     <main className="grid min-h-screen place-items-center p-4 text-ink">
-      <Panel glass className="appear flex w-full max-w-[460px] flex-col gap-4 rounded-[24px] p-6" data-testid="start-session">
+      <Panel glass className="appear flex w-full max-w-[460px] flex-col gap-4 rounded-[20px] p-6" data-testid="start-session">
         <div className="flex items-center gap-3">
           <LoopMark />
           <h1 className="m-0 text-lg font-semibold">Start the shift session</h1>

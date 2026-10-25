@@ -271,8 +271,8 @@ function Messages({ messages, pendingCount }: { messages: PatientState["messages
             key={m.id}
             className={
               m.direction === "doctor_to_patient"
-                ? "appear mr-6 rounded-[18px] rounded-bl-[6px] bg-ground p-3"
-                : "appear ml-8 rounded-[18px] rounded-br-[6px] border border-accent-border bg-accent-tint p-3 text-accent-ink"
+                ? "appear mr-6 rounded-[16px] rounded-bl-[6px] bg-ground p-3"
+                : "appear ml-8 rounded-[16px] rounded-br-[6px] bg-onyx p-3 text-white [&>span]:text-white/60"
             }
           >
             <span className="block text-[0.85em] font-semibold text-muted">
@@ -312,7 +312,7 @@ function ResultsPack({ pack }: { pack: NonNullable<PatientState["pack"]> }) {
       ) : (
         <p className="mb-2">None</p>
       )}
-      <div className="mb-3 rounded-[16px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink">
+      <div className="mb-3 rounded-[14px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink">
         <p className="flex items-center gap-2 font-semibold">
           <TriangleIcon size={16} /> When to get help
         </p>

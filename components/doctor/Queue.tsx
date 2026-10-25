@@ -49,7 +49,7 @@ export function ProfilePanel({ v, doctorId, onConsult, busy }: { v: VisitCard; d
   }, [v.id, doctorId]);
   const translated = profile && profile.reason.language !== "en";
   return (
-    <aside aria-label="Patient profile" className="glass-strong appear flex flex-col gap-4 rounded-[24px] p-5 lg:sticky lg:top-28 lg:self-start">
+    <aside aria-label="Patient profile" className="glass-strong appear flex flex-col gap-4 rounded-[20px] p-5 lg:sticky lg:top-28 lg:self-start">
       <h2 className="text-[17px] font-semibold">Patient overview</h2>
       <div className="flex flex-wrap items-center gap-2">
         <Mono className="text-[22px]">{v.displayId}</Mono>
@@ -66,8 +66,8 @@ export function ProfilePanel({ v, doctorId, onConsult, busy }: { v: VisitCard; d
           </div>
         )}
       </div>
-      <div className="rounded-[16px] border border-accent-border bg-accent-tint/90 p-3.5 text-accent-ink">
-        <div className="text-[13px] font-semibold">AI summary · from the triage note and enquiries · you decide</div>
+      <div className="rounded-[14px] border border-border bg-white p-3.5 text-ink">
+        <div className="text-[13px] font-semibold text-accent-ink">AI summary · from the triage note and enquiries · you decide</div>
         <div className="mt-1 text-[14px]">{summaryText(v)}</div>
         {!!v.summary?.keyPoints.length && (
           <ul className="mt-1 list-disc pl-5 text-[13px]">
@@ -109,7 +109,7 @@ export function QueueRow(props: {
   return (
     <article
       data-testid={`queue-row-${v.displayId}`}
-      className={`liftable flex flex-col gap-2.5 rounded-[18px] border bg-surface p-4 shadow-[0_1px_2px_rgb(20_30_45/0.05),0_3px_10px_rgb(20_30_45/0.04)] ${selected ? "border-accent ring-[3px] ring-accent/20" : "border-border"}`}
+      className={`liftable flex flex-col gap-2.5 rounded-[16px] border bg-surface p-4 shadow-[0_1px_2px_rgb(20_30_45/0.05),0_3px_10px_rgb(20_30_45/0.04)] ${selected ? "border-accent ring-[3px] ring-accent/20" : "border-border"}`}
     >
       <PatientChips v={v} now={props.now} longWaitMinutes={props.longWaitMinutes} />
       <div className="text-[14px]">

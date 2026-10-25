@@ -23,10 +23,10 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
   if (!visits.length && !pending.length) return null;
 
   return (
-    <section aria-label="Awaiting decision" className="surface flex flex-col gap-3 rounded-[22px] p-5">
+    <section aria-label="Awaiting decision" className="surface flex flex-col gap-3 rounded-[18px] p-5">
       <h2 className="text-[17px] font-semibold">Awaiting decision</h2>
       {visits.map((v) => (
-        <article key={v.id} className="rounded-[16px] bg-ground p-3.5">
+        <article key={v.id} className="rounded-[14px] bg-ground p-3.5">
           <div className="flex flex-wrap items-center gap-2">
             <Mono className="text-[16px]">{v.displayId}</Mono>
             <span className="text-xs font-semibold">{v.name ?? v.initials}</span>
@@ -61,7 +61,7 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
         </article>
       ))}
       {pending.map(([visitId, p]) => (
-        <article key={visitId} className="appear rounded-[16px] border border-accent-border bg-accent-tint p-3.5 text-accent-ink">
+        <article key={visitId} className="appear rounded-[14px] border border-accent-border bg-accent-tint p-3.5 text-accent-ink">
           <div className="text-[14px] font-semibold">Results pack · {p.status === "released" ? "released to the patient" : p.status}</div>
           <div className="text-[13px]">{p.content.results || "[no results entered]"}</div>
           <div className="mt-2 flex gap-2">

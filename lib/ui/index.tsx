@@ -2,11 +2,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { ArrowIcon, BubbleIcon, CheckIcon, ChevronUpIcon, ClockIcon, DotIcon, MicIcon, TriangleIcon } from "./icons";
 
 export * from "./icons";
 
-const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
+// Later classes win over earlier ones (tailwind-merge), so callers can override a variant cleanly.
+const cx = cn;
 
 // ---------------------------------------------------------------------------
 // Button: min height 44px, radius 8px (SPEC section 13)
@@ -114,7 +116,7 @@ export function DemoTag() {
 
 /** Opaque reading surface. Pass `glass` for chrome that floats over the page (bars, side panels, gates). */
 export function Panel({ className, glass, ...rest }: HTMLAttributes<HTMLElement> & { glass?: boolean }) {
-  return <section className={cx("rounded-[18px] p-4", glass ? "glass-strong" : "surface", className)} {...rest} />;
+  return <section className={cx("rounded-[16px] p-4", glass ? "glass-strong" : "surface", className)} {...rest} />;
 }
 
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
@@ -123,7 +125,7 @@ export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
 
 /** A board column: a soft translucent well. */
 export function Column({ className, ...rest }: HTMLAttributes<HTMLElement>) {
-  return <section className={cx("glass-well flex min-w-0 flex-col gap-2.5 rounded-[22px] p-2.5", className)} {...rest} />;
+  return <section className={cx("glass-well flex min-w-0 flex-col gap-2.5 rounded-[18px] p-2.5", className)} {...rest} />;
 }
 
 /** Patient IDs and session numbers are set in IBM Plex Mono. */

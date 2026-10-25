@@ -72,7 +72,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
   return (
     <div className="min-h-screen px-4 pb-10 pt-4 text-ink sm:px-6">
       <main className="mx-auto max-w-[1760px]">
-        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[26px] px-4 py-3">
+        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
           <div className="flex items-center gap-3">
             <LoopMark />
             <div>
@@ -116,7 +116,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
                 const cards = columnCards(visits, col);
                 const grouped = col.statuses.length > 1;
                 return (
-                  <section key={col.id} aria-label={col.label} data-column={col.id} className="glass-well flex min-w-0 flex-col gap-2.5 rounded-[24px] p-2.5">
+                  <section key={col.id} aria-label={col.label} data-column={col.id} className="glass-well flex min-w-0 flex-col gap-2.5 rounded-[20px] p-2.5">
                     <div className="flex items-center justify-between gap-2 px-1.5 pt-1">
                       <h2 className="m-0 text-[14px] font-semibold leading-snug">{col.label}</h2>
                       <span className="min-w-6 rounded-full bg-white/85 px-2 py-0.5 text-center text-xs font-semibold tabular-nums shadow-[0_1px_2px_rgb(20_30_45/0.06)]">

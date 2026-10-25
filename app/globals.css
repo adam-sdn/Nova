@@ -260,6 +260,31 @@ input[type="radio"] {
   accent-color: var(--color-accent);
 }
 
+/* Dialog: scrim fades, sheet settles from 96% (never from 0). Exit is quicker than enter. */
+.dialog-overlay[data-state="open"] {
+  animation: fade 200ms ease both;
+}
+.dialog-overlay[data-state="closed"] {
+  animation: fade 140ms ease reverse both;
+}
+.dialog-content[data-state="open"] {
+  animation: dialog-in 240ms var(--ease-out) both;
+}
+.dialog-content[data-state="closed"] {
+  animation: dialog-in 140ms ease reverse both;
+}
+/* Centering uses Tailwind's `translate` property, so the animation only touches `transform`. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes appear {
   from {
     opacity: 0;
@@ -289,6 +314,9 @@ input[type="radio"] {
   }
   .segmented-thumb {
     transition: none;
+  }
+  .dialog-content[data-state] {
+    animation: fade 140ms ease both;
   }
   .appear {
     animation: fade 160ms ease both;

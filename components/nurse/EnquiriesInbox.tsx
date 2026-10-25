@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EnquiryTier, EnquiryView } from "@/lib/contracts";
 import { Button, Chip, Mono, sinceLabel, type ChipVariant } from "@/lib/ui";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inboxItems, matchesFilter, type InboxFilter } from "./boardLogic";
 
 type Act = (url: string, body?: Record<string, unknown>) => Promise<void>;
@@ -40,18 +41,16 @@ export function EnquiriesInbox({ enquiries, now, act, openCard }: Props) {
           <span className="rounded-full border border-routine-border bg-column px-2 py-0.5 text-xs font-semibold">{items.length} open</span>
         </div>
         <div className="mt-0.5 text-xs text-muted">Priority suggested by AI · nurse confirms</div>
-        <div role="group" aria-label="Filter enquiries" className="mt-2.5 flex flex-wrap gap-1.5">
-          {FILTERS.map((f) => (
-            <Button
-              key={f}
-              aria-pressed={filter === f}
-              variant={filter === f ? "primary" : "secondary"}
-              onClick={() => setFilter(f)}
-            >
-              {FILTER_LABEL[f]} {count(f)}
-            </Button>
-          ))}
-        </div>
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as InboxFilter)} className="mt-3">
+          <TabsList aria-label="Filter enquiries" className="w-full">
+            {FILTERS.map((f) => (
+              <TabsTrigger key={f} value={f} className="min-h-9 px-2 text-[13px]">
+                {FILTER_LABEL[f]}
+                <span className="tabular-nums opacity-70">{count(f)}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {visible.length === 0 && <div className="px-4 py-4 text-[13px] text-muted">No open enquiries.</div>}

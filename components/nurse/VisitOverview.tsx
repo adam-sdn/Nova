@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EnquiryView, PackStatus, VisitCard } from "@/lib/contracts";
 import { Button, Chip, Mono, sinceLabel } from "@/lib/ui";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BOARD_COLUMNS, STEP_LABELS, TEST_STATE_LABELS, statusText } from "./boardLogic";
 
 type Act = (url: string, body?: Record<string, unknown>) => Promise<void>;
@@ -143,30 +144,35 @@ export function VisitOverview({
       {c.status === "done" && (
         <div className="flex flex-col gap-2 rounded-[16px] border border-border bg-white/85 p-3.5" data-testid="end-visit">
           {canEnd ? (
-            confirmEnd ? (
-              <>
-                <p className="m-0 text-[13px]">End this visit? The card leaves the board and the patient&apos;s phone shows that the visit has ended.</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="primary"
-                    onClick={async () => {
-                      await act(`/api/visits/${c.id}/close`);
-                      onClose();
-                    }}
-                  >
-                    Confirm end visit
-                  </Button>
-                  <Button onClick={() => setConfirmEnd(false)}>Cancel</Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="m-0 text-[13px] text-muted">The patient has their summary. You can end the visit.</p>
-                <Button variant="primary" onClick={() => setConfirmEnd(true)}>
-                  End visit
-                </Button>
-              </>
-            )
+            <>
+              <p className="m-0 text-[13px] text-muted">The patient has their summary. You can end the visit.</p>
+              <Dialog open={confirmEnd} onOpenChange={setConfirmEnd}>
+                <DialogTrigger asChild>
+                  <Button variant="primary">End visit</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle>End the visit for {c.displayId}?</DialogTitle>
+                  <DialogDescription>
+                    The card leaves the board and the patient&apos;s phone shows that the visit has ended. Their summary stays readable.
+                  </DialogDescription>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button>Cancel</Button>
+                    </DialogClose>
+                    <Button
+                      variant="primary"
+                      onClick={async () => {
+                        await act(`/api/visits/${c.id}/close`);
+                        setConfirmEnd(false);
+                        onClose();
+                      }}
+                    >
+                      Confirm end visit
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           ) : (
             <p className="m-0 text-[13px] text-muted">The visit can be ended once the doctor releases the patient&apos;s summary.</p>
           )}

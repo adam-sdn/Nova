@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { House, ListChecks, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FollowUpView, StaffState } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, Mono, postJson, usePoll } from "@/lib/ui";
 import { COMPLETE_TARGET, readyQueue } from "@/lib/agents/doctor/board";
@@ -12,10 +14,10 @@ import { InSession, WaitingFrame } from "./Session";
 import { actorOf, type DoctorInfo } from "./types";
 
 type Tab = "home" | "follow-ups" | "settings";
-const TABS: { id: Tab; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "follow-ups", label: "Follow-ups" },
-  { id: "settings", label: "Settings" },
+const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
+  { id: "home", label: "Home", icon: House },
+  { id: "follow-ups", label: "Follow-ups", icon: ListChecks },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 const TEXT_KEY = "careloop.doctor.textSize";
 
@@ -94,7 +96,36 @@ export function DoctorBoard(props: {
   const zoom = TEXT_SIZES.find((t) => t.id === textSize)!.zoom;
 
   return (
-    <main className="mx-auto flex max-w-[1440px] flex-col gap-5 px-4 pb-10 pt-4" style={{ zoom }}>
+    <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="block" style={{ zoom }}>
+      {/* Floating glass rail (Glassmorphism Navigation pattern): left edge on desktop, bottom bar on phones. */}
+      <TabsList
+        variant="rail"
+        aria-label="Doctor"
+        data-testid="doctor-nav"
+        className="glass fixed inset-x-3 bottom-3 z-30 justify-around rounded-[26px] p-1.5 lg:inset-x-auto lg:bottom-auto lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:flex-col lg:justify-start"
+      >
+        {TABS.map((t) => (
+          <TabsTrigger key={t.id} value={t.id} variant="rail" className="flex-1 lg:flex-none">
+            <span className="relative">
+              <t.icon size={20} strokeWidth={1.9} aria-hidden="true" />
+              {t.id === "follow-ups" && toConfirm > 0 && (
+                <span
+                  className="absolute -right-2.5 -top-1.5 min-w-[18px] rounded-full bg-accent px-1 text-center text-[11px] leading-[18px] tabular-nums text-white shadow-[0_0_0_2px_#fff]"
+                  aria-label={`${toConfirm} to confirm`}
+                >
+                  {toConfirm}
+                </span>
+              )}
+              {t.id === "home" && mine?.activeSession?.state === "in_session" && tab !== "home" && (
+                <span className="absolute -right-1.5 -top-0.5 size-2.5 rounded-full bg-accent shadow-[0_0_0_2px_#fff]" aria-label="in session" />
+              )}
+            </span>
+            {t.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+    <main className="mx-auto flex max-w-[1440px] flex-col gap-5 px-4 pb-28 pt-4 lg:pb-10 lg:pl-[132px]">
       <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[26px] px-4 py-3">
         <div className="flex items-center gap-3">
           <div
@@ -110,38 +141,6 @@ export function DoctorBoard(props: {
             </div>
           </div>
         </div>
-
-        <nav aria-label="Doctor" className="segmented order-last w-full sm:order-none sm:w-[360px]" data-testid="doctor-nav">
-          <span
-            aria-hidden="true"
-            className="segmented-thumb"
-            style={{
-              width: `calc((100% - 8px) / ${TABS.length})`,
-              transform: `translateX(${TABS.findIndex((t) => t.id === tab) * 100}%)`,
-            }}
-          />
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-current={tab === t.id ? "page" : undefined}
-              onClick={() => setTab(t.id)}
-              className={`relative z-10 inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-3 text-[14px] font-semibold transition-colors duration-150 ${
-                tab === t.id ? "text-accent-ink" : "text-muted hover:text-ink"
-              }`}
-            >
-              {t.label}
-              {t.id === "follow-ups" && toConfirm > 0 && (
-                <span className="min-w-5 rounded-full bg-accent px-1.5 text-center text-[12px] tabular-nums text-white" aria-label={`${toConfirm} to confirm`}>
-                  {toConfirm}
-                </span>
-              )}
-              {t.id === "home" && mine?.activeSession?.state === "in_session" && tab !== "home" && (
-                <span className="text-[12px] font-normal">· in session</span>
-              )}
-            </button>
-          ))}
-        </nav>
 
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex min-h-11 items-center gap-2 text-[13px]">
@@ -227,5 +226,6 @@ export function DoctorBoard(props: {
       {!mine && <DecisionPanel visits={visits.filter((v) => v.status === "awaiting_decision")} act={act} busy={busy} />}
       </div>
     </main>
+    </Tabs>
   );
 }

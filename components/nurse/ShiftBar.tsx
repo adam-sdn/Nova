@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { PresenceView, ShiftStatus } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, Mono, Panel, postJson } from "@/lib/ui";
 import { QrCode, openEntranceWindow } from "./QrCode";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type Actor = { role: "nurse"; id: string };
 
@@ -161,20 +162,26 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
             {error}
           </span>
         )}
-        {confirmEnd ? (
-          <>
-            <span className="text-[13px]">End for everyone? Doctors are logged out and the code stops working.</span>
-            <Button variant="primary" onClick={end}>
-              Confirm end
-            </Button>
-            <Button onClick={() => setConfirmEnd(false)}>Keep running</Button>
-          </>
-        ) : (
-          <>
-            <Button onClick={openEntranceWindow}>Entrance QR</Button>
-            <Button onClick={() => setConfirmEnd(true)}>End session</Button>
-          </>
-        )}
+        <Button onClick={openEntranceWindow}>Entrance QR</Button>
+        <Dialog open={confirmEnd} onOpenChange={setConfirmEnd}>
+          <DialogTrigger asChild>
+            <Button>End session</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogTitle>End the session for everyone?</DialogTitle>
+            <DialogDescription>
+              Doctors are logged out and the session code stops working. Patients already checked in keep their visit.
+            </DialogDescription>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button>Keep running</Button>
+              </DialogClose>
+              <Button variant="primary" onClick={end}>
+                Confirm end
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );

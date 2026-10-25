@@ -147,8 +147,8 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
 
   // AI drafts follow-ups from the signed assessment; the doctor confirms one and marks it done.
   const nav = doctor.getByTestId("doctor-nav");
-  await expect(nav.getByRole("button", { name: /Follow-ups/ }), "badge counts follow-ups to confirm").toContainText("2", A4);
-  await nav.getByRole("button", { name: /Follow-ups/ }).click();
+  await expect(nav.getByRole("tab", { name: /Follow-ups/ }), "badge counts follow-ups to confirm").toContainText("2", A4);
+  await nav.getByRole("tab", { name: /Follow-ups/ }).click();
   const fu = doctor.getByTestId("follow-ups");
   const bloods = fu.locator("article", { hasText: "Review result: Bloods (demo)" });
   await expect(bloods).toContainText("AI draft");
@@ -158,10 +158,10 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   await bloods.getByRole("button", { name: "Mark done" }).click();
   await expect(bloods).toContainText("Done", A4);
   await expect(patient.getByTestId("session-messages")).not.toContainText("Review result");
-  await nav.getByRole("button", { name: "Settings" }).click();
+  await nav.getByRole("tab", { name: "Settings" }).click();
   await doctor.getByTestId("doctor-code").click();
   await expect(doctor.getByTestId("doctor-code")).toContainText(code);
-  await nav.getByRole("button", { name: "Home" }).click();
+  await nav.getByRole("tab", { name: "Home" }).click();
   await card.getByLabel("Bloods (demo) state").selectOption("results_back");
   await card.getByRole("button", { name: "Move to Awaiting Decision" }).click();
 
@@ -184,7 +184,7 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   await expect(overview, "overview opens on the right").toContainText(id, A4);
   await expect(overview.locator('li[aria-current="step"]')).toContainText("Disposition");
   await overview.getByRole("button", { name: "End visit" }).click();
-  await overview.getByRole("button", { name: "Confirm end visit" }).click();
+  await nurse.getByRole("dialog").getByRole("button", { name: "Confirm end visit" }).click();
   await expect(nurse.getByTestId(`card-${id}`), "card leaves the board").toHaveCount(0, A4);
   await expect(patient.getByTestId("visit-ended"), "the phone shows the visit has ended").toBeVisible(A4);
   await expect(patient.getByTestId("results-pack"), "summary stays readable").toBeVisible();

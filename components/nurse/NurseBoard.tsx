@@ -5,6 +5,7 @@ import type { ShiftStatus, StaffState } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, postJson, usePoll } from "@/lib/ui";
 import { BOARD_COLUMNS, STEP_LABELS, columnCards, escortRequests } from "./boardLogic";
 import { BoardCard } from "./BoardCard";
+import { BoardStats } from "./BoardStats";
 import { EnquiriesInbox } from "./EnquiriesInbox";
 import { EscortStrip } from "./EscortStrip";
 import { ShiftBar, StartSessionGate } from "./ShiftBar";
@@ -98,6 +99,8 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
           </div>
           <span className="text-[13px] text-muted">Sorted by priority, then time in stage · patients are tracked by ID</span>
         </div>
+
+        {data && <BoardStats visits={visits} enquiries={data.enquiries} now={data.now} longWaitMinutes={longWaitMinutes} />}
 
         {(error || actionError) && (
           <div role="alert" className="appear mb-3 rounded-[14px] border border-urgent-border bg-urgent-fill px-3.5 py-2.5 text-[13px] text-urgent-ink">

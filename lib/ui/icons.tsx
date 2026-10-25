@@ -73,6 +73,30 @@ export const CheckIcon = (p: { size?: number }) => (
   </Icon>
 );
 
+export const PhoneIcon = (p: { size?: number }) => (
+  <Icon {...p}>
+    <rect x="6" y="2" width="12" height="20" rx="3" />
+    <path d="M11 18h2" />
+  </Icon>
+);
+
+export const BoardIcon = (p: { size?: number }) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16" />
+    <path d="M15 4v16" />
+  </Icon>
+);
+
+export const StethoscopeIcon = (p: { size?: number }) => (
+  <Icon {...p}>
+    <path d="M5 4v6a4 4 0 0 0 8 0V4" />
+    <path d="M9 18a4 4 0 0 0 4-4v-2" />
+    <circle cx="19" cy="6" r="2" />
+    <circle cx="9" cy="18" r="3" />
+  </Icon>
+);
+
 /** The Care Loop mark from the mockup header. */
 export const LoopMark = () => (
   <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent" aria-hidden="true">

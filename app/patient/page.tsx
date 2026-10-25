@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DemoTag, Mono, Panel } from "@/lib/ui";
 import { CheckinForm } from "@/components/patient/CheckinForm";
 import { PatientStatus, type PatientSession } from "@/components/patient/PatientStatus";
+import { SessionCodeEntry } from "@/components/patient/SessionCodeEntry";
 
 const KEY = "careloop.patient";
 const LARGE_KEY = "careloop.patient.large";
@@ -26,9 +27,15 @@ export default function PatientPage() {
   const [session, setSession] = useState<PatientSession | null>(null);
   const [justCheckedIn, setJustCheckedIn] = useState<string | null>(null);
   const [large, setLarge] = useState(false);
+  // The session code from the check-in link or QR code (?s=CODE), or typed by the patient.
+  const [code, setCode] = useState<string | null>(null);
+  const [codeNotice, setCodeNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setSession(load());
+    try {
+      setCode(new URLSearchParams(window.location.search).get("s"));
+    } catch {}
     try {
       setLarge(localStorage.getItem(LARGE_KEY) === "1");
     } catch {}
@@ -81,11 +88,24 @@ export default function PatientPage() {
               save(null);
             }}
           />
-        ) : (
+        ) : code ? (
           <CheckinForm
+            sessionCode={code}
             onDone={(r) => {
               setJustCheckedIn(r.displayId);
               save({ token: r.token, visitId: r.visitId });
+            }}
+            onBadCode={(msg) => {
+              setCodeNotice(msg);
+              setCode(null);
+            }}
+          />
+        ) : (
+          <SessionCodeEntry
+            notice={codeNotice}
+            onCode={(c) => {
+              setCodeNotice(null);
+              setCode(c);
             }}
           />
         )}

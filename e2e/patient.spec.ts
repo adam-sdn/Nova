@@ -1,12 +1,18 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { sessionCode } from "./session";
 
 const nurse = { role: "nurse", id: "N-01" };
 const doctor = { role: "doctor", id: "D-05" };
 
+let code = "";
+test.beforeEach(async ({ request }) => {
+  code = await sessionCode(request);
+});
+
 async function checkInViaForm(page: Page, name: string) {
-  await page.goto("/patient");
+  await page.goto(`/patient?s=${code}`);
   await page.evaluate(() => localStorage.clear());
-  await page.goto("/patient");
+  await page.goto(`/patient?s=${code}`);
   await page.locator("input[name=name]").fill(name);
   await page.locator("textarea[name=reason]").fill("Synthetic reason for visit");
   await page.locator("input[name=consentContact]").check();
@@ -30,9 +36,9 @@ const post = (request: APIRequestContext, url: string, data: unknown) =>
 test.use({ viewport: { width: 375, height: 812 } });
 
 test("B1/B5: check-in needs consent, then shows Your ID and creates a card", async ({ page, request }) => {
-  await page.goto("/patient");
+  await page.goto(`/patient?s=${code}`);
   await page.evaluate(() => localStorage.clear());
-  await page.goto("/patient");
+  await page.goto(`/patient?s=${code}`);
   await page.locator("input[name=name]").fill("Test Person Echo");
   await page.locator("textarea[name=reason]").fill("Synthetic");
   await page.locator("input[name=aiNoticeAccepted]").check();
@@ -54,6 +60,7 @@ test("D7: I feel worse shows the fixed wording and alerts the nurse", async ({ p
 
 test("D8, F5, G2: closed in session, pending lines hidden, summary preparing until release", async ({ page, request }) => {
   const c = await post(request, "/api/checkin", {
+    sessionCode: code,
     name: "Test Person Golf",
     language: "en",
     consentContact: true,

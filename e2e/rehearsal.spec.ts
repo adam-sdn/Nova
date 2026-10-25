@@ -17,13 +17,35 @@ async function windowFor(browser: Browser, path: string, viewport = { width: 160
 test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({ browser, request }) => {
   test.setTimeout(120_000);
 
-  // 1. Reset and Seed.
+  // 1. Reset and Seed. End any session left open by an earlier run, so the nurse starts a fresh one.
   expect((await request.post("/api/demo/seed")).ok()).toBeTruthy();
-  const patient = await windowFor(browser, "/patient", { width: 375, height: 812 });
+  await request.post("/api/shift/close", { data: { actor: { role: "nurse", id: "N-01" } } });
+
+  // The nurse starts the shift session and taps to reveal its code.
   const nurse = await windowFor(browser, "/nurse");
+  await nurse.getByTestId("start-session").getByRole("button", { name: "Start session" }).click();
+  await expect(nurse.getByTestId("session-code"), "the code is hidden until tapped").toHaveCount(0);
+  await nurse.getByTestId("reveal-code").click();
+  const code = (await nurse.getByTestId("session-code").innerText()).trim();
+  expect(code).toMatch(/^[A-Z2-9]{6}$/);
+  await expect(nurse.getByTestId("patient-link")).toContainText(`/patient?s=${code}`);
+
+  // The doctor joins with the code; the nurse board shows them as connected.
   const doctor = await windowFor(browser, "/doctor?doctor=D-03");
+  await doctor.locator("input[name=code]").fill("WRONG1");
+  await doctor.getByRole("button", { name: "Join session" }).click();
+  await expect(doctor.getByTestId("doctor-join").getByRole("alert"), "a wrong code is refused").toContainText("not valid");
+  await doctor.locator("input[name=code]").fill(code.toLowerCase());
+  await doctor.getByRole("button", { name: "Join session" }).click();
+  await expect(doctor.getByTestId("live-status")).toContainText("Live", FIRST);
+  await expect(nurse.getByTestId("connected"), "nurse sees the doctor connected").toContainText("D-03", A4);
+
+  // The patient types the check-in code (the link or QR code carries it as ?s=).
+  const patient = await windowFor(browser, "/patient", { width: 375, height: 812 });
   await patient.evaluate(() => localStorage.clear());
   await patient.reload();
+  await patient.locator("input[name=sessionCode]").fill(code);
+  await patient.getByRole("button", { name: "Continue" }).click();
 
   // 2. Patient checks in (Arabic, so every doctor line is translated). The card appears on the nurse board.
   await patient.locator("select[name=language]").selectOption("ar");
@@ -36,6 +58,7 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   const id = (await patient.getByTestId("checkin-done").innerText()).match(/A-\d{3}/)![0];
   const card = nurse.getByTestId(`card-${id}`);
   await expect(card, "C1: registered card shows in Triage Waiting").toContainText("Call for triage", A4);
+  await expect(nurse.getByTestId("connected"), "nurse sees the patient online").toContainText("1 patient online", A4);
 
   // 3. Nurse: call for triage, complete triage with a priority.
   await card.getByRole("button", { name: "Call for triage" }).click();
@@ -130,4 +153,12 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   // 10. The audit chain verifies.
   const audit = await (await request.get("/api/demo/audit")).json();
   expect(audit.ok).toBe(true);
+
+  // 11. The nurse ends the session: the doctor is sent back to the join screen and the code stops working.
+  await nurse.getByRole("button", { name: "End session" }).click();
+  await nurse.getByRole("button", { name: "Confirm end" }).click();
+  await expect(nurse.getByTestId("start-session")).toBeVisible(A4);
+  await expect(doctor.getByTestId("doctor-join"), "doctor is logged out when the session ends").toBeVisible(A4);
+  await expect(doctor.getByTestId("doctor-join").getByRole("status")).toContainText("session has ended");
+  expect((await request.post("/api/shift/join", { data: { code } })).status()).toBe(403);
 });

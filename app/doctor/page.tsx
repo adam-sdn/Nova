@@ -1,15 +1,14 @@
 import { appConfig } from "@/lib/config";
-import { DoctorBoard } from "@/components/doctor/DoctorBoard";
+import { DoctorGate } from "@/components/doctor/DoctorGate";
 
 export const dynamic = "force-dynamic";
 
 export default async function DoctorPage({ searchParams }: { searchParams: Promise<{ doctor?: string }> }) {
   const { doctor } = await searchParams;
   const doctors = appConfig.doctors;
-  const me = doctors.find((d) => d.id === doctor) ?? doctors.find((d) => d.id === "D-05") ?? doctors[0];
   return (
-    <DoctorBoard
-      me={me}
+    <DoctorGate
+      preselect={doctor ?? null}
       doctors={doctors}
       noteSections={appConfig.noteTemplateSections}
       testCatalogue={appConfig.testCatalogue}

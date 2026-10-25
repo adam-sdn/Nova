@@ -134,6 +134,16 @@ CREATE TABLE IF NOT EXISTS audit (
   hash TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS shifts (      -- a nurse-hosted session; its code lets doctors and patients join
+  id TEXT PRIMARY KEY,
+  code_hash TEXT NOT NULL,                 -- sha256 of the code, for lookup without decrypting
+  code_enc TEXT NOT NULL,                  -- the code, encrypted, so a nurse can reveal it
+  opened_by TEXT NOT NULL,
+  opened_at TEXT NOT NULL,
+  closed_by TEXT,
+  closed_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS settings (    -- demo: runtime toggles such as MOCK_AI
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL

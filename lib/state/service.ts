@@ -50,18 +50,20 @@ import {
   type SessionRow,
   type VisitRow,
 } from "./repo";
+import { bump } from "@/lib/live";
 import { enquiryView, messageView, packView, sessionView, visitCard } from "./views";
 
 export class TransitionError extends Error {
   constructor(
-    public code: "forbidden_role" | "wrong_status" | "guard_failed" | "not_found",
+    public code: "forbidden_role" | "wrong_status" | "guard_failed" | "not_found" | "bad_session_code" | "no_session",
     message: string,
   ) {
     super(message);
     this.name = "TransitionError";
   }
   get httpStatus(): number {
-    return this.code === "not_found" ? 404 : this.code === "forbidden_role" ? 403 : 409;
+    if (this.code === "not_found") return 404;
+    return this.code === "forbidden_role" || this.code === "bad_session_code" ? 403 : 409;
   }
 }
 
@@ -512,7 +514,7 @@ export function recordTranslationResult(ctx: Ctx, messageId: string, r: Translat
   if (r.status === "delivered" || r.status === "escalated") {
     throw new TransitionError("guard_failed", `The translation agent cannot set ${r.status}`);
   }
-  return tx(ctx, () => {
+  const out = tx(ctx, () => {
     const m = loadMessage(ctx, messageId);
     if (m.status === "delivered") throw new TransitionError("wrong_status", "This message was already delivered");
     const json = (x: unknown) => (x === undefined ? null : JSON.stringify(x));
@@ -536,6 +538,8 @@ export function recordTranslationResult(ctx: Ctx, messageId: string, r: Translat
     audit(ctx, "system:translation-agent", `message.${r.status}`, m.id, { tier: r.tier });
     return { message: messageView(ctx, getMessage(ctx.db, m.id)!) };
   });
+  bump();
+  return out;
 }
 
 export type MessageAgent = (

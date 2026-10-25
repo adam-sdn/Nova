@@ -7,7 +7,16 @@ import { checkinFormErrors, LANGUAGES, type CheckinForm as Form } from "./logic"
 
 const field = "min-h-11 w-full rounded-[8px] border border-border-strong bg-surface px-3 text-[1em] text-ink";
 
-export function CheckinForm({ onDone }: { onDone: (r: CheckinResult, language: string) => void }) {
+export function CheckinForm({
+  sessionCode,
+  onDone,
+  onBadCode,
+}: {
+  sessionCode: string;
+  onDone: (r: CheckinResult, language: string) => void;
+  /** The session ended or the code was wrong: go back to code entry. */
+  onBadCode: (message: string) => void;
+}) {
   const [f, setF] = useState<Form>({ name: "", language: "en", reason: "", consentContact: false, aiNoticeAccepted: false });
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -20,10 +29,12 @@ export function CheckinForm({ onDone }: { onDone: (r: CheckinResult, language: s
     if (errs.length) return;
     setBusy(true);
     try {
-      const r = await postJson<CheckinResult>("/api/checkin", f);
+      const r = await postJson<CheckinResult>("/api/checkin", { ...f, sessionCode });
       onDone(r, f.language);
     } catch (err) {
-      setErrors([err instanceof Error ? err.message : "Check-in failed"]);
+      const msg = err instanceof Error ? err.message : "Check-in failed";
+      if (/session code/i.test(msg)) onBadCode(msg);
+      else setErrors([msg]);
     } finally {
       setBusy(false);
     }

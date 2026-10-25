@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import type { ApiError } from "@/lib/contracts";
+import { bump } from "@/lib/live";
 import { getCtx, type Ctx } from "@/lib/state/db";
 import { TransitionError } from "@/lib/state/service";
 
@@ -32,7 +33,9 @@ export function post<S extends ZodType, K extends string = never>(
       const text = await req.text();
       const body = schema.parse(text ? JSON.parse(text) : {});
       const params = (route ? await route.params : {}) as Record<K, string>;
-      return NextResponse.json(await fn(getCtx(), body, params));
+      const out = await fn(getCtx(), body, params);
+      bump();
+      return NextResponse.json(out);
     } catch (e) {
       return errorResponse(e);
     }

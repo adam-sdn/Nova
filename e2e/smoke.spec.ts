@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { sessionCode } from "./session";
 
 test("onboarding shows three role cards that each open their route in a new window (A1)", async ({ page, context }) => {
   await page.goto("/");
@@ -33,9 +34,10 @@ test("API rejects an illegal transition with a clear error and validates input",
   await request.post("/api/demo/seed");
   const bad = await request.post("/api/checkin", { data: { name: "" } });
   expect(bad.status()).toBe(400);
-  const r = await request.post("/api/checkin", {
-    data: { name: "E2E Person", language: "en", consentContact: true, aiNoticeAccepted: true, reason: "e2e" },
-  });
+  const person = { name: "E2E Person", language: "en", consentContact: true, aiNoticeAccepted: true, reason: "e2e" };
+  const noCode = await request.post("/api/checkin", { data: { ...person, sessionCode: "WRONG1" } });
+  expect(noCode.status(), "check-in needs the open session's code").toBe(403);
+  const r = await request.post("/api/checkin", { data: { ...person, sessionCode: await sessionCode(request) } });
   expect(r.ok()).toBe(true);
   const { visitId, token, displayId } = await r.json();
   expect(displayId).toMatch(/^A-\d{3}$/);

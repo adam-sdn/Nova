@@ -120,6 +120,30 @@ export const CheckinReq = z.object({
 });
 export type CheckinReq = z.infer<typeof CheckinReq>;
 
+/** Session codes: 6 letters and digits, shown by the nurse board, typed by doctors and carried by the patient link. */
+export const SessionCode = z.string().trim().min(4).max(20);
+
+/** Check-in through the app needs the open session's code (from the link or QR, or typed). */
+export const CheckinWithCodeReq = CheckinReq.extend({ sessionCode: SessionCode });
+export type CheckinWithCodeReq = z.infer<typeof CheckinWithCodeReq>;
+
+export const JoinSessionReq = z.object({ code: SessionCode });
+export type JoinSessionReq = z.infer<typeof JoinSessionReq>;
+
+export interface PresenceView {
+  role: "nurse" | "doctor" | "patient";
+  id: string;
+  since: string;
+}
+
+/** GET /api/shift: whether a session is open and who is connected. Never includes the code. */
+export interface ShiftStatus {
+  open: boolean;
+  openedBy: string | null;
+  openedAt: string | null;
+  connected: PresenceView[];
+}
+
 export const ActorOnlyReq = withActor({});
 export type ActorOnlyReq = z.infer<typeof ActorOnlyReq>;
 
@@ -213,6 +237,8 @@ export const StateQuery = z.object({
   id: z.string().optional(),
   /** Staff boards: "1" when the Show names toggle is on. */
   names: z.enum(["0", "1"]).optional(),
+  /** Doctors: the session code they joined with. */
+  code: z.string().optional(),
 });
 export type StateQuery = z.infer<typeof StateQuery>;
 

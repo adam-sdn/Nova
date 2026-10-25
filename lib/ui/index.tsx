@@ -129,7 +129,8 @@ export function Mono({ className, ...rest }: HTMLAttributes<HTMLSpanElement>) {
 }
 
 // ---------------------------------------------------------------------------
-// usePoll: each window polls GET /api/state every 1 to 2 seconds
+// usePoll: each window fetches GET /api/state. With `live`, the server pushes a signal after every change
+// (Server-Sent Events, /api/live) and the window refetches at once; polling becomes a slow safety net.
 // ---------------------------------------------------------------------------
 
 export interface PollResult<T> {
@@ -137,15 +138,31 @@ export interface PollResult<T> {
   error: string | null;
   /** Fetch now (for example straight after an action). */
   refresh: () => Promise<void>;
+  /** True while the live stream is connected. */
+  live: boolean;
 }
 
-export function usePoll<T>(url: string | null, ms = 1500): PollResult<T> {
+export interface LiveOptions {
+  /** /api/live URL for this window (also marks it as connected for the nurse board). */
+  url: string | null;
+  /** Called when the session this window joined has ended. */
+  onEnded?: () => void;
+}
+
+const LIVE_FALLBACK_MS = 10_000;
+
+export function usePoll<T>(url: string | null, ms = 1500, liveOpts?: LiveOptions): PollResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [live, setLive] = useState(false);
   const urlRef = useRef(url);
   urlRef.current = url;
+  const inFlight = useRef<Promise<void> | null>(null);
+  const again = useRef(false);
+  const onEnded = useRef(liveOpts?.onEnded);
+  onEnded.current = liveOpts?.onEnded;
 
-  const refresh = useCallback(async () => {
+  const fetchOnce = useCallback(async () => {
     const u = urlRef.current;
     if (!u) return;
     try {
@@ -162,14 +179,49 @@ export function usePoll<T>(url: string | null, ms = 1500): PollResult<T> {
     }
   }, []);
 
+  // Coalesce: a burst of change signals causes at most one fetch in flight plus one after it.
+  const refresh = useCallback(async () => {
+    if (inFlight.current) {
+      again.current = true;
+      return inFlight.current;
+    }
+    const run = async () => {
+      do {
+        again.current = false;
+        await fetchOnce();
+      } while (again.current);
+    };
+    inFlight.current = run().finally(() => (inFlight.current = null));
+    return inFlight.current;
+  }, [fetchOnce]);
+
+  const liveUrl = liveOpts?.url ?? null;
+  useEffect(() => {
+    if (!liveUrl || !url || typeof EventSource === "undefined") return;
+    const es = new EventSource(liveUrl);
+    es.addEventListener("open", () => setLive(true));
+    es.addEventListener("change", () => void refresh());
+    es.addEventListener("ended", () => {
+      es.close();
+      setLive(false);
+      onEnded.current?.();
+    });
+    es.addEventListener("error", () => setLive(false));
+    return () => {
+      es.close();
+      setLive(false);
+    };
+  }, [liveUrl, url, refresh]);
+
+  const every = liveUrl ? Math.max(ms, LIVE_FALLBACK_MS) : ms;
   useEffect(() => {
     if (!url) return;
     void refresh();
-    const t = setInterval(refresh, ms);
+    const t = setInterval(refresh, every);
     return () => clearInterval(t);
-  }, [url, ms, refresh]);
+  }, [url, every, refresh]);
 
-  return { data, error, refresh };
+  return { data, error, refresh, live };
 }
 
 /** POST JSON to an API route. Throws an Error with the server's message on failure. */

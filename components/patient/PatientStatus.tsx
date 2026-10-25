@@ -27,6 +27,7 @@ export function PatientStatus({
   const { data, error, refresh } = usePoll<PatientState>(
     `/api/state?role=patient&id=${encodeURIComponent(session.token)}`,
     2000,
+    { url: `/api/live?role=patient&token=${encodeURIComponent(session.token)}` },
   );
   // TODO(i18n): display language only switches UI chrome; there is no API yet to change the visit language.
   const [displayLang, setDisplayLang] = useState<string | null>(null);

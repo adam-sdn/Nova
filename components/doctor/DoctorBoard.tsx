@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { StaffState } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, Mono, postJson, usePoll } from "@/lib/ui";
 import { COMPLETE_TARGET, readyQueue } from "@/lib/agents/doctor/board";
@@ -15,10 +15,24 @@ export function DoctorBoard(props: {
   noteSections: string[];
   testCatalogue: string[] | null;
   longWaitMinutes: number;
+  /** The session code this doctor joined with. */
+  code: string;
+  /** Back to the join screen, with the reason to show there. */
+  onLeave: (reason?: string) => void;
 }) {
-  const { me } = props;
+  const { me, code, onLeave } = props;
   const [showNames, setShowNames] = useState(false);
-  const { data, error, refresh } = usePoll<StaffState>(`/api/state?role=doctor&id=${me.id}${showNames ? "&names=1" : ""}`, 2000);
+  const ended = "The session has ended. Ask the nurse in charge for the new code to join again.";
+  const c = encodeURIComponent(code);
+  const { data, error, refresh, live } = usePoll<StaffState>(
+    `/api/state?role=doctor&id=${me.id}&code=${c}${showNames ? "&names=1" : ""}`,
+    2000,
+    { url: `/api/live?role=doctor&id=${me.id}&code=${c}`, onEnded: () => onLeave(ended) },
+  );
+  // A wrong or expired code (for example the session ended while this window was closed).
+  useEffect(() => {
+    if (error && /session code/i.test(error)) onLeave(ended);
+  }, [error, onLeave, ended]);
   const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -70,6 +84,11 @@ export function DoctorBoard(props: {
           <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] font-semibold">
             {me.name} · <Mono>{me.id}</Mono>
           </span>
+          <span className="inline-flex items-center gap-1.5 text-[13px] text-muted" data-testid="live-status">
+            <span aria-hidden="true" className={`size-2 rounded-full ${live ? "bg-accent" : "bg-border-strong"}`} />
+            {live ? "Live" : "Connecting…"}
+          </span>
+          <Button onClick={() => onLeave()}>Leave session</Button>
         </div>
       </header>
 

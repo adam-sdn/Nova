@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { COLUMN_LABELS, VISIT_STATUSES, type StaffState } from "@/lib/contracts";
+import { COLUMN_LABELS, VISIT_STATUSES, type ShiftStatus, type StaffState } from "@/lib/contracts";
 import { Button, DemoTag, LoopMark, postJson, usePoll } from "@/lib/ui";
 import { COLUMN_HINTS, escortRequests, sortCards } from "./boardLogic";
 import { BoardCard } from "./BoardCard";
 import { EnquiriesInbox } from "./EnquiriesInbox";
 import { EscortStrip } from "./EscortStrip";
+import { ShiftBar, StartSessionGate } from "./ShiftBar";
 
 export const NURSE = { role: "nurse", id: "N-01" } as const;
 
@@ -19,7 +20,17 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
   const [showNames, setShowNames] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const { data, error, refresh } = usePoll<StaffState>(`/api/state?role=nurse&id=${NURSE.id}${showNames ? "&names=1" : ""}`, 2000);
+  const shift = usePoll<ShiftStatus>("/api/shift", 2000);
+  const open = shift.data?.open === true;
+  const liveUrl = open ? `/api/live?role=nurse&id=${NURSE.id}` : null;
+  const { data, error, refresh } = usePoll<StaffState>(
+    open ? `/api/state?role=nurse&id=${NURSE.id}${showNames ? "&names=1" : ""}` : null,
+    2000,
+    { url: liveUrl },
+  );
+  // The session bar refetches on the same live signal (presence changes count as changes).
+  const shiftLive = usePoll<ShiftStatus>(open ? "/api/shift?live=1" : null, 2000, { url: liveUrl });
+  const shiftStatus = shiftLive.data ?? shift.data;
 
   /** Run an API call, then refresh at once. Errors show in the banner. */
   async function act(url: string, body: Record<string, unknown> = {}) {
@@ -51,6 +62,9 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
   const visits = data?.visits ?? [];
   const escorts = escortRequests(visits);
 
+  if (!shift.data) return <main className="min-h-screen bg-ground p-6 text-muted">{shift.error ?? "Loading…"}</main>;
+  if (!open) return <StartSessionGate actor={NURSE} onStarted={() => void shift.refresh()} />;
+
   return (
     <div className="min-h-screen bg-ground px-6 pb-8 pt-5 text-ink">
       <main className="mx-auto max-w-[1760px]">
@@ -69,6 +83,8 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
             </span>
           </div>
         </header>
+
+        {shiftStatus && <ShiftBar actor={NURSE} status={shiftStatus} onEnded={() => void shift.refresh()} />}
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Button aria-pressed={showNames} variant={showNames ? "primary" : "secondary"} onClick={() => setShowNames(!showNames)}>

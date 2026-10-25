@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ArrowIcon, BubbleIcon, CheckIcon, ChevronUpIcon, ClockIcon, DotIcon, MicIcon, TriangleIcon } from "./icons";
 
 export * from "./icons";
+export * from "./brand";
 
 // Later classes win over earlier ones (tailwind-merge), so callers can override a variant cleanly.
 const cx = cn;

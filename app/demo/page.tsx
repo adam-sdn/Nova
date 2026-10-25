@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COLUMN_LABELS, VISIT_STATUSES, type StaffState } from "@/lib/contracts";
-import { Button, Chip, DemoTag, LoopMark, Mono, Panel, postJson, usePoll } from "@/lib/ui";
+import { Button, Chip, DemoTag, NovaMark, Mono, Panel, postJson, usePoll } from "@/lib/ui";
 
 export default function DemoControls() {
   const { data, error, refresh } = usePoll<StaffState>("/api/state?role=nurse", 1500);
@@ -36,9 +36,9 @@ export default function DemoControls() {
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <LoopMark />
+          <NovaMark />
           <div>
-            <h1 className="text-lg font-semibold leading-tight">Care Loop · Demo controls</h1>
+            <h1 className="text-lg font-semibold leading-tight">Nova Systems · Demo controls</h1>
             <Link href="/" className="text-[13px] text-accent underline underline-offset-2">
               Back to role windows
             </Link>

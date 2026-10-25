@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DemoTag, Mono, Panel } from "@/lib/ui";
+import { DemoTag, Mono, NovaLogo, Panel } from "@/lib/ui";
 import { CheckinForm } from "@/components/patient/CheckinForm";
 import { PatientStatus, type PatientSession } from "@/components/patient/PatientStatus";
 import { SessionCodeEntry } from "@/components/patient/SessionCodeEntry";
@@ -67,7 +67,7 @@ export default function PatientPage() {
         data-large={large ? "1" : "0"}
       >
         <div className="flex items-center justify-between px-1">
-          <span className="text-[1.05em] font-semibold tracking-tight">Care Loop</span>
+          <NovaLogo height={36} />
           <DemoTag />
         </div>
         {justCheckedIn && (

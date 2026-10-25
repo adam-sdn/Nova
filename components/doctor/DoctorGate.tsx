@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, DemoTag, LoopMark, Panel, postJson } from "@/lib/ui";
+import { Button, DemoTag, NovaMark, Panel, postJson } from "@/lib/ui";
 import { DoctorBoard } from "./DoctorBoard";
 import type { DoctorInfo } from "./types";
 
@@ -101,7 +101,7 @@ function JoinForm({
         <form onSubmit={submit} className="flex flex-col gap-4" data-testid="doctor-join">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <LoopMark />
+              <NovaMark />
               <h1 className="m-0 text-lg font-semibold">Join the session</h1>
             </div>
             <DemoTag />

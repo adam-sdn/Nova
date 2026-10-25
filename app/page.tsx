@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BoardIcon, DemoTag, LoopMark, PhoneIcon, StethoscopeIcon } from "@/lib/ui";
+import { BoardIcon, DemoTag, NovaLogo, PhoneIcon, StethoscopeIcon } from "@/lib/ui";
 
 const ROLES = [
   {
@@ -34,9 +34,10 @@ export default function Onboarding() {
         <div className="glass-strong appear flex flex-col gap-8 rounded-[32px] p-6 sm:p-10">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3.5">
-              <LoopMark />
-              <div>
-                <h1 className="text-[24px] font-semibold leading-tight tracking-tight">Care Loop</h1>
+              <div className="flex flex-col gap-2">
+                <h1 className="m-0">
+                  <NovaLogo height={58} />
+                </h1>
                 <p className="text-[14px] text-muted">Open each role in its own window</p>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ShiftStatus } from "@/lib/contracts";
-import { DemoTag, LoopMark, Mono, postJson, usePoll } from "@/lib/ui";
+import { DemoTag, NovaMark, Mono, postJson, usePoll } from "@/lib/ui";
 import { NURSE } from "./NurseBoard";
 import { QrCode } from "./QrCode";
 
@@ -33,7 +33,7 @@ export function EntranceDisplay() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-5 p-6 text-center text-ink" data-testid="entrance">
       <div className="flex items-center gap-3">
-        <LoopMark />
+        <NovaMark />
         <h1 className="m-0 text-xl font-semibold">Emergency department check-in</h1>
       </div>
       {link && code ? (

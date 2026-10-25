@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { House, ListChecks, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { FollowUpView, StaffState } from "@/lib/contracts";
-import { Button, DemoTag, LoopMark, Mono, postJson, usePoll } from "@/lib/ui";
+import { Button, DemoTag, NovaLogo, NovaMark, Mono, postJson, usePoll } from "@/lib/ui";
 import { COMPLETE_TARGET, readyQueue } from "@/lib/agents/doctor/board";
 import { DecisionPanel } from "./Decision";
 import { FollowUps } from "./FollowUps";
@@ -100,8 +100,7 @@ export function DoctorBoard(props: {
       {/* Floating glass navigation: a compact sidebar on desktop, a pill bar at the bottom on phones. */}
       <aside className="glass fixed inset-x-3 bottom-3 z-30 rounded-[22px] p-1.5 lg:inset-x-auto lg:bottom-4 lg:left-4 lg:top-4 lg:flex lg:w-[200px] lg:flex-col lg:gap-8 lg:p-3">
         <div className="hidden items-center gap-2.5 px-1.5 pt-1.5 lg:flex">
-          <LoopMark />
-          <span className="text-[15px] font-semibold tracking-tight">Care Loop</span>
+          <NovaLogo height={44} />
         </div>
       <TabsList
         variant="rail"
@@ -135,12 +134,12 @@ export function DoctorBoard(props: {
       <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="lg:hidden">
-            <LoopMark />
+            <NovaMark />
           </span>
           <div>
             <h1 className="text-[17px] font-semibold leading-tight">{me.name}</h1>
             <div className="text-[13px] text-muted">
-              Care Loop · <Mono className="font-medium">{me.id}</Mono> · {me.cubicle}
+              Nova Systems · <Mono className="font-medium">{me.id}</Mono> · {me.cubicle}
             </div>
           </div>
         </div>

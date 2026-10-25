@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { PresenceView, ShiftStatus } from "@/lib/contracts";
-import { Button, DemoTag, LoopMark, Mono, Panel, postJson } from "@/lib/ui";
+import { Button, DemoTag, NovaMark, Mono, Panel, postJson } from "@/lib/ui";
 import { QrCode, openEntranceWindow } from "./QrCode";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -33,7 +33,7 @@ export function StartSessionGate({ actor, onStarted }: { actor: Actor; onStarted
     <main className="grid min-h-screen place-items-center p-4 text-ink">
       <Panel glass className="appear flex w-full max-w-[460px] flex-col gap-4 rounded-[20px] p-6" data-testid="start-session">
         <div className="flex items-center gap-3">
-          <LoopMark />
+          <NovaMark />
           <h1 className="m-0 text-lg font-semibold">Start the shift session</h1>
         </div>
         <p className="text-[14px] text-muted">

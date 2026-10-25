@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ShiftStatus, StaffState } from "@/lib/contracts";
-import { Button, DemoTag, LoopMark, postJson, usePoll } from "@/lib/ui";
+import { Button, DemoTag, NovaMark, postJson, usePoll } from "@/lib/ui";
 import { BOARD_COLUMNS, STEP_LABELS, columnCards, escortRequests } from "./boardLogic";
 import { BoardCard } from "./BoardCard";
 import { BoardStats } from "./BoardStats";
@@ -74,10 +74,10 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
       <main className="mx-auto max-w-[1760px]">
         <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
           <div className="flex items-center gap-3">
-            <LoopMark />
+            <NovaMark />
             <div>
               <h1 className="m-0 text-[17px] font-semibold leading-tight">Nurse board</h1>
-              <div className="text-[13px] text-muted">Care Loop · Emergency department · {visits.length} patients</div>
+              <div className="text-[13px] text-muted">Nova Systems · Emergency department · {visits.length} patients</div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

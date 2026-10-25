@@ -54,6 +54,16 @@ const handlers: Record<AiTask, Handler> = {
   verify_translation: () => ({ passed: true, errors: [] }),
 
   draft_pack: ({ results, advice, medicines }) => ({ results, advice, medicines }),
+
+  // One task per test ordered and per non-empty "plan"-like section, worded from the doctor's own text.
+  draft_follow_ups: ({ sections, tests }: { sections: Record<string, string>; tests: string[] }) => ({
+    items: [
+      ...tests.map((t) => ({ text: `Review result: ${t}`, fromSection: "Tests ordered" })),
+      ...Object.entries(sections)
+        .filter(([k, v]) => /plan|follow|safety|next/i.test(k) && v.trim())
+        .map(([k, v]) => ({ text: `Follow up: ${v.trim()}`, fromSection: k })),
+    ],
+  }),
 };
 
 export const mockAdapter: AiAdapter = {

@@ -114,3 +114,16 @@ npm run dev -- -p 3002
 
 Then open `http://localhost:<port>/demo`, press Reset and Seed, and open your screen. The patient window needs a
 token: check in through `/patient`, or call `POST /api/checkin` and use `?token=` as your screen decides.
+
+## Follow-ups and the AI Clinical Assessment (doctor)
+
+| Endpoint | Body / query | Returns | Notes |
+|---|---|---|---|
+| `POST /api/sessions/:id/draft-note` | `{actor, sections, transcript}` | `{draft: {[section]: {text, fromLine, toLine}}}` | AI draft of the Clinical Assessment; doctor in the session only; audited `note.ai_draft` |
+| `POST /api/sessions/:id/complete` | as before | adds `followUps: FollowUpView[]` | after completion, AI drafts follow-ups from the signed note (`suggested`) |
+| `GET /api/follow-ups?doctor=&code=` | needs the open session code | `{followUps}` | dismissed ones are hidden; never in the patient view |
+| `POST /api/follow-ups/:id/confirm` | `{actor, text?}` | `{followUp}` | suggested → confirmed, optional rewording |
+| `POST /api/follow-ups/:id/done` | `{actor}` | `{followUp}` | confirmed → done |
+| `POST /api/follow-ups/:id/dismiss` | `{actor}` | `{followUp}` | suggested → dismissed |
+
+Only the doctor who saw the patient can act on a follow-up. Text is encrypted; audit holds hashes.

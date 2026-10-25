@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MessageView, SessionView, VisitCard } from "@/lib/contracts";
 import { Button, Chip, Mono } from "@/lib/ui";
 import { canComplete, canStartSession, sessionSteps } from "@/lib/agents/doctor/board";
@@ -97,7 +97,7 @@ export function InSession(props: {
   testCatalogue: string[] | null;
   act: Act;
   busy: boolean;
-  onCompleted: (next: "tests" | "decision") => void;
+  onCompleted: (next: "tests" | "decision", followUps: number) => void;
 }) {
   const { v, s, me, messages, act } = props;
   const [line, setLine] = useState("");
@@ -107,6 +107,35 @@ export function InSession(props: {
   const [tests, setTests] = useState<string[]>([]);
   const [newTest, setNewTest] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // AI fills the Clinical Assessment as the conversation grows. Sections the doctor has typed in are left alone.
+  const [aiLines, setAiLines] = useState<Record<string, { fromLine: number; toLine: number }>>({});
+  const [drafting, setDrafting] = useState(false);
+  const edited = useRef(new Set<string>());
+  const transcript = messages.map((m) => (m.direction === "doctor_to_patient" ? m.source : (m.translation ?? m.source)));
+  const transcriptKey = transcript.join("\n");
+
+  const fillWithAi = async () => {
+    if (transcript.length === 0) return;
+    setDrafting(true);
+    try {
+      const r = (await act(`/api/sessions/${s.id}/draft-note`, { sections: props.noteSections, transcript })) as {
+        draft: Record<string, { text: string; fromLine: number; toLine: number }>;
+      } | null;
+      if (!r) return;
+      const open = Object.entries(r.draft).filter(([k, d]) => !edited.current.has(k) && d.text);
+      setSections((cur) => ({ ...cur, ...Object.fromEntries(open.map(([k, d]) => [k, d.text])) }));
+      setAiLines((cur) => ({ ...cur, ...Object.fromEntries(open.map(([k, d]) => [k, { fromLine: d.fromLine, toLine: d.toLine }])) }));
+      setSigned(false);
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  useEffect(() => {
+    void fillWithAi();
+    // Re-draft only when the conversation changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcriptKey]);
 
   const sendLine = async () => {
     if (!line.trim()) return;
@@ -121,13 +150,12 @@ export function InSession(props: {
     const ok = canComplete(next, signed, tests.length);
     if (!ok.ok) return setError(ok.reason ?? null);
     setError(null);
-    const transcript = messages.map((m) => (m.direction === "doctor_to_patient" ? m.source : (m.translation ?? m.source)));
     const r = await act(`/api/sessions/${s.id}/complete`, {
       next,
       note: { sections, transcript, signed },
       tests: next === "tests" ? tests : [],
     });
-    if (r) props.onCompleted(next);
+    if (r) props.onCompleted(next, (r as { followUps?: unknown[] }).followUps?.length ?? 0);
   };
 
   const addTest = (t: string) => {
@@ -166,10 +194,18 @@ export function InSession(props: {
             </div>
           </div>
         </section>
-        <section aria-label="Draft note" className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold">Draft note</h3>
-            <span className="text-xs text-muted">Template: [your trust’s template]</span>
+        <section aria-label="Clinical Assessment" className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-[15px] font-semibold">Clinical Assessment</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted">{drafting ? "AI is filling the form…" : "Template: [your trust’s template]"}</span>
+              <Button disabled={props.busy || drafting || transcript.length === 0} onClick={fillWithAi}>
+                Fill with AI
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-[8px] border border-high-border bg-high-fill px-2 py-1.5 text-xs text-high-ink">
+            The AI drafts this form from the conversation. Read every section and correct it before you sign.
           </div>
           {props.noteSections.map((k) => (
             <label key={k} className="flex flex-col gap-1">
@@ -178,9 +214,17 @@ export function InSession(props: {
                 className="min-h-16 rounded-[8px] border border-border p-2 text-[14px]"
                 placeholder="[Doctor to complete]"
                 value={sections[k] ?? ""}
-                onChange={(e) => setSections({ ...sections, [k]: e.target.value })}
+                onChange={(e) => {
+                  edited.current.add(k);
+                  setAiLines(({ [k]: _, ...rest }) => rest);
+                  setSections({ ...sections, [k]: e.target.value });
+                }}
               />
-              {/* TODO(ai): AI draft lines, each marked "AI draft · from conversation lines x to y". */}
+              {aiLines[k] && (
+                <span className="text-xs text-muted" data-testid="ai-draft-label">
+                  AI draft · from conversation line{aiLines[k].fromLine === aiLines[k].toLine ? ` ${aiLines[k].fromLine}` : `s ${aiLines[k].fromLine} to ${aiLines[k].toLine}`} · check before signing
+                </span>
+              )}
             </label>
           ))}
           <div>
@@ -221,7 +265,7 @@ export function InSession(props: {
           </div>
           <label className="flex min-h-11 items-center gap-2 text-[14px] font-semibold">
             <input type="checkbox" className="size-5" checked={signed} onChange={(e) => setSigned(e.target.checked)} />
-            I have reviewed this note and sign it ({me.id})
+            I have reviewed this assessment and sign it ({me.id})
           </label>
         </section>
       </div>

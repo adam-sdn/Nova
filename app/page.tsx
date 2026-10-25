@@ -6,7 +6,7 @@ import { DemoTag, LoopMark } from "@/lib/ui";
 const ROLES = [
   { href: "/patient", title: "Patient", body: "Phone-width window: check-in, status, enquiries, results pack.", size: "width=420,height=860" },
   { href: "/nurse", title: "Nurse", body: "Seven-column board, escort requests, enquiries inbox.", size: "width=1760,height=1000" },
-  { href: "/doctor", title: "Doctor", body: "Ready to be seen, session frame, notes, tests, decision.", size: "width=1400,height=950" },
+  { href: "/doctor", title: "Doctor", body: "Home, follow-ups and settings; AI-filled clinical assessment.", size: "width=1400,height=950" },
 ] as const;
 
 export default function Onboarding() {

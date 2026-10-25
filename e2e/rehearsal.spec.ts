@@ -131,14 +131,37 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   await expect(card, "F9: Interpreter needed chip on the nurse board").toContainText("Interpreter needed", A4);
   await expect(patient.getByTestId("session-messages")).not.toContainText("consent");
 
+  // The AI fills the Clinical Assessment from the conversation; the doctor corrects the Plan.
+  const assessment = doctor.getByLabel("Clinical Assessment");
+  await expect(assessment.getByTestId("ai-draft-label").first(), "AI draft is labelled with its source lines").toBeVisible(A4);
+  await assessment.getByLabel("Plan").fill("Recheck pain in 2 hours");
+
   // 8. Complete · send for tests (needs a signed note). Nurse: results back, Awaiting Decision.
   await doctor.getByLabel("Test name").fill("Bloods (demo)");
   await doctor.getByRole("button", { name: "Add test" }).click();
   await doctor.getByRole("button", { name: "Complete · send for tests" }).click();
   await expect(doctor.getByRole("alert").filter({ hasText: /sign/i }), "C8: unsigned note is refused").toBeVisible();
-  await doctor.getByLabel(/I have reviewed this note and sign it/).check();
+  await doctor.getByLabel(/I have reviewed this assessment and sign it/).check();
   await doctor.getByRole("button", { name: "Complete · send for tests" }).click();
   await expect(card, "C8: card in Diagnostics with the test listed").toContainText("Bloods (demo)", FIRST);
+
+  // AI drafts follow-ups from the signed assessment; the doctor confirms one and marks it done.
+  const nav = doctor.getByTestId("doctor-nav");
+  await expect(nav.getByRole("button", { name: /Follow-ups/ }), "badge counts follow-ups to confirm").toContainText("2", A4);
+  await nav.getByRole("button", { name: /Follow-ups/ }).click();
+  const fu = doctor.getByTestId("follow-ups");
+  const bloods = fu.locator("article", { hasText: "Review result: Bloods (demo)" });
+  await expect(bloods).toContainText("AI draft");
+  await expect(fu).toContainText("Follow up: Recheck pain in 2 hours");
+  await bloods.getByRole("button", { name: "Confirm" }).click();
+  await expect(bloods).toContainText("Confirmed", A4);
+  await bloods.getByRole("button", { name: "Mark done" }).click();
+  await expect(bloods).toContainText("Done", A4);
+  await expect(patient.getByTestId("session-messages")).not.toContainText("Review result");
+  await nav.getByRole("button", { name: "Settings" }).click();
+  await doctor.getByTestId("doctor-code").click();
+  await expect(doctor.getByTestId("doctor-code")).toContainText(code);
+  await nav.getByRole("button", { name: "Home" }).click();
   await card.getByLabel("Bloods (demo) state").selectOption("results_back");
   await card.getByRole("button", { name: "Move to Awaiting Decision" }).click();
 

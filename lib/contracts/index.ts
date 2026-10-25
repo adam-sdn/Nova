@@ -401,3 +401,36 @@ export interface CheckinResult {
 export interface ApiError {
   error: { code: string; message: string; issues?: unknown };
 }
+
+// ---------------------------------------------------------------------------
+// Follow-ups: drafted by AI from the signed note after a consultation; the doctor confirms each one
+// ---------------------------------------------------------------------------
+
+export const FollowUpStatus = z.enum(["suggested", "confirmed", "done", "dismissed"]);
+export type FollowUpStatus = z.infer<typeof FollowUpStatus>;
+
+export const FollowUpView = z.object({
+  id: z.string(),
+  visitId: z.string(),
+  displayId: z.string(),
+  sessionNumber: z.number().int(),
+  text: z.string(),
+  fromSection: z.string().nullable(),
+  status: FollowUpStatus,
+  createdAt: z.string(),
+  confirmedAt: z.string().nullable(),
+  doneAt: z.string().nullable(),
+});
+export type FollowUpView = z.infer<typeof FollowUpView>;
+
+export const FollowUpQuery = z.object({ doctor: z.string().min(1), code: z.string().optional() });
+
+/** Confirm a suggested follow-up, optionally with the doctor's edited wording. */
+export const ConfirmFollowUpReq = withActor({ text: z.string().trim().min(1).max(500).optional() });
+export type ConfirmFollowUpReq = z.infer<typeof ConfirmFollowUpReq>;
+
+export const DraftNoteReq = withActor({
+  sections: z.array(z.string()).min(1),
+  transcript: z.array(z.string()).max(400),
+});
+export type DraftNoteReq = z.infer<typeof DraftNoteReq>;

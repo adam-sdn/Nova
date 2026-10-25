@@ -14,7 +14,8 @@ export type AiTask =
   | "translate_message"
   | "back_translate"
   | "verify_translation"
-  | "draft_pack";
+  | "draft_pack"
+  | "draft_follow_ups";
 
 /**
  * A provider. Receives pseudonymised JSON text and returns JSON text. `model` is the model named in
@@ -73,6 +74,13 @@ export interface TranslationCallOpts {
   feedback?: string[];
 }
 
+/** A follow-up task drafted from a signed note. A suggestion only: the doctor confirms, edits or dismisses it. */
+export interface FollowUpDraft {
+  text: string;
+  /** The note section it came from. */
+  fromSection: string;
+}
+
 export interface PackDraftInput {
   results: string;
   advice: string;
@@ -95,6 +103,8 @@ export interface Ai {
   ): Promise<TranslationVerdict>;
   /** Plain-language rewording in the patient's language. Relays only what was entered. */
   draftPack(input: PackDraftInput, language: string, ids?: Identifiers): Promise<PackDraftInput>;
+  /** Follow-up tasks from the signed note and the tests ordered. Relays only what the doctor wrote. */
+  draftFollowUps(input: { sections: Record<string, string>; tests: string[] }, ids?: Identifiers): Promise<FollowUpDraft[]>;
 }
 
 export function createAi(opts: { mock: boolean; adapter?: AiAdapter }): Ai {
@@ -124,5 +134,8 @@ export function createAi(opts: { mock: boolean; adapter?: AiAdapter }): Ai {
     },
     verifyTranslation: (input, ids, opts) => call("verify_translation", input, ids, opts?.model),
     draftPack: (input, language, ids) => call("draft_pack", { ...input, language }, ids),
+    async draftFollowUps(input, ids) {
+      return (await call<{ items: FollowUpDraft[] }>("draft_follow_ups", input, ids)).items;
+    },
   };
 }

@@ -1,7 +1,7 @@
 // SQLite schema (SPEC section 10). Columns ending in _enc hold an EncryptedField as JSON.
 // Additions beyond SPEC are marked "guard" (needed by a section 5 guard) or "demo".
 /** Bump when a table changes shape. Older local demo databases are rebuilt (synthetic data only). */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS visits (
@@ -144,6 +144,19 @@ CREATE TABLE IF NOT EXISTS shifts (      -- a nurse-hosted session; its code let
   closed_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS follow_ups (  -- tasks drafted by AI after a consultation; the doctor confirms each one
+  id TEXT PRIMARY KEY,
+  visit_id TEXT NOT NULL REFERENCES visits(id),
+  session_id TEXT NOT NULL REFERENCES sessions(id),
+  doctor_id TEXT NOT NULL,
+  text_enc TEXT NOT NULL,
+  from_section TEXT,                       -- the note section the draft came from, for the "AI draft" label
+  status TEXT NOT NULL,                    -- suggested | confirmed | done | dismissed
+  created_at TEXT NOT NULL,
+  confirmed_at TEXT,
+  done_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS settings (    -- demo: runtime toggles such as MOCK_AI
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -152,6 +165,7 @@ CREATE TABLE IF NOT EXISTS settings (    -- demo: runtime toggles such as MOCK_A
 
 /** Tables wiped by /demo Reset. The audit log is wiped too so Reset gives an identical start (A2). */
 export const RESET_TABLES = [
+  "follow_ups",
   "attestations",
   "messages",
   "notes",

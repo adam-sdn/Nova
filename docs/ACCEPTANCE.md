@@ -7,7 +7,7 @@ Mark an item PASS only with evidence: a passing test name, a command output, or 
 
 | ID | Item | How verified |
 |---|---|---|
-| A1 | `/` shows Patient, Nurse, Doctor and Interpreter cards that open each route in a new window | Demo |
+| A1 | `/` shows three cards (Patient, Nurse, Doctor) that open each route in a new window | Demo |
 | A2 | `/demo` Reset and Seed give the same starting board every time (patients in all columns) | Test |
 | A3 | `MOCK_AI=1` runs the whole flow with no network (browser speech aside) | Demo with Wi-Fi off |
 | A4 | A state change in one window shows in the others within 3 seconds | E2E test |
@@ -68,16 +68,19 @@ Mark an item PASS only with evidence: a passing test name, a command output, or 
 | E7 | The doctor can edit every note section; completing requires a signed note | E2E test |
 | E8 | The rule check flags any number, unit or drug name in the note that is not in the transcript | Unit test |
 
-## F. Interpreter pipeline and patient safety
+## F. Translation agent and patient safety
 
 | ID | Item | How verified |
 |---|---|---|
-| F1 | The Safety Checker fails when a number, unit, drug name, negation or time differs between the source and the back-translation | Unit test with planted errors: dose changed, "not" dropped, drug swapped, time shifted, unit changed, extra number |
-| F2 | A failed check retries the translation at most twice, then holds the message | Unit test |
-| F3 | Verify and hold tiers never reach the patient until the interpreter verifies | Unit and E2E test |
-| F4 | Consent-type messages need the extra confirmation | E2E test |
-| F5 | `getPatientVisibleContent()` never returns drafted, checked, awaiting, rejected or unreleased content | Unit test over every status |
+| F1 | The rule checker fails when a number, unit, drug name, negation or time differs between the source and the back-translation | Unit test with planted errors: dose changed, "not" dropped, drug swapped, time shifted, unit changed, extra number |
+| F2 | A failed check retries the translation at most twice, with the verifier's feedback, then holds the message | Unit test |
+| F3 | A doctor-to-patient message is delivered only after it passes every check AND the doctor taps Send | Unit and E2E test |
+| F4 | Consent-type messages and messages in a `weakLanguages` language are never delivered; the doctor sees the "Use the hospital interpreter service" banner and the nurse card shows the "Interpreter needed" chip | E2E test |
+| F5 | `getPatientVisibleContent()` returns only delivered messages, pre-approved phrases and released packs; never drafted, checked, ready_for_doctor, flagged, held, escalated or unreleased content | Unit test over every status |
 | F6 | Pre-verified phrases carry verifier and date, and unverified phrases are never served | Unit test |
+| F7 | The translator, back-translator and AI verifier are three different model families; config with a repeated family is rejected | Unit test |
+| F8 | Before Send, the doctor sees "The patient will read: <back-translation>" with the checks panel and the agent trace | E2E test |
+| F9 | Escalate keeps the message held, writes an audit entry and sets the "Interpreter needed" chip on the nurse card | Unit and E2E test |
 
 ## G. Results pack and outcome
 
@@ -85,7 +88,7 @@ Mark an item PASS only with evidence: a passing test name, a command output, or 
 |---|---|---|
 | G1 | The pack contains only results, the doctor's advice and medicines the doctor entered; the AI adds nothing | Unit test with a fixture |
 | G2 | The patient sees "preparing your summary" until the doctor releases | E2E test |
-| G3 | Release is doctor-only and requires verified translation | Unit test |
+| G3 | Release is doctor-only and requires a pack translation that passed the translation agent's checks and was confirmed by the doctor | Unit test |
 | G4 | After release the phone shows the pack in the patient's language and a follow-up button | Demo |
 | G5 | "When to seek help" wording comes from fixed config, never from AI | Unit test |
 
@@ -117,7 +120,9 @@ Mark an item PASS only with evidence: a passing test name, a command output, or 
 4. Patient: send an enquiry and press "I feel worse". Show the nurse inbox flag and the fixed urgent wording.
 5. Doctor: open the profile and AI summary, press Consult now. Nurse: escort, press Patient is with the doctor.
 6. Doctor: Start session. Type or speak a line with a dose and a "do not". Show the draft note.
-7. Plant a wrong dose. Show the Safety Checker blocking it. Interpreter: verify. Patient sees it only now.
+7. Plant a wrong dose. Show the checks catching it. Doctor: edit and recheck; checks pass; read "The patient will
+   read" and tap Send. Patient sees it only now. Then type a consent line: show it held, with the "Use the hospital
+   interpreter service" banner on the doctor screen and the "Interpreter needed" chip on the nurse board.
 8. Doctor: Complete · send for tests. Nurse: update a test, results back, Awaiting Decision.
 9. Doctor: record the decision and release the pack. Patient: show the pack, language and follow-up button.
 10. Show the audit chain check.

@@ -7,7 +7,6 @@ const ROLES = [
   { href: "/patient", title: "Patient", body: "Phone-width window: check-in, status, enquiries, results pack.", size: "width=420,height=860" },
   { href: "/nurse", title: "Nurse", body: "Seven-column board, escort requests, enquiries inbox.", size: "width=1760,height=1000" },
   { href: "/doctor", title: "Doctor", body: "Ready to be seen, session frame, notes, tests, decision.", size: "width=1400,height=950" },
-  { href: "/interpreter", title: "Interpreter", body: "Verify translations before the patient sees them.", size: "width=1300,height=900" },
 ] as const;
 
 export default function Onboarding() {
@@ -24,7 +23,7 @@ export default function Onboarding() {
         <DemoTag />
       </header>
 
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul className="grid gap-4 sm:grid-cols-3">
         {ROLES.map((r) => (
           <li key={r.href}>
             <a

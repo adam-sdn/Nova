@@ -161,14 +161,10 @@ export const RULES: Record<TransitionName, Rule> = {
   },
 
   verify_pack: {
-    roles: ["interpreter", "doctor"],
+    // The doctor confirms the pack after it passed the translation agent's checks (SPEC section 9, G3).
+    roles: ["doctor"],
     from: ["done"],
-    guard: (f) => {
-      if (f.packStatus !== "draft") return "There is no draft pack to verify";
-      // Only an English pack needs no translation, so only then may the doctor verify it.
-      if (f.actor.role === "doctor" && f.packLanguage !== "en") return "The interpreter must verify the translation";
-      return null;
-    },
+    guard: (f) => (f.packStatus === "draft" ? null : "There is no draft pack to verify"),
   },
 
   release_pack: {

@@ -1,7 +1,8 @@
 # Care Loop (working title): hackathon app
 
-A multilingual, human-verified patient-flow system for an emergency department.
-Four role windows share one live record: **Patient** (phone-width), **Nurse**, **Doctor**, **Interpreter**.
+A multilingual patient-flow system for an emergency department, with AI translation that is checked by
+independent models and rules and confirmed by the doctor.
+Three role windows share one live record: **Patient** (phone-width), **Nurse**, **Doctor**. There is no interpreter role.
 AI agents cut staff workload. Humans make every clinical decision.
 
 Before each milestone read `docs/SPEC.md` (the relevant section). Before calling a milestone done,
@@ -10,8 +11,10 @@ check `docs/ACCEPTANCE.md`. Milestone prompts are in `docs/PROMPTS.md`.
 ## Hard rules (never break; starred rules must have automated tests)
 
 1. Synthetic data only. Never add real patient data, real names or real phone numbers.
-2. * The patient-facing API returns only content a human has verified or released, plus pre-approved
-   phrases. One function decides this: `getPatientVisibleContent()`. Everything patient-facing goes through it.
+2. * The patient-facing API returns only messages in state `delivered` (passed every check, then confirmed by the
+   doctor's Send), pre-approved phrases from `data/phrases.json`, and released results packs. Never drafted, checked,
+   ready_for_doctor, flagged, held or escalated content. One function decides this: `getPatientVisibleContent()`.
+   Everything patient-facing goes through it.
 3. AI never sets triage priority, urgency, diagnoses, doses, test orders or outcomes. Humans do.
 4. * Enquiry priority: AI may raise it, never lower it. The nurse can always override.
 5. * Urgent and red-flag wording is fixed text from `data/config.json`, written by a clinician. Never AI-generated.
@@ -22,6 +25,9 @@ check `docs/ACCEPTANCE.md`. Milestone prompts are in `docs/PROMPTS.md`.
    leave a clearly marked placeholder `TODO(clinician)`. Never invent it.
 9. No "zero-knowledge" and no outcome claims in UI copy. Label demo screens "Demo data".
 10. Do not add dependencies, network calls outside `lib/ai.ts`, or secrets in the repo without asking first.
+11. The translator, back-translator and AI verifier must be three different model families (validated from config).
+    Consent-type messages are never delivered by the app: consent goes through the hospital interpreter service
+    outside the app, and the doctor records an attestation.
 
 ## Stack (confirmed in Stage 0)
 
@@ -41,7 +47,7 @@ Commands:
 ## Layout
 
 ```
-app/                 pages and API routes (/, /patient, /nurse, /doctor, /interpreter, /demo)
+app/                 pages and API routes (/, /patient, /nurse, /doctor, /demo)
 lib/ai.ts            the only place that calls an AI provider (plus MOCK_AI fixtures)
 lib/privacy/         tested helpers: envelope encryption, pseudonymise, audit hash chain
 lib/contracts/       shared zod schemas and types for every route and screen
@@ -69,4 +75,4 @@ docs/                SPEC.md, ACCEPTANCE.md, PROMPTS.md, PARALLEL_PLAN.md, CONTR
 - Status is always shown with text plus an icon, never colour alone. Touch targets are at least 44px.
 - Patients are shown by ID (A-102). Names are hidden on staff boards by default, with a "Show names" toggle.
 - Approved mockups for the Nurse and Doctor screens are in `docs/design/` (read `docs/design/README.md` first).
-  Match their layout, copy and styles. They are references, not code to import. Patient and Interpreter screens have no mockup: build them from SPEC section 6 in the same style.
+  Match their layout, copy and styles. They are references, not code to import. Only the Patient screens have no mockup: build them from SPEC section 6 in the same style.

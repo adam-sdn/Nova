@@ -1,4 +1,4 @@
 {
-  "_note": "Drug names the Safety Checker looks for. TODO(clinician): replace with the list your clinicians use. Owned by the interpreter worktree.",
+  "_note": "Drug names the Safety Checker looks for. TODO(clinician): replace with the list your clinicians use. Owned by the translation worktree.",
   "drugs": []
 }

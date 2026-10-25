@@ -42,5 +42,14 @@
   "resultsPack": {
     "contents": ["results as entered", "doctor's advice as entered", "medicines or supplements the doctor listed"],
     "whenToSeekHelpText": "TODO(clinician): fixed wording, never AI-generated"
+  },
+  "translation": {
+    "_note": "Translator, backTranslator and aiVerifier must be three different model families; the app rejects config where two share a family. Held messages are never delivered.",
+    "translator": { "model": "TranslateGemma", "family": "gemma" },
+    "backTranslator": { "model": "TODO: choose a model", "family": "TODO: a family different from the translator and the verifier" },
+    "aiVerifier": { "model": "TODO: choose a model", "family": "TODO: a third family, different from the other two" },
+    "consentRequiresInterpreter": true,
+    "weakLanguages": "TODO(clinician): languages whose messages are always held and escalated to the hospital interpreter service",
+    "maxRetries": 2
   }
 }

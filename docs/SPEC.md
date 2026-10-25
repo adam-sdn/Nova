@@ -15,7 +15,9 @@ can send enquiries any time they are in the waiting area, and an AI agent flags 
 At the end, an AI-prepared results pack (results, the doctor's advice, any medicines the doctor listed) is
 released by the doctor and delivered in the patient's language, with a follow-up option.
 
-Every AI step has a human gate. Nothing unverified reaches a patient.
+Every AI step has a human gate. A doctor's message reaches the patient only after it passes independent model
+and rule checks and the doctor confirms it against a back-translation; high-risk content is held and escalated to
+the hospital's interpreter service outside the app.
 
 ## 2. Scope
 
@@ -30,11 +32,10 @@ integration, real phone calls or SMS, dialect handling, trained ML models.
 
 | Route | Who | Device | Purpose |
 |---|---|---|---|
-| `/` | Presenter | Laptop | Onboarding: four cards that open each role in its own window |
+| `/` | Presenter | Laptop | Onboarding: three cards that open each role in its own window |
 | `/patient` | Patient | Phone-width window | Check-in, status, enquiries, escort alert, session view, results pack |
 | `/nurse` | Nurse | Wide screen (1700px or more designed) | Kanban board, escort requests, enquiries inbox |
 | `/doctor` | Doctor | Laptop or tablet | Ready-to-be-seen queue, session frame, notes, tests, decision |
-| `/interpreter` | Bilingual verifier | Laptop | Verify translations before the patient sees them |
 | `/demo` | Presenter | Any | Reset, seed, simulate arrivals, toggle MOCK_AI |
 
 All windows read and write one server-side record and poll every 1 to 2 seconds.
@@ -72,7 +73,7 @@ and its state.
 | T9 | Doctor `Complete · to decision` | Consultation to Awaiting Decision | Note signed | Phone status updates |
 | T10 | Nurse or lab updates a test state; all results back | stays in Diagnostics | none | Badge "Results back"; nurse or doctor may `Move to Awaiting Decision` |
 | T11 | Doctor `Record decision` (Discharge or Admit) | Awaiting Decision to Done | Doctor only | AI drafts the results pack; phone shows "Your doctor is preparing your summary" |
-| T12 | Doctor `Release pack` | stays in Done | Doctor only; translation verified | Phone shows the results pack and a follow-up button; enquiry box replaced |
+| T12 | Doctor `Release pack` | stays in Done | Doctor only; the pack translation passed the translation agent's checks and the doctor confirmed it | Phone shows the results pack and a follow-up button; enquiry box replaced |
 | T13 | Doctor `Order more tests` or `Second look` | Awaiting Decision to Diagnostics, or a new session | Doctor only | Session number increments |
 | T14 | Retention timer | Done off the active board | Config `doneRetentionMinutes` | Audit log keeps everything |
 
@@ -82,7 +83,7 @@ during Doctor Consultation (the patient is with the doctor) and after Done (the 
 ## 6. Screens
 
 ### Onboarding `/`
-Four cards (Patient, Nurse, Doctor, Interpreter), each opening its route in a new window. A "Demo controls"
+Three cards (Patient, Nurse, Doctor), each opening its route in a new window. A "Demo controls"
 link. A "Demo data" tag.
 
 ### Patient `/patient` (phone-width)
@@ -91,7 +92,7 @@ link. A "Demo data" tag.
 - Status feed in their language using pre-verified phrases. No wait numbers; at most a labelled range.
 - "I feel worse" shows fixed urgent wording (from config) and alerts the nurse at once.
 - Escort alert: "A nurse is coming" with a "I am here" tap.
-- In session: verified messages only. A pending message shows "Your interpreter is checking this". Never unverified text.
+- In session: delivered messages only (passed every check, then confirmed by the doctor's Send). A pending message shows "Your message is being checked". Held or escalated messages are never shown.
 - Outcome: after the doctor releases it, the results pack and a follow-up button.
 
 ### Nurse `/nurse`
@@ -105,13 +106,11 @@ link. A "Demo data" tag.
 - "Ready to be seen": triaged patients sorted by nurse priority, then longest wait. Each row: ID, priority, initials, language, Interpreter needed, wait time, Long wait, enquiry chip, an "AI summary", buttons `View profile` and `Consult now`.
 - Profile panel: reason for visit in the patient's words, the AI summary (labelled, with key points), the triage record (vitals entered by the nurse; placeholders until entered), a `Consult now` button.
 - Session frame, header with Patient ID, Doctor ID, Session no. Waiting state: stepper (Called, Nurse notified, Patient escorted, In session), "Waiting for the patient", `Start session` disabled until the nurse confirms, `Return to queue`.
-- In session: "Notes capturing" indicator; Conversation panel (doctor English, patient translated, each line with "Translation verified"); Draft note panel (template sections, each AI line marked "AI draft · from conversation lines x to y", editable); Tests to order; buttons `Complete · send for tests` and `Complete · to decision`.
+- In session: "Notes capturing" indicator; Conversation panel with one message card per line:
+  - Doctor lines: a status chip (Checking, Ready to send, Held, Escalated, Delivered); a box "The patient will read: <back-translation>"; a checks panel (rule checks: numbers with units, drug names, negations, allergy words, times; AI verifier: error list by type and severity); a collapsible "Agent trace" (each step, model family, retry count, result); buttons `Send`, `Edit and recheck`, `Escalate`. `Send` is enabled only when every check passes. A held or escalated line shows "Use the hospital interpreter service" and a `Handled with interpreter service` button (records an attestation with a reason).
+  - Patient lines: the AI translation with the original beside it and a chip "AI-checked" or "Needs checking". No gate. A "Needs checking" line prompts the doctor to ask a clarifying question.
+- Draft note panel (template sections, each AI line marked "AI draft · from conversation lines x to y", editable); Tests to order; buttons `Complete · send for tests` and `Complete · to decision`.
 - After completing: back to the queue with a notice saying where the card moved.
-
-### Interpreter `/interpreter`
-Queue of messages awaiting verification (hold-tier first, then language filter). Detail: source, translation and
-back-translation side by side, safety items ticked or flagged, buttons Verify, Edit, Send back to doctor.
-Consent-type messages need an extra typed confirmation. Each verification stamps name and time.
 
 ### Demo `/demo`
 Reset, Seed (synthetic patients across all columns), simulate a new arrival, toggle MOCK_AI, advance a test state.
@@ -125,8 +124,9 @@ Reset, Seed (synthetic patients across all columns), simulate a new arrival, tog
 | Patient summary | Triage note, intake, enquiries | Short labelled summary and key points | Doctor reads | Summarises only; never assesses |
 | Consult scribe | Transcript | Draft note in the template | Doctor edits and signs | Rule check flags any number, unit or drug name in the note that is not in the transcript |
 | Orders extractor | Signed note | Suggested tests | Doctor confirms | Optional; cut first |
-| Interpreter pipeline | Doctor message | Translation, back-translation, safety result, tier | Interpreter verifies | See section 9 |
-| Outcome pack | Results, doctor advice, medicines the doctor listed | Plain-language pack in the patient's language | Doctor releases; interpreter verifies translation | Relays only what was entered; adds nothing |
+| Translation agent | Doctor message (or patient line) | Translation, back-translation, rule-check result, AI verifier result, retries, agent trace | Doctor reads the back-translation and the checks, then taps Send; held lines go to the hospital interpreter service outside the app | See section 9. Translator, back-translator and AI verifier are three different model families |
+| AI verifier | Source, translation and back-translation | Structured error list (accuracy, omission, addition, negation, terminology), each with a severity | Feeds the agent's decision; the doctor sees it in the checks panel | A third model family, independent of the translator and back-translator |
+| Outcome pack | Results, doctor advice, medicines the doctor listed | Plain-language pack in the patient's language | Doctor releases; translation passes checks and the doctor confirms | Relays only what was entered; adds nothing |
 
 Not AI (plain rules): queue ordering, escort ping, timers, status machine, ID generation.
 
@@ -143,21 +143,69 @@ Not AI (plain rules): queue ordering, escort ping, timers, status machine, ID ge
 Placeholder weights are fine for the demo. Calibrate later against labelled vignettes or datasets and report
 over- and under-flagging honestly.
 
-## 9. Message pipeline (doctor and patient lines in a session)
+## 9. Translation agent (doctor and patient lines in a session)
 
-States: `drafted` then `checked` then either `delivered_labelled` (routine) or `awaiting_verifier` (verify or hold)
-then `verified`, `edited` or `rejected` then `delivered`.
+There is no interpreter role or window. Translation is an agentic system: AI translation, independent model and
+rule checks, and the doctor's confirmation. High-risk content is held and escalated to the hospital's interpreter
+service outside the app. No third person joins the conversation inside the app.
 
-- **Safety Checker (rules):** extract numbers with units, drug names (from `data/drugs.json`), negations (not, no, never, do not, avoid, stop), allergy words and times from the source English, then compare with the back-translated English. Any mismatch fails. The Translator retries up to 2 times, then the message is held.
-- **Tiers (config):** routine (no safety items, no consent keywords) is shown with a "machine translated" label; verify (doses, drugs, allergies, times, negations) needs the interpreter; hold (consent, risks, bad news, rare language, checker failure) needs the interpreter plus an extra confirm.
-- Patient lines flow the other way through the same pipeline so the doctor sees verified translations.
-- Pre-verified phrases (stage updates, escort alerts, outcome boilerplate) are translated and verified once, ahead of time, in `data/phrases.json`, and reused at runtime.
+### Doctor-to-patient messages
+
+States: `drafted` then `checked` then `ready_for_doctor` (every check passed) or `flagged` (a check failed, retries
+left) or `held`; from `ready_for_doctor` the doctor's Send gives `delivered`; Escalate gives `escalated` (still held).
+Edit and recheck returns a message to `drafted`.
+
+1. **Translator** (TranslateGemma) produces the translation.
+2. **Back-translator** (a different model family) translates it back to English.
+3. **Rule checker** (pure functions in `lib/rules/safety`): extract numbers with units, drug names (from
+   `data/drugs.json`), negations (not, no, never, do not, avoid, stop), allergy words and times from the source
+   English, then compare with the back-translation. Any mismatch fails.
+4. **AI verifier** (a third model family): compares source, translation and back-translation and returns a structured
+   error list. Each error has a type (accuracy, omission, addition, negation, terminology) and a severity.
+5. **Agent decision:** if any check fails, the Translator retries, up to `maxRetries` (2), with the verifier's
+   feedback (for example "preserve numbers verbatim"). Still failing: the message is `held`.
+6. **Doctor confirmation:** the doctor sees "The patient will read: <back-translation>" with the checks and taps
+   `Send`. Every doctor-to-patient message needs the doctor's Send. Only pre-approved system phrases (stage updates,
+   escort alerts, outcome boilerplate) deliver without it, because a fluent speaker verified them ahead of time in
+   `data/phrases.json`.
+7. **Agent trace:** a collapsible trace per message shows each step, the model family used, the retry count and the result.
+
+### Held messages and escalation
+
+- Held messages are never delivered. A message is held when: any check still fails after the retries; it is a
+  consent-type message; the patient's language is listed in `weakLanguages`; or the doctor chooses Escalate.
+- **Escalate:** the message stays held; the doctor sees "Use the hospital interpreter service"; the patient's card on
+  the nurse board gets an "Interpreter needed" chip so a nurse can arrange the service outside the app; an audit
+  entry is written. The doctor can also `Edit and recheck`, or mark `Handled with interpreter service` (a recorded
+  attestation with a reason).
+- **Consent:** consent-type messages are never delivered by the app. Consent is handled with the interpreter service
+  outside the app, and the doctor records an attestation.
+
+### Patient-to-doctor lines
+
+The AI translation is shown to the doctor with the original beside it and a chip "AI-checked" or "Needs checking".
+There is no gate. A flagged line prompts the doctor to ask a clarifying question.
+
+### Config (`data/config.json`, `translation` block)
+
+`translator`, `backTranslator`, `aiVerifier` (model and family for each; the app validates that the three families
+differ), `consentRequiresInterpreter: true`, `weakLanguages` (`TODO(clinician)`), `maxRetries: 2`.
+
+### Invariant and claim
+
+`getPatientVisibleContent()` returns only messages in state `delivered`, pre-approved phrases and released packs.
+Never `drafted`, `checked`, `ready_for_doctor`, `flagged`, `held` or `escalated`.
+
+Claim to use: "AI-translated, checked by independent models and rules, and confirmed by the doctor against a
+back-translation. High-risk content is held and escalated to the hospital's interpreter service outside the app."
+Never claim "AI-verified, therefore safe".
 
 ## 10. Data model (SQLite; sensitive fields encrypted)
 
 - `visits`: id, display_id (`A-102`), token, name_enc, language, status, priority, stage_changed_at, created_at, consent_contact, consent_transcribe
 - `sessions`: id, visit_id, doctor_id, number, state (`waiting`, `ready`, `in_session`, `ended`), started_at, ended_at
-- `messages`: id, session_id, direction, source_enc, translation_enc, back_translation_enc, tier, safety_json, status, verified_by, verified_at, edits_json
+- `messages`: id, session_id, direction, source_enc, translation_enc, back_translation_enc, status (`drafted`, `checked`, `ready_for_doctor`, `flagged`, `held`, `escalated`, `delivered`), safety_json (rule checks), ai_checks_json (AI verifier error list), trace_json (agent trace: steps, model families, retries, results), confirmed_by, confirmed_at, escalated_at, edits_json
+- `attestations`: id, message_id, session_id, doctor_id, kind (`handled_with_interpreter_service`, `consent_via_interpreter_service`), reason_enc, created_at
 - `enquiries`: id, visit_id, text_enc, original_lang, category, tier, ai_reason, status, handled_by, created_at
 - `tests`: id, visit_id, name, state (`ordered`, `in_progress`, `done`, `results_back`)
 - `notes`: id, session_id, template_json_enc, transcript_enc, signed_by, signed_at
@@ -170,12 +218,12 @@ no personal information. Session number is the nth consultation for that visit.
 
 ## 11. API (JSON, zod-validated)
 
-- `GET /api/state?role=nurse|doctor|patient|interpreter&id=...` the live view for polling
+- `GET /api/state?role=nurse|doctor|patient&id=...` the live view for polling
 - `POST /api/checkin`, `POST /api/visits/:id/call-triage`, `POST /api/visits/:id/triage`
 - `POST /api/visits/:id/consult-now`, `POST /api/sessions/:id/escorted`, `POST /api/sessions/:id/start`, `POST /api/sessions/:id/complete`
 - `POST /api/visits/:id/tests/:testId`, `POST /api/visits/:id/decision`, `POST /api/visits/:id/pack/release`
 - `POST /api/enquiries`, `POST /api/enquiries/:id/handle`, `POST /api/enquiries/:id/priority`
-- `GET /api/interpreter/queue`, `POST /api/interpreter/:messageId/verify`
+- `POST /api/sessions/:id/messages` (runs the translation agent), and under `/api/sessions/:id/messages/:msgId/`: `send` (the doctor's Send), `recheck` (after an edit), `escalate`, `attest` (Handled with interpreter service, with a reason)
 - `POST /api/demo/reset`, `POST /api/demo/seed`
 
 Every state-changing route checks the transition guard (section 5), writes an audit entry, and returns the new state.
@@ -184,7 +232,8 @@ Every state-changing route checks the transition guard (section 5), writes an au
 
 Use `lib/privacy` (tested): `encryptField` for names, enquiry text, transcripts, notes, packs; `pseudonymise`
 before any AI call and `restore` afterwards; `appendAudit` for every transition, flag, verification, release
-and decryption. No raw audio is stored. Honest claims only: encrypted at rest with keys held outside the
+and decryption. No third person joins the conversation inside the app: the hospital interpreter service, when
+needed, is arranged outside it. No raw audio is stored. Honest claims only: encrypted at rest with keys held outside the
 database, identifiers removed before AI calls, tamper-evident log. Not zero-knowledge. Chrome's speech
 recognition sends audio to Google's servers, so say "we do not store audio", not "audio never leaves the device".
 
@@ -202,8 +251,8 @@ recognition sends audio to Google's servers, so say "we do not store audio", not
 Put all of these in `data/config.json` and mark each `TODO(clinician)` until a clinician fills it:
 stage wording; priority scale; red-flag phrase list; category-to-tier table; wait thresholds and the Long wait
 threshold; fixed urgent wording; the note template sections; the test catalogue; results-pack template and
-"when to seek help" wording; `doneRetentionMinutes`. Languages: choose one or two and have a fluent speaker
-verify `data/phrases.json`. A fluent verifier must also staff the Interpreter window in the demo.
+"when to seek help" wording; `doneRetentionMinutes`. Languages: choose one or two. A fluent speaker verifies
+`data/phrases.json` ahead of time.
 
 ## 15. Milestones
 
@@ -213,20 +262,34 @@ M2 patient check-in (ID issue), status feed, enquiry box, "I feel worse".
 M3 nurse board: triage actions, escort strip, enquiries inbox with the AI triage agent.
 M4 doctor board: Ready queue with AI summary, Consult now, session frame (waiting, start).
 M5 live speech with typed fallback, draft note, tests ordered, Complete.
-M6 Awaiting Decision, decision, results pack, release, follow-up button, interpreter verification of the pack.
+M6 Awaiting Decision, decision, results pack, release, follow-up button; the translation agent (translator, back-translator, rule checker, AI verifier, retries, doctor Send, escalation), also applied to the pack.
 M7 polish, accessibility, smoke test of the full demo script, rehearsal.
 
 ## 16. Cut line
 
 Must have: M0 to M4, M5 with typed input, M6 with mock AI. Cut in this order if time slips: orders extractor,
-translation verification of the results pack (use pre-verified phrases), live speech (keep typed input),
+translation-agent checks for the results pack (use pre-approved phrases from `data/phrases.json`), live speech
+(keep typed input),
 encryption toggle on the audit page, patient-side large-text toggle.
 
 ## 17. Decisions log and open questions
 
 Decided (change here first, then tell Claude Code to re-read this file):
 
-- Four windows, including a separate Interpreter window, because the verification gate is the core safety claim.
+- Three windows (Patient, Nurse, Doctor). There is no interpreter role, window, route or onboarding card.
+- Translation is an agentic system: Translator (TranslateGemma), Back-translator and AI verifier from three different
+  model families, plus a rule checker. Failed checks retry up to 2 times with the verifier's feedback, then hold.
+- Every doctor-to-patient message needs the doctor's Send, after the doctor reads "The patient will read:
+  <back-translation>" and the checks. Only pre-approved phrases in `data/phrases.json` deliver without it.
+- Held messages are never delivered. Escalate keeps the message held, tells the doctor to use the hospital
+  interpreter service, puts an "Interpreter needed" chip on the nurse board card, and writes an audit entry.
+  `Handled with interpreter service` is a recorded attestation with a reason.
+- Consent-type messages are never delivered by the app (`consentRequiresInterpreter: true`); consent goes through the
+  interpreter service outside the app and the doctor records an attestation.
+- Patient-to-doctor lines are AI-translated with the original shown and an "AI-checked" or "Needs checking" chip; no gate.
+- Claim: "AI-translated, checked by independent models and rules, and confirmed by the doctor against a
+  back-translation. High-risk content is held and escalated to the hospital's interpreter service outside the app."
+  Never "AI-verified, therefore safe".
 - Registration moves To Do to Triage Waiting automatically on check-in submission. Open: a reception step may be needed.
 - Only a doctor records the decision that moves a card to Done. A nurse may move cards between Diagnostics and Awaiting Decision.
 - Enquiries are closed during Doctor Consultation and replaced by the follow-up button after Done.

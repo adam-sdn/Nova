@@ -3,7 +3,7 @@ import * as svc from "@/lib/state/service";
 import { createAi, type AiAdapter, type AiTask } from "@/lib/ai";
 import { mockAdapter } from "@/lib/ai.fixtures";
 import { patientState } from "@/lib/state/views";
-import { checkinInput, doctor, interpreter, nurse, testCtx } from "./helpers";
+import { checkinInput, doctor, nurse, testCtx } from "./helpers";
 
 const NAME = "Zephyrine Quillfeather";
 
@@ -84,7 +84,7 @@ describe("encryption at rest (H1)", () => {
     await svc.escorted(ctx, session.id, { actor: nurse, outcome: "with_doctor" });
     await svc.startSession(ctx, session.id, { actor: doctor, transcriptionConsent: true });
     const { message } = await svc.createMessage(ctx, session.id, { actor: doctor, direction: "doctor_to_patient", text: marks.message });
-    await svc.verifyMessage(ctx, message.id, { actor: interpreter, action: "verify" });
+    await svc.sendMessage(ctx, session.id, message.id, doctor);
     await svc.completeSession(ctx, session.id, {
       actor: doctor,
       next: "decision",

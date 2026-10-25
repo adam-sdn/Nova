@@ -1,6 +1,7 @@
 # Contract (Stage 0)
 
 The shared surface that the four parallel worktrees build on. Re-read this at the start of every session.
+There is no interpreter role or window: translation is the agent in SPEC section 9.
 Types live in `lib/contracts/index.ts` (zod schemas + TypeScript types). Do not redefine them. If you need a change,
 make the smallest additive change and list it under SHARED CHANGES in your final report (see docs/PARALLEL_PLAN.md).
 
@@ -12,8 +13,8 @@ make the smallest additive change and list it under SHARED CHANGES in your final
   - `409 wrong_status` / `guard_failed`: the status machine refused the transition (SPEC section 5). Nothing was written.
   - `404 not_found`.
 - Every state-changing route takes `actor: { role, id }` (demo only, no real auth). Roles: `patient`, `nurse`,
-  `doctor`, `interpreter`, `system`, `demo`. A patient's `id` is the visit **token** from check-in. Doctor IDs come
-  from `data/config.json` (`D-01`, `D-03`, `D-05`); nurse and interpreter IDs are free text (`N-01`, `I-01`).
+  `doctor`, `system`, `demo` (there is no interpreter role). A patient's `id` is the visit **token** from check-in. Doctor IDs come
+  from `data/config.json` (`D-01`, `D-03`, `D-05`); nurse IDs are free text (`N-01`).
 - Every state-changing route checks the guard in `lib/state/machine.ts`, writes in one transaction, appends an audit
   entry (hash only) and returns the new state, usually `{ visit: VisitCard, ... }`.
 - Visit statuses: `arrival`, `triage_waiting`, `triaged`, `diagnostics`, `consultation`, `awaiting_decision`, `done`.
@@ -25,7 +26,7 @@ Owner = the worktree that builds the real behaviour on top of the stub. Shared r
 
 | Method and path | Body / query (`lib/contracts`) | Returns | Transition | Owner |
 |---|---|---|---|---|
-| `GET /api/state?role=nurse\|doctor\|interpreter[&names=1]` | `StateQuery` | `StaffState` | none | shared |
+| `GET /api/state?role=nurse\|doctor[&names=1]` | `StateQuery` | `StaffState` | none | shared |
 | `GET /api/state?role=patient&id=<token>` | `StateQuery` | `PatientState` (only via `getPatientVisibleContent()`) | none | shared |
 | `POST /api/checkin` | `CheckinReq` (no actor) | `CheckinResult` `{visitId, displayId, token}` | T1 + T2 | patient |
 | `POST /api/visits/:id/register` | `ActorOnlyReq` | `{visit}` | T2 by hand (walk-in still in To Do) | nurse |
@@ -36,32 +37,40 @@ Owner = the worktree that builds the real behaviour on top of the stub. Shared r
 | `POST /api/sessions/:id/return` | `ActorOnlyReq` (doctor) | `{session, visit}` | Return to queue | doctor |
 | `POST /api/sessions/:id/start` | `StartSessionReq` `{transcriptionConsent}` | `{session, visit}` | T7 | doctor |
 | `POST /api/sessions/:id/complete` | `CompleteSessionReq` `{next, note, tests}` | `{session, visit}` | T8 / T9 | doctor |
-| `POST /api/sessions/:id/messages` | `MessageReq` `{direction, text}` | `{message}` | message `awaiting_verifier` (stub) | interpreter |
+| `POST /api/sessions/:id/messages` | `MessageReq` `{direction, text}` | `{message}` | runs the translation agent: doctor line ends `ready_for_doctor`, `flagged` or `held`; patient line `ai_checked` or `needs_checking` | translation |
+| `POST /api/sessions/:id/messages/:msgId/send` | `SendMessageReq` (doctor of the session) | `{message}` | doctor's Send: `ready_for_doctor` to `delivered` only | translation |
+| `POST /api/sessions/:id/messages/:msgId/recheck` | `RecheckMessageReq` `{text}` | `{message}` | Edit and recheck: back to `drafted`, agent runs again | translation |
+| `POST /api/sessions/:id/messages/:msgId/escalate` | `EscalateMessageReq` `{reason?}` | `{message}` | `escalated` (still held); nurse card `interpreterNeeded`; audit | translation |
+| `POST /api/sessions/:id/messages/:msgId/attest` | `AttestMessageReq` `{kind, reason}` | `{message}` | attestation recorded; message never delivered; clears `interpreterNeeded` | translation |
 | `POST /api/visits/:id/tests/:testId` | `TestUpdateReq` `{state}` | `{visit}` | T10 | nurse |
 | `POST /api/visits/:id/to-decision` | `ActorOnlyReq` (nurse or doctor) | `{visit}` | T10 Move to Awaiting Decision | nurse |
 | `POST /api/visits/:id/reopen` | `ReopenReq` `{kind: more_tests\|second_look, tests}` | `{visit, session}` | T13 | doctor |
 | `POST /api/visits/:id/decision` | `DecisionReq` `{outcome, results, advice, medicines}` | `{visit, pack}` | T11 (pack drafted) | doctor |
-| `POST /api/visits/:id/pack/verify` | `ActorOnlyReq` (interpreter; doctor only for `en`) | `{visit, pack}` | pack `draft` to `verified` | doctor |
+| `POST /api/visits/:id/pack/verify` | `ActorOnlyReq` (doctor) | `{visit, pack}` | pack `draft` to `verified` | doctor |
 | `POST /api/visits/:id/pack/release` | `ActorOnlyReq` (doctor) | `{visit, pack}` | T12 | doctor |
 | `POST /api/enquiries` | `EnquiryReq` `{visitId, kind: message\|feel_worse, text}` | `{enquiry}` | enquiry created | patient |
 | `POST /api/enquiries/:id/handle` | `ActorOnlyReq` (nurse) | `{enquiry}` | Mark handled | nurse |
 | `POST /api/enquiries/:id/priority` | `EnquiryPriorityReq` `{tier}` | `{enquiry}` | Nurse override | nurse |
-| `GET /api/interpreter/queue[?language=ar]` | | `{queue: MessageView[]}` hold first | none | interpreter |
-| `POST /api/interpreter/:messageId/verify` | `VerifyMessageReq` `{action, editedTranslation?, confirmText?}` | `{message}` | verify / edit / reject | interpreter |
 | `POST /api/demo/reset` · `seed` · `arrival` · `advance-test` | `{}` | `{ok}` etc. | demo | shared |
 | `GET` / `POST /api/demo/settings` | `DemoSettingsReq` `{mockAi}` | `{mockAi, demoDefaultsInUse}` | demo | shared |
 | `GET /api/demo/audit` | | `{ok, brokenAt?, length}` | none | shared |
 
-Routes added beyond SPEC section 11 (all needed by section 5): `register`, `return`, `messages`, `to-decision`,
-`reopen`, `pack/verify`, and the extra demo routes.
+Routes added beyond SPEC section 11 (all needed by section 5): `register`, `return`, `to-decision`, `reopen`,
+`pack/verify`, and the extra demo routes.
 
 ## What the stubs do today (replace in your worktree)
 
 - **Enquiries** (`createEnquiry` in `lib/state/service.ts`): `feel_worse` is always `urgent`; a `message` gets a mock
   category and reason and the tier `needs_review`. The nurse worktree adds `lib/rules/enquiry` (red flags, tier table,
   time bump, raise-only, low confidence, canned answers) and calls it from here.
-- **Messages** (`createMessage`): mock translation and back-translation, tier `verify`, status `awaiting_verifier`.
-  The interpreter worktree adds `lib/rules/safety` and `lib/pipeline` (checker, retries, routine/verify/hold).
+- **Messages** (`createMessage`): stores the line as `drafted`, then calls the registered message agent. The stub
+  agent gives a mock translation and back-translation and `ready_for_doctor` (tier `verify`); patient lines get
+  `needs_checking`. The translation worktree builds `lib/agents/translation` and registers it with
+  `setMessageAgent()`; it writes each result with `recordTranslationResult()`, which refuses `delivered` and `escalated`
+  (only the doctor's Send and Escalate set those). `MessageView` carries `tier`, `safety` (rule checks), `aiChecks`,
+  `trace`, `confirmedBy`, `escalatedAt` and `attestation`. `VisitCard.interpreterNeeded` is true while an escalated
+  message has no attestation. Model calls: `ctx.ai().translateMessage / backTranslate / verifyTranslation`, each with
+  `{ model }` from `appConfig.translation` (three distinct families, checked at load by `assertDistinctFamilies`).
 - **Packs**: the AI relays results, advice and medicines as entered; `whenToSeekHelp` is fixed text from config.
 
 ## Shared modules (Stage 0 only; import, do not edit)
@@ -89,7 +98,7 @@ Each worktree needs its own port and database file (PARALLEL_PLAN.md Stage 1):
 | Worktree | Port | `DB_PATH` |
 |---|---|---|
 | main | 3000 | `./care-loop.db` |
-| interpreter | 3001 | `./care-loop-interp.db` |
+| translation | 3001 | `./care-loop-translation.db` |
 | patient | 3002 | `./care-loop-patient.db` |
 | nurse | 3003 | `./care-loop-nurse.db` |
 | doctor | 3004 | `./care-loop-doctor.db` |

@@ -23,7 +23,6 @@ export const nurse: Actor = { role: "nurse", id: "N-01" };
 export const nurse2: Actor = { role: "nurse", id: "N-02" };
 export const doctor: Actor = { role: "doctor", id: "D-05" };
 export const doctor2: Actor = { role: "doctor", id: "D-01" };
-export const interpreter: Actor = { role: "interpreter", id: "I-01" };
 
 export const checkinInput = (name = "Test Person One", language = "en") => ({
   name,

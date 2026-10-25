@@ -44,20 +44,27 @@ export type SessionState = z.infer<typeof SessionState>;
 export const SessionEndReason = z.enum(["completed", "not_found", "returned"]);
 export type SessionEndReason = z.infer<typeof SessionEndReason>;
 
+/**
+ * Doctor-to-patient: drafted -> checked -> ready_for_doctor | flagged | held; the doctor's Send gives delivered;
+ * Escalate gives escalated (still held). Patient-to-doctor lines end as ai_checked or needs_checking (no gate).
+ * Only `delivered` ever reaches the patient (getPatientVisibleContent).
+ */
 export const MESSAGE_STATUSES = [
   "drafted",
   "checked",
-  "delivered_labelled",
-  "awaiting_verifier",
-  "verified",
-  "edited",
-  "rejected",
+  "ready_for_doctor",
+  "flagged",
+  "held",
+  "escalated",
   "delivered",
+  "ai_checked",
+  "needs_checking",
 ] as const;
 export const MessageStatus = z.enum(MESSAGE_STATUSES);
 export type MessageStatus = z.infer<typeof MessageStatus>;
 
-export const MessageTier = z.enum(["routine", "verify", "hold"]);
+/** The translation agent's decision for a doctor line (SPEC section 9). */
+export const MessageTier = z.enum(["routine", "verify", "held"]);
 export type MessageTier = z.infer<typeof MessageTier>;
 
 export const MessageDirection = z.enum(["doctor_to_patient", "patient_to_doctor"]);
@@ -82,11 +89,14 @@ export type EnquiryKind = z.infer<typeof EnquiryKind>;
 export const Decision = z.enum(["discharge", "admit"]);
 export type Decision = z.infer<typeof Decision>;
 
+export const AttestationKind = z.enum(["handled_with_interpreter_service", "consent_via_interpreter_service"]);
+export type AttestationKind = z.infer<typeof AttestationKind>;
+
 // ---------------------------------------------------------------------------
 // Actors (demo only: no real authentication, the window says who it is)
 // ---------------------------------------------------------------------------
 
-export const Role = z.enum(["patient", "nurse", "doctor", "interpreter", "system", "demo"]);
+export const Role = z.enum(["patient", "nurse", "doctor", "system", "demo"]);
 export type Role = z.infer<typeof Role>;
 
 export const Actor = z.object({
@@ -178,19 +188,27 @@ export const MessageReq = withActor({
 });
 export type MessageReq = z.infer<typeof MessageReq>;
 
-export const VerifyMessageReq = withActor({
-  action: z.enum(["verify", "edit", "reject"]),
-  editedTranslation: z.string().trim().max(2000).optional(),
-  /** Hold-tier (consent-type) messages need this typed confirmation. */
-  confirmText: z.string().optional(),
-});
-export type VerifyMessageReq = z.infer<typeof VerifyMessageReq>;
+/** The doctor's Send, after reading "The patient will read: <back-translation>". ready_for_doctor -> delivered only. */
+export const SendMessageReq = ActorOnlyReq;
+export type SendMessageReq = ActorOnlyReq;
+
+/** Edit and recheck: the doctor's new English text runs through the translation agent again. */
+export const RecheckMessageReq = withActor({ text: z.string().trim().min(1).max(2000) });
+export type RecheckMessageReq = z.infer<typeof RecheckMessageReq>;
+
+/** Escalate to the hospital interpreter service: the message stays held and the nurse card gets "Interpreter needed". */
+export const EscalateMessageReq = withActor({ reason: z.string().trim().max(500).default("") });
+export type EscalateMessageReq = z.infer<typeof EscalateMessageReq>;
+
+/** "Handled with interpreter service" (or consent taken there): a recorded attestation with a reason. */
+export const AttestMessageReq = withActor({ kind: AttestationKind, reason: z.string().trim().min(1).max(1000) });
+export type AttestMessageReq = z.infer<typeof AttestMessageReq>;
 
 export const DemoSettingsReq = z.object({ mockAi: z.boolean() });
 export type DemoSettingsReq = z.infer<typeof DemoSettingsReq>;
 
 export const StateQuery = z.object({
-  role: z.enum(["nurse", "doctor", "patient", "interpreter"]),
+  role: z.enum(["nurse", "doctor", "patient"]),
   /** Patient: the visit token from check-in. Staff: their own ID (optional). */
   id: z.string().optional(),
   /** Staff boards: "1" when the Show names toggle is on. */
@@ -229,11 +247,19 @@ export interface MessageView {
   source: string;
   translation: string | null;
   backTranslation: string | null;
-  tier: MessageTier;
+  /** null for patient-to-doctor lines and before the agent has decided. */
+  tier: MessageTier | null;
   status: MessageStatus;
+  /** Rule checker result (lib/agents/translation/steps/ruleCheck). */
   safety: unknown;
-  verifiedBy: string | null;
-  verifiedAt: string | null;
+  /** AI verifier result. */
+  aiChecks: unknown;
+  /** Agent trace: steps, models, retries, results. Shown collapsible on the doctor screen. */
+  trace: unknown;
+  confirmedBy: string | null;
+  confirmedAt: string | null;
+  escalatedAt: string | null;
+  attestation: { kind: AttestationKind; doctorId: string; createdAt: string } | null;
   createdAt: string;
 }
 
@@ -287,12 +313,14 @@ export interface VisitCard {
   sessionCount: number;
   openEnquiries: number;
   urgentEnquiry: boolean;
+  /** A message was escalated and not yet attested: a nurse arranges the hospital interpreter service. */
+  interpreterNeeded: boolean;
   /** AI summary from triage. Label it "AI summary" on screen. */
   summary: { summary: string; keyPoints: string[] } | null;
 }
 
 export interface StaffState {
-  role: "nurse" | "doctor" | "interpreter";
+  role: "nurse" | "doctor";
   now: string;
   visits: VisitCard[];
   enquiries: EnquiryView[];
@@ -307,8 +335,6 @@ export interface PatientMessage {
   id: string;
   direction: MessageDirection;
   text: string;
-  /** True for routine-tier lines shown with a "machine translated" label. */
-  machineTranslated: boolean;
 }
 
 export interface PatientPhrase {
@@ -329,7 +355,7 @@ export interface PatientState {
     calledForTriage: boolean;
   };
   messages: PatientMessage[];
-  /** Number of lines waiting for the interpreter (the patient sees "Your interpreter is checking this"). */
+  /** Doctor lines not yet delivered (the patient sees "Your message is being checked."). */
   pendingCount: number;
   pack: { content: PackContent; language: string } | null;
   packPreparing: boolean;

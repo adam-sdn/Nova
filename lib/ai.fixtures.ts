@@ -46,6 +46,8 @@ const handlers: Record<AiTask, Handler> = {
 
   back_translate: ({ text }: { text: string }) => ({ text: text.replace(/^\[mock [^\]]+\] /, "") }),
 
+  verify_translation: () => ({ passed: true, errors: [] }),
+
   draft_pack: ({ results, advice, medicines }) => ({ results, advice, medicines }),
 };
 

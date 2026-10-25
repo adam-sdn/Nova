@@ -1,5 +1,6 @@
 // CLAUDE.md hard rule 2: the ONE function that decides what a patient may see.
-// Only human-verified or released content, plus pre-approved phrases that carry a verifier and date.
+// Only doctor lines in state `delivered` (every check passed, then the doctor's Send), released packs, and
+// pre-approved phrases that carry a verifier and date.
 // Pure: no database, no decryption. Callers pass already-built views in.
 import {
   ENQUIRY_OPEN_STATUSES,
@@ -14,15 +15,7 @@ import {
 import type { PhraseTable } from "@/lib/config";
 
 /** Doctor lines in these states may be shown. Everything else is withheld. */
-export const PATIENT_VISIBLE_MESSAGE_STATUSES: readonly MessageStatus[] = [
-  "delivered_labelled", // routine tier, shown with a "machine translated" label
-  "verified",
-  "edited",
-  "delivered",
-];
-
-/** Doctor lines still on their way (the patient sees "Your interpreter is checking this"). */
-const PENDING_STATUSES: readonly MessageStatus[] = ["drafted", "checked", "awaiting_verifier"];
+export const PATIENT_VISIBLE_MESSAGE_STATUSES: readonly MessageStatus[] = ["delivered"];
 
 export interface PatientVisibleInput {
   status: VisitStatus;
@@ -34,6 +27,7 @@ export interface PatientVisibleInput {
 
 export interface PatientVisibleContent {
   messages: PatientMessage[];
+  /** Doctor lines not delivered yet; the patient sees "Your message is being checked." and nothing else. */
   pendingCount: number;
   pack: { content: PackContent; language: string } | null;
   packPreparing: boolean;
@@ -48,17 +42,12 @@ export function getPatientVisibleContent(input: PatientVisibleInput): PatientVis
   for (const m of input.messages) {
     if (m.direction === "patient_to_doctor") {
       // The patient's own words, as they wrote them. No AI text is involved.
-      messages.push({ id: m.id, direction: m.direction, text: m.source, machineTranslated: false });
+      messages.push({ id: m.id, direction: m.direction, text: m.source });
       continue;
     }
     if (PATIENT_VISIBLE_MESSAGE_STATUSES.includes(m.status) && m.translation) {
-      messages.push({
-        id: m.id,
-        direction: m.direction,
-        text: m.translation,
-        machineTranslated: m.status === "delivered_labelled",
-      });
-    } else if (PENDING_STATUSES.includes(m.status)) {
+      messages.push({ id: m.id, direction: m.direction, text: m.translation });
+    } else {
       pendingCount++;
     }
   }

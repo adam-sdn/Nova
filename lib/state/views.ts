@@ -17,6 +17,7 @@ import { getPatientVisibleContent } from "./patientVisible";
 import {
   activeSessionFor,
   allDoctors,
+  attestationFor,
   consultationCount,
   enquiriesFor,
   getDoctor,
@@ -24,6 +25,7 @@ import {
   messagesForVisit,
   packFor,
   testsFor,
+  unattestedEscalations,
   type EnquiryRow,
   type MessageRow,
   type PackRow,
@@ -64,6 +66,7 @@ export function sessionView(ctx: Ctx, s: SessionRow): SessionView {
 }
 
 export function messageView(ctx: Ctx, m: MessageRow): MessageView {
+  const a = attestationFor(ctx.db, m.id);
   return {
     id: m.id,
     sessionId: m.session_id,
@@ -74,8 +77,12 @@ export function messageView(ctx: Ctx, m: MessageRow): MessageView {
     tier: m.tier,
     status: m.status,
     safety: m.safety_json ? JSON.parse(m.safety_json) : null,
-    verifiedBy: m.verified_by,
-    verifiedAt: m.verified_at,
+    aiChecks: m.ai_checks_json ? JSON.parse(m.ai_checks_json) : null,
+    trace: m.trace_json ? JSON.parse(m.trace_json) : null,
+    confirmedBy: m.confirmed_by,
+    confirmedAt: m.confirmed_at,
+    escalatedAt: m.escalated_at,
+    attestation: a ? { kind: a.kind, doctorId: a.doctor_id, createdAt: a.created_at } : null,
     createdAt: m.created_at,
   };
 }
@@ -129,6 +136,7 @@ export function visitCard(ctx: Ctx, v: VisitRow, showNames: boolean): VisitCard 
     sessionCount: consultationCount(ctx.db, v.id),
     openEnquiries: enquiries.length,
     urgentEnquiry: enquiries.some((e) => e.tier === "urgent"),
+    interpreterNeeded: unattestedEscalations(ctx.db, v.id) > 0,
     summary: v.summary_enc ? JSON.parse(dec(ctx, "visits", v.id, "summary", v.summary_enc)) : null,
   };
 }

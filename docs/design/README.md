@@ -18,5 +18,18 @@ Read them for:
 All names, IDs, times and summaries in them are demo data. Vitals show as `[from triage]` and the note template as
 `[your trust's template]` on purpose: those are placeholders for a clinician to fill.
 
-Not mocked up: the Patient phone screens and the Interpreter window. Build those from docs/SPEC.md section 6 and the
+Not mocked up: only the Patient phone screens. Build them from docs/SPEC.md section 6 and the
 same design tokens, keeping the same look (IBM Plex fonts, teal accent, text-plus-icon chips).
+
+## Layout frames (`frames/`)
+
+Rendered frames added as layout guides. Use them for **layout only** (what sits where, panel order, density).
+Visual style (colours, type, spacing details) is still to be decided, so keep the tokens in SPEC section 13 for now.
+Names, numbers and vitals in them are made up; do not copy clinical values from them.
+
+| File | Use it for |
+|---|---|
+| `frames/nurse-board.webp` | Nurse board: header, Show names / Reset demo, escort strip, seven columns, enquiries inbox on the right |
+| `frames/doctor-ready-to-be-seen.webp` | Doctor home: priority filter tabs, Ready to be seen cards, Patient Overview panel with Consult now |
+| `frames/layout-patients-list.webp` | Reference only: left filter rail, table list, right detail panel |
+| `frames/layout-tasks.webp` | Reference only: list with right-hand detail panel and action footer |

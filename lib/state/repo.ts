@@ -1,5 +1,6 @@
 // Row types and small read helpers. Writes live in service.ts so every write goes through a guard.
 import type {
+  AttestationKind,
   Decision,
   EnquiryKind,
   EnquiryStatus,
@@ -57,12 +58,25 @@ export interface MessageRow {
   source_enc: string;
   translation_enc: string | null;
   back_translation_enc: string | null;
-  tier: MessageTier;
+  tier: MessageTier | null;
   safety_json: string | null;
+  ai_checks_json: string | null;
+  trace_json: string | null;
   status: MessageStatus;
-  verified_by: string | null;
-  verified_at: string | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  escalated_at: string | null;
   edits_json: string | null;
+  created_at: string;
+}
+
+export interface AttestationRow {
+  id: string;
+  message_id: string;
+  session_id: string;
+  doctor_id: string;
+  kind: AttestationKind;
+  reason_enc: string;
   created_at: string;
 }
 
@@ -155,6 +169,23 @@ export const messagesForVisit = (db: DB, visitId: string) =>
       "SELECT m.* FROM messages m JOIN sessions s ON s.id = m.session_id WHERE s.visit_id = ? ORDER BY m.created_at, m.rowid",
     )
     .all(visitId) as MessageRow[];
+
+export const attestationFor = (db: DB, messageId: string) =>
+  db.prepare("SELECT * FROM attestations WHERE message_id = ? ORDER BY created_at DESC LIMIT 1").get(messageId) as
+    | AttestationRow
+    | undefined;
+
+/** Escalated messages for this visit that no doctor has attested yet (the nurse "Interpreter needed" chip). */
+export const unattestedEscalations = (db: DB, visitId: string) =>
+  (
+    db
+      .prepare(
+        `SELECT COUNT(*) n FROM messages m JOIN sessions s ON s.id = m.session_id
+         WHERE s.visit_id = ? AND m.status = 'escalated'
+           AND NOT EXISTS (SELECT 1 FROM attestations a WHERE a.message_id = m.id)`,
+      )
+      .get(visitId) as { n: number }
+  ).n;
 
 export const getDoctor = (db: DB, id: string) =>
   db.prepare("SELECT * FROM doctors WHERE id = ?").get(id) as DoctorRow | undefined;

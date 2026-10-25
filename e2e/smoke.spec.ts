@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("onboarding shows four role cards that each open their route in a new window (A1)", async ({ page, context }) => {
+test("onboarding shows three role cards that each open their route in a new window (A1)", async ({ page, context }) => {
   await page.goto("/");
   await expect(page.getByText("Demo data")).toBeVisible();
-  for (const role of ["patient", "nurse", "doctor", "interpreter"]) {
+  await expect(page.locator("[data-testid^=role-]")).toHaveCount(3);
+  await expect(page.getByText("Interpreter")).toHaveCount(0);
+  for (const role of ["patient", "nurse", "doctor"]) {
     const [popup] = await Promise.all([context.waitForEvent("page"), page.getByTestId(`role-${role}`).click()]);
     await popup.waitForLoadState();
     expect(new URL(popup.url()).pathname).toBe(`/${role}`);

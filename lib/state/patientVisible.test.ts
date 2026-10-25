@@ -22,8 +22,12 @@ const msg = (status: MessageStatus, direction: MessageView["direction"] = "docto
   tier: "verify",
   status,
   safety: null,
-  verifiedBy: null,
-  verifiedAt: null,
+  aiChecks: null,
+  trace: null,
+  confirmedBy: status === "delivered" ? "D-05" : null,
+  confirmedAt: null,
+  escalatedAt: null,
+  attestation: null,
   createdAt: "2026-10-24T09:00:00Z",
 });
 
@@ -45,23 +49,19 @@ describe("getPatientVisibleContent (F5)", () => {
     expect(shown).toBe(PATIENT_VISIBLE_MESSAGE_STATUSES.includes(status));
   });
 
-  it("never shows drafted, checked, awaiting, or rejected lines", () => {
-    const hidden: MessageStatus[] = ["drafted", "checked", "awaiting_verifier", "rejected"];
-    const out = getPatientVisibleContent({ ...base, messages: hidden.map((s) => msg(s)) });
-    expect(JSON.stringify(out)).not.toContain(SECRET);
-    expect(out.messages).toEqual([]);
-    expect(out.pendingCount).toBe(3); // rejected lines are not pending
-  });
-
-  it("labels routine lines as machine translated", () => {
-    const out = getPatientVisibleContent({ ...base, messages: [msg("delivered_labelled"), msg("verified")] });
-    expect(out.messages.map((m) => m.machineTranslated)).toEqual([true, false]);
+  it("shows only delivered lines; drafted, checked, ready_for_doctor, flagged, held and escalated stay pending", () => {
+    const hidden: MessageStatus[] = ["drafted", "checked", "ready_for_doctor", "flagged", "held", "escalated"];
+    const out = getPatientVisibleContent({ ...base, messages: [...hidden.map((s) => msg(s)), msg("delivered")] });
+    const text = JSON.stringify(out);
+    for (const s of hidden) expect(text).not.toContain(`${SECRET}-${s}`);
+    expect(out.messages.map((m) => m.id)).toEqual(["m-delivered"]);
+    expect(out.pendingCount).toBe(hidden.length);
   });
 
   it("shows the patient's own lines as typed, never a translation", () => {
     const out = getPatientVisibleContent({ ...base, messages: [msg("drafted", "patient_to_doctor")] });
     expect(out.messages).toEqual([
-      { id: "m-drafted", direction: "patient_to_doctor", text: "Take two tablets", machineTranslated: false },
+      { id: "m-drafted", direction: "patient_to_doctor", text: "Take two tablets" },
     ]);
   });
 

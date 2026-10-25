@@ -10,7 +10,29 @@
   "idStart": 101,
   "idPrefix": "A",
   "enquiry": {
-    "redFlagPhrases": ["can't breathe", "cannot breathe", "chest pain", "fainted", "bleeding"],
+    "redFlagPhrases": [
+      "can't breathe",
+      "cannot breathe",
+      "chest pain",
+      "fainted",
+      "bleeding"
+    ],
     "waitBumpMinutes": 30
+  },
+  "translation": {
+    "_note": "DEMO-ONLY model choices, used only while config.translation still says TODO. Not a recommendation.",
+    "translator": {
+      "model": "TranslateGemma",
+      "family": "gemma"
+    },
+    "backTranslator": {
+      "model": "demo-back-translator",
+      "family": "demo-family-b"
+    },
+    "aiVerifier": {
+      "model": "demo-verifier",
+      "family": "demo-family-c"
+    },
+    "weakLanguages": []
   }
 }

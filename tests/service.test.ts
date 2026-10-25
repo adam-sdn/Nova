@@ -5,7 +5,8 @@ import { loadChain, verifyAudit } from "@/lib/state/audit";
 import { DISPLAY_ID_RE } from "@/lib/state/ids";
 import { staffState } from "@/lib/state/views";
 import { appConfig } from "@/lib/config";
-import { checkinInput, doctor, doctor2, interpreter, nurse, nurse2, testCtx, type TestCtx } from "./helpers";
+import { checkinInput, doctor, doctor2, nurse, nurse2, testCtx, type TestCtx } from "./helpers";
+import { patientState } from "@/lib/state/views";
 
 const signedNote = { sections: { Plan: "Synthetic plan" }, transcript: ["line one"], signed: true };
 
@@ -213,7 +214,8 @@ describe("decision, pack and retention (T11 to T14, C10, C12)", () => {
     const c = await toAwaitingDecision(ctx);
     await svc.recordDecision(ctx, c.visitId, { actor: doctor, outcome: "admit", results: "r", advice: "a", medicines: ["x"] });
     await expectRejected(svc.releasePack(ctx, c.visitId, doctor), "guard_failed");
-    await svc.verifyPack(ctx, c.visitId, interpreter);
+    await expectRejected(svc.verifyPack(ctx, c.visitId, nurse), "forbidden_role");
+    await svc.verifyPack(ctx, c.visitId, doctor);
     await expectRejected(svc.releasePack(ctx, c.visitId, nurse), "forbidden_role");
     const r = await svc.releasePack(ctx, c.visitId, doctor);
     expect(r.pack.status).toBe("released");
@@ -262,6 +264,75 @@ describe("enquiries (stubs; rules are built in the nurse worktree)", () => {
     expect(set.enquiry.tier).toBe("routine");
     const done = await svc.handleEnquiry(ctx, msg.enquiry.id, nurse);
     expect(done.enquiry.status).toBe("handled");
+  });
+});
+
+describe("session messages: translation agent stub, Send, escalate, attest (SPEC section 9)", () => {
+  const line = { direction: "doctor_to_patient" as const, text: "Take one tablet in the morning" };
+
+  it("a doctor line waits as ready_for_doctor and reaches the patient only after the doctor's Send", async () => {
+    const ctx = testCtx();
+    const c = await toConsultation(ctx);
+    const { message } = await svc.createMessage(ctx, c.sessionId, { actor: doctor, ...line });
+    expect(message.status).toBe("ready_for_doctor");
+    expect(message.backTranslation).toBeTruthy();
+    expect(patientState(ctx, c.token)!.messages).toEqual([]);
+    expect(patientState(ctx, c.token)!.pendingCount).toBe(1);
+    await expectRejected(svc.sendMessage(ctx, c.sessionId, message.id, doctor2), "forbidden_role");
+    const sent = await svc.sendMessage(ctx, c.sessionId, message.id, doctor);
+    expect(sent.message).toMatchObject({ status: "delivered", confirmedBy: doctor.id });
+    expect(patientState(ctx, c.token)!.messages.map((m) => m.id)).toEqual([message.id]);
+    await expectRejected(svc.sendMessage(ctx, c.sessionId, message.id, doctor), "wrong_status");
+  });
+
+  it("the agent can never set delivered", () => {
+    const ctx = testCtx();
+    expect(() =>
+      svc.recordTranslationResult(ctx, "x", { status: "delivered", tier: "routine", translation: "t", backTranslation: "b" }),
+    ).toThrow(TransitionError);
+  });
+
+  it("held lines cannot be sent; escalate sets Interpreter needed until attested", async () => {
+    const ctx = testCtx();
+    const c = await toConsultation(ctx);
+    const { message } = await svc.createMessage(ctx, c.sessionId, { actor: doctor, ...line });
+    svc.recordTranslationResult(ctx, message.id, { status: "held", tier: "held", translation: "t", backTranslation: "b" });
+    await expectRejected(svc.sendMessage(ctx, c.sessionId, message.id, doctor), "wrong_status");
+    const onCard = () => staffState(ctx, "nurse", false).visits.find((v) => v.id === c.visitId)!.interpreterNeeded;
+    expect(onCard()).toBe(false);
+    const esc = await svc.escalateMessage(ctx, c.sessionId, message.id, { actor: doctor, reason: "" });
+    expect(esc.message.status).toBe("escalated");
+    expect(onCard()).toBe(true);
+    expect(loadChain(ctx.db).some((e) => e.refId === message.id && e.action === "message.escalated")).toBe(true);
+    await expectRejected(svc.sendMessage(ctx, c.sessionId, message.id, doctor), "wrong_status");
+    const att = await svc.attestMessage(ctx, c.sessionId, message.id, {
+      actor: doctor,
+      kind: "handled_with_interpreter_service",
+      reason: "Synthetic reason",
+    });
+    expect(att.message.attestation?.kind).toBe("handled_with_interpreter_service");
+    expect(att.message.status).toBe("escalated");
+    expect(onCard()).toBe(false);
+    expect(patientState(ctx, c.token)!.messages).toEqual([]);
+  });
+
+  it("edit and recheck runs the agent again with the new text", async () => {
+    const ctx = testCtx();
+    const c = await toConsultation(ctx);
+    const { message } = await svc.createMessage(ctx, c.sessionId, { actor: doctor, ...line });
+    const r = await svc.recheckMessage(ctx, c.sessionId, message.id, { actor: doctor, text: "Take one tablet at night" });
+    expect(r.message).toMatchObject({ status: "ready_for_doctor", source: "Take one tablet at night" });
+  });
+
+  it("patient lines are translated for the doctor without a gate", async () => {
+    const ctx = testCtx();
+    const c = await toConsultation(ctx);
+    const r = await svc.createMessage(ctx, c.sessionId, {
+      actor: { role: "patient", id: c.token },
+      direction: "patient_to_doctor",
+      text: "It hurts here",
+    });
+    expect(r.message.status).toBe("needs_checking");
   });
 });
 

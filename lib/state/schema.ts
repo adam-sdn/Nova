@@ -57,12 +57,25 @@ CREATE TABLE IF NOT EXISTS messages (
   source_enc TEXT NOT NULL,
   translation_enc TEXT,
   back_translation_enc TEXT,
-  tier TEXT NOT NULL,
-  safety_json TEXT,
+  tier TEXT,                               -- routine | verify | held; null for patient lines
+  safety_json TEXT,                        -- rule checker result
+  ai_checks_json TEXT,                     -- AI verifier result
+  trace_json TEXT,                         -- agent trace (steps, models, retries)
   status TEXT NOT NULL,
-  verified_by TEXT,
-  verified_at TEXT,
+  confirmed_by TEXT,                       -- the doctor's Send
+  confirmed_at TEXT,
+  escalated_at TEXT,
   edits_json TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS attestations (
+  id TEXT PRIMARY KEY,
+  message_id TEXT NOT NULL REFERENCES messages(id),
+  session_id TEXT NOT NULL REFERENCES sessions(id),
+  doctor_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  reason_enc TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
 
@@ -126,6 +139,7 @@ CREATE TABLE IF NOT EXISTS settings (    -- demo: runtime toggles such as MOCK_A
 
 /** Tables wiped by /demo Reset. The audit log is wiped too so Reset gives an identical start (A2). */
 export const RESET_TABLES = [
+  "attestations",
   "messages",
   "notes",
   "tests",

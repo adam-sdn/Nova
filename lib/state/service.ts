@@ -12,16 +12,21 @@ import {
   type EnquiryPriorityReq,
   type EnquiryReq,
   type EnquiryView,
+  type AttestMessageReq,
+  type EscalateMessageReq,
   type EscortedReq,
+  type MessageDirection,
   type MessageReq,
+  type MessageStatus,
+  type MessageTier,
   type MessageView,
   type PackView,
+  type RecheckMessageReq,
   type ReopenReq,
   type SessionView,
   type StartSessionReq,
   type TestUpdateReq,
   type TriageReq,
-  type VerifyMessageReq,
   type VisitCard,
   type VisitStatus,
 } from "@/lib/contracts";
@@ -468,9 +473,103 @@ export async function setEnquiryTier(ctx: Ctx, id: string, req: EnquiryPriorityR
 }
 
 // ---------------------------------------------------------------------------
-// Session messages. Stage 0 stub: every line waits for the interpreter (tier "verify").
-// The real pipeline (safety checker, retries, tiers) is built in the interpreter worktree.
+// Session messages (SPEC section 9). There is no interpreter role: the translation agent checks each line
+// and the doctor's Send delivers it. Stage 0 stub agent: mock translation and back-translation, then
+// ready_for_doctor. The translation worktree (lib/agents/translation) swaps in the real pipeline with
+// setMessageAgent() and writes its results through recordTranslationResult().
 // ---------------------------------------------------------------------------
+
+function loadMessage(ctx: Ctx, id: string) {
+  const m = getMessage(ctx.db, id);
+  if (!m) throw new TransitionError("not_found", `Message ${id} not found`);
+  return m;
+}
+
+/** The message must belong to this session, and only that session's doctor may act on doctor lines. */
+function loadDoctorLine(ctx: Ctx, sessionId: string, messageId: string, actor: Actor) {
+  const s = loadSession(ctx, sessionId);
+  const m = loadMessage(ctx, messageId);
+  if (m.session_id !== s.id) throw new TransitionError("not_found", `Message ${messageId} is not in this session`);
+  if (m.direction !== "doctor_to_patient") throw new TransitionError("wrong_status", "Only doctor lines go through Send");
+  if (actor.role !== "doctor" || actor.id !== s.doctor_id) {
+    throw new TransitionError("forbidden_role", "Only this session's doctor can act on this message");
+  }
+  return { s, m, v: loadVisit(ctx, s.visit_id) };
+}
+
+export interface TranslationResult {
+  status: MessageStatus;
+  tier: MessageTier | null;
+  translation: string | null;
+  backTranslation: string | null;
+  safety?: unknown;
+  aiChecks?: unknown;
+  trace?: unknown;
+}
+
+/** Writes one translation-agent result onto a message. The agent can never set delivered: only Send does. */
+export function recordTranslationResult(ctx: Ctx, messageId: string, r: TranslationResult) {
+  if (r.status === "delivered" || r.status === "escalated") {
+    throw new TransitionError("guard_failed", `The translation agent cannot set ${r.status}`);
+  }
+  return tx(ctx, () => {
+    const m = loadMessage(ctx, messageId);
+    if (m.status === "delivered") throw new TransitionError("wrong_status", "This message was already delivered");
+    const json = (x: unknown) => (x === undefined ? null : JSON.stringify(x));
+    ctx.db
+      .prepare(
+        `UPDATE messages SET status = ?, tier = ?, translation_enc = ?, back_translation_enc = ?,
+           safety_json = ?, ai_checks_json = ?, trace_json = ? WHERE id = ?`,
+      )
+      .run(
+        r.status,
+        r.tier,
+        r.translation === null ? null : enc(ctx, "messages", m.id, "translation", r.translation),
+        r.backTranslation === null ? null : enc(ctx, "messages", m.id, "back_translation", r.backTranslation),
+        json(r.safety),
+        json(r.aiChecks),
+        json(r.trace),
+        m.id,
+      );
+    audit(ctx, "system:translation-agent", `message.${r.status}`, m.id, { tier: r.tier });
+    return { message: messageView(ctx, getMessage(ctx.db, m.id)!) };
+  });
+}
+
+export type MessageAgent = (
+  ctx: Ctx,
+  messageId: string,
+  text: string,
+  direction: MessageDirection,
+  visit: { id: string; language: string; name: string },
+) => Promise<{ message: MessageView }>;
+
+/** Stage 0 stand-in for the translation agent. */
+const stubAgent: MessageAgent = async (ctx, messageId, text, direction, visit) => {
+  const [from, to] = direction === "doctor_to_patient" ? ["en", visit.language] : [visit.language, "en"];
+  const ids = { name: visit.name };
+  const ai = ctx.ai();
+  const translation = await ai.translateMessage(text, from, to, ids);
+  const back = await ai.backTranslate(translation, to, from, ids);
+  return recordTranslationResult(ctx, messageId, {
+    status: direction === "doctor_to_patient" ? "ready_for_doctor" : "needs_checking",
+    tier: direction === "doctor_to_patient" ? "verify" : null,
+    translation,
+    backTranslation: back,
+  });
+};
+
+let messageAgent: MessageAgent = stubAgent;
+/** The translation worktree registers the real pipeline here, so the routes do not change. */
+export function setMessageAgent(agent: MessageAgent | null) {
+  messageAgent = agent ?? stubAgent;
+}
+
+const agentVisit = (ctx: Ctx, v: VisitRow) => ({
+  id: v.id,
+  language: v.language,
+  name: dec(ctx, "visits", v.id, "name", v.name_enc),
+});
 
 export async function createMessage(ctx: Ctx, sessionId: string, req: MessageReq): Promise<{ message: MessageView }> {
   const s = loadSession(ctx, sessionId);
@@ -483,56 +582,78 @@ export async function createMessage(ctx: Ctx, sessionId: string, req: MessageReq
   } else {
     requirePatient(v, req.actor);
   }
-  const [from, to] = req.direction === "doctor_to_patient" ? ["en", v.language] : [v.language, "en"];
-  const ids = { name: dec(ctx, "visits", v.id, "name", v.name_enc) };
-  const ai = ctx.ai();
-  const translation = await ai.translateMessage(req.text, from, to, ids);
-  const back = await ai.backTranslate(translation, to, from, ids);
-  return tx(ctx, () => {
+  const id = tx(ctx, () => {
     const id = newId();
     ctx.db
-      .prepare(
-        `INSERT INTO messages (id, session_id, direction, source_enc, translation_enc, back_translation_enc, tier, status, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'verify', 'awaiting_verifier', ?)`,
-      )
-      .run(
-        id,
-        sessionId,
-        req.direction,
-        enc(ctx, "messages", id, "source", req.text),
-        enc(ctx, "messages", id, "translation", translation),
-        enc(ctx, "messages", id, "back_translation", back),
-        iso(ctx),
-      );
+      .prepare("INSERT INTO messages (id, session_id, direction, source_enc, status, created_at) VALUES (?, ?, ?, ?, 'drafted', ?)")
+      .run(id, sessionId, req.direction, enc(ctx, "messages", id, "source", req.text), iso(ctx));
     audit(ctx, req.direction === "doctor_to_patient" ? req.actor : `patient:${v.display_id}`, "message.drafted", id, { sessionId });
-    return { message: messageView(ctx, getMessage(ctx.db, id)!) };
+    return id;
+  });
+  return messageAgent(ctx, id, req.text, req.direction, agentVisit(ctx, v));
+}
+
+/** The doctor's Send: ready_for_doctor -> delivered. Never from flagged, held or escalated. */
+export async function sendMessage(ctx: Ctx, sessionId: string, messageId: string, actor: Actor) {
+  return tx(ctx, () => {
+    const { m } = loadDoctorLine(ctx, sessionId, messageId, actor);
+    if (m.status !== "ready_for_doctor") {
+      throw new TransitionError("wrong_status", `Only a message that passed every check can be sent (this one is ${m.status})`);
+    }
+    ctx.db
+      .prepare("UPDATE messages SET status = 'delivered', confirmed_by = ?, confirmed_at = ? WHERE id = ?")
+      .run(actor.id, iso(ctx), m.id);
+    audit(ctx, actor, "message.delivered", m.id);
+    return { message: messageView(ctx, getMessage(ctx.db, m.id)!) };
   });
 }
 
-export async function verifyMessage(ctx: Ctx, messageId: string, req: VerifyMessageReq) {
+/** Edit and recheck: the doctor's new English text goes back to drafted and the agent runs again. */
+export async function recheckMessage(ctx: Ctx, sessionId: string, messageId: string, req: RecheckMessageReq) {
+  const { m, v } = loadDoctorLine(ctx, sessionId, messageId, req.actor);
+  if (m.status === "delivered") throw new TransitionError("wrong_status", "A delivered message cannot be edited");
+  tx(ctx, () => {
+    const edits = JSON.parse(m.edits_json ?? "[]") as unknown[];
+    edits.push({ by: actorLabel(req.actor), at: iso(ctx) });
+    ctx.db
+      .prepare(
+        `UPDATE messages SET status = 'drafted', tier = NULL, source_enc = ?, translation_enc = NULL,
+           back_translation_enc = NULL, safety_json = NULL, ai_checks_json = NULL, trace_json = NULL,
+           escalated_at = NULL, edits_json = ? WHERE id = ?`,
+      )
+      .run(enc(ctx, "messages", m.id, "source", req.text), JSON.stringify(edits), m.id);
+    audit(ctx, req.actor, "message.edited", m.id);
+  });
+  return messageAgent(ctx, m.id, req.text, "doctor_to_patient", agentVisit(ctx, v));
+}
+
+/** Escalate to the hospital interpreter service: the message stays held and the nurse card shows "Interpreter needed". */
+export async function escalateMessage(ctx: Ctx, sessionId: string, messageId: string, req: EscalateMessageReq) {
   return tx(ctx, () => {
-    const m = getMessage(ctx.db, messageId);
-    if (!m) throw new TransitionError("not_found", `Message ${messageId} not found`);
-    if (req.actor.role !== "interpreter") throw new TransitionError("forbidden_role", "Only the interpreter can verify");
-    if (m.status !== "awaiting_verifier") throw new TransitionError("wrong_status", `Message is ${m.status}, not awaiting the verifier`);
-    if (m.tier === "hold" && req.action !== "reject" && !req.confirmText?.trim()) {
-      throw new TransitionError("guard_failed", "Hold-tier messages need the extra typed confirmation");
+    const { m } = loadDoctorLine(ctx, sessionId, messageId, req.actor);
+    if (m.status === "delivered") throw new TransitionError("wrong_status", "A delivered message cannot be escalated");
+    if (m.status === "escalated") throw new TransitionError("wrong_status", "This message is already escalated");
+    ctx.db.prepare("UPDATE messages SET status = 'escalated', escalated_at = ? WHERE id = ?").run(iso(ctx), m.id);
+    audit(ctx, req.actor, "message.escalated", m.id, { reason: req.reason });
+    return { message: messageView(ctx, getMessage(ctx.db, m.id)!) };
+  });
+}
+
+/** "Handled with interpreter service" (or consent taken there). The message itself is never delivered. */
+export async function attestMessage(ctx: Ctx, sessionId: string, messageId: string, req: AttestMessageReq) {
+  return tx(ctx, () => {
+    const { m, s } = loadDoctorLine(ctx, sessionId, messageId, req.actor);
+    if (!["flagged", "held", "escalated"].includes(m.status)) {
+      throw new TransitionError("wrong_status", `Only a held or escalated message can be attested (this one is ${m.status})`);
     }
-    const now = iso(ctx);
-    if (req.action === "edit") {
-      if (!req.editedTranslation) throw new TransitionError("guard_failed", "An edit needs the corrected translation");
-      const edits = JSON.parse(m.edits_json ?? "[]") as unknown[];
-      edits.push({ by: actorLabel(req.actor), at: now });
-      ctx.db
-        .prepare("UPDATE messages SET status = 'edited', translation_enc = ?, edits_json = ?, verified_by = ?, verified_at = ? WHERE id = ?")
-        .run(enc(ctx, "messages", m.id, "translation", req.editedTranslation), JSON.stringify(edits), req.actor.id, now, m.id);
-    } else {
-      const status = req.action === "verify" ? "verified" : "rejected";
-      ctx.db
-        .prepare("UPDATE messages SET status = ?, verified_by = ?, verified_at = ? WHERE id = ?")
-        .run(status, req.actor.id, now, m.id);
-    }
-    audit(ctx, req.actor, `message.${req.action}`, m.id);
+    const id = newId();
+    ctx.db
+      .prepare(
+        `INSERT INTO attestations (id, message_id, session_id, doctor_id, kind, reason_enc, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(id, m.id, s.id, req.actor.id, req.kind, enc(ctx, "attestations", id, "reason", req.reason), iso(ctx));
+    audit(ctx, req.actor, `message.attest.${req.kind}`, m.id, { reason: req.reason });
     return { message: messageView(ctx, getMessage(ctx.db, m.id)!) };
   });
 }

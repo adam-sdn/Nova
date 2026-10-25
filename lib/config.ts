@@ -35,6 +35,22 @@ function scale(value: unknown): { min: number; max: number } {
 
 export type Tier = "urgent" | "high" | "routine";
 
+export interface ModelChoice {
+  model: string;
+  family: string;
+}
+
+export interface TranslationConfig {
+  translator: ModelChoice;
+  backTranslator: ModelChoice;
+  aiVerifier: ModelChoice;
+  /** Consent-type messages are never delivered by the app (CLAUDE.md rule 11). */
+  consentRequiresInterpreter: boolean;
+  /** Messages to patients with these languages are always held and escalated. */
+  weakLanguages: string[];
+  maxRetries: number;
+}
+
 export interface AppConfig {
   columns: string[];
   doneRetentionMinutes: number;
@@ -56,10 +72,42 @@ export interface AppConfig {
   /** null while the clinician list is still TODO. */
   testCatalogue: string[] | null;
   doctors: { id: string; name: string; cubicle: string }[];
+  translation: TranslationConfig;
   /** Fixed "when to seek help" wording. May be a TODO(clinician) placeholder. Never AI-generated. */
   whenToSeekHelpText: string;
   /** Keys that are currently using DEMO-ONLY values from data/demo-defaults.json. */
   demoDefaultsInUse: string[];
+}
+
+function model(key: string, value: unknown, demoValue: ModelChoice): ModelChoice {
+  const v = (value ?? {}) as Partial<ModelChoice>;
+  if (typeof v.model === "string" && typeof v.family === "string" && !isTodo(v.model) && !isTodo(v.family)) {
+    return { model: v.model, family: v.family };
+  }
+  fallbacks.push(key);
+  return demoValue;
+}
+
+/** CLAUDE.md rule 11: translator, back-translator and verifier must be three different model families. */
+export function assertDistinctFamilies(t: Pick<TranslationConfig, "translator" | "backTranslator" | "aiVerifier">) {
+  const fams = [t.translator.family, t.backTranslator.family, t.aiVerifier.family].map((f) => f.trim().toLowerCase());
+  if (new Set(fams).size !== 3) {
+    throw new Error(`config.translation: translator, backTranslator and aiVerifier must use three different families (got ${fams.join(", ")})`);
+  }
+}
+
+function translation(t: Record<string, any> = {}): TranslationConfig {
+  const d = demo.translation;
+  const out: TranslationConfig = {
+    translator: model("translation.translator", t.translator, d.translator),
+    backTranslator: model("translation.backTranslator", t.backTranslator, d.backTranslator),
+    aiVerifier: model("translation.aiVerifier", t.aiVerifier, d.aiVerifier),
+    consentRequiresInterpreter: t.consentRequiresInterpreter !== false,
+    weakLanguages: list("translation.weakLanguages", t.weakLanguages ?? "TODO", d.weakLanguages),
+    maxRetries: typeof t.maxRetries === "number" ? t.maxRetries : 2,
+  };
+  assertDistinctFamilies(out);
+  return out;
 }
 
 function build(): AppConfig {
@@ -90,6 +138,7 @@ function build(): AppConfig {
     noteTemplateSections: c.noteTemplate?.sections ?? [],
     testCatalogue: Array.isArray(catalogue) ? catalogue : null,
     doctors: c.doctors,
+    translation: translation(c.translation),
     whenToSeekHelpText: String(c.resultsPack?.whenToSeekHelpText ?? "TODO(clinician)"),
     demoDefaultsInUse: [...fallbacks],
   };

@@ -38,7 +38,7 @@ const happy: Record<TransitionName, GuardFacts> = {
   update_test: { status: "diagnostics", actor: nurse },
   move_to_decision: { status: "diagnostics", actor: nurse, tests: ["results_back", "results_back"] },
   record_decision: { status: "awaiting_decision", actor: doctor, decision: "discharge" },
-  verify_pack: { status: "done", actor: actor("interpreter", "I-01"), packStatus: "draft", packLanguage: "ar" },
+  verify_pack: { status: "done", actor: doctor, packStatus: "draft", packLanguage: "ar" },
   release_pack: { status: "done", actor: doctor, packStatus: "verified" },
   order_more_tests: { status: "awaiting_decision", actor: doctor, testsToOrder: 2 },
   second_look: { status: "awaiting_decision", actor: doctor, activeSession: null },
@@ -65,7 +65,7 @@ const expectedTo: Record<TransitionName, VisitStatus> = {
 };
 
 const names = Object.keys(RULES) as TransitionName[];
-const allRoles: Role[] = ["patient", "nurse", "doctor", "interpreter", "system", "demo"];
+const allRoles: Role[] = ["patient", "nurse", "doctor", "system", "demo"];
 
 describe("legal transitions (SPEC section 5)", () => {
   it.each(names)("%s passes with all guards met and lands in the right column", (name) => {
@@ -112,7 +112,6 @@ describe("illegal transitions are rejected with a clear error (C13)", () => {
     ["move_to_decision", { tests: [] }, "Not all results"],
     ["record_decision", { decision: null }, "decision"],
     ["verify_pack", { packStatus: "verified" }, "no draft pack"],
-    ["verify_pack", { actor: doctor, packLanguage: "ar" }, "interpreter must verify"],
     ["release_pack", { packStatus: "draft" }, "verified first"],
     ["release_pack", { packStatus: null }, "verified first"],
     ["order_more_tests", { testsToOrder: 0 }, "at least one test"],
@@ -150,8 +149,8 @@ describe("specific rules", () => {
     ).toEqual({ ok: true, to: "consultation" });
   });
 
-  it("an English pack may be verified by the doctor because nothing was translated", () => {
-    expect(check("verify_pack", { ...happy.verify_pack, actor: doctor, packLanguage: "en" }).ok).toBe(true);
+  it("only the doctor confirms a pack; there is no interpreter role", () => {
+    expect(check("verify_pack", { ...happy.verify_pack, actor: nurse }).ok).toBe(false);
   });
 
   it("check-in needs consent to contact and the AI notice (T1, B5)", () => {

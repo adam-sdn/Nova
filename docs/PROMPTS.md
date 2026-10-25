@@ -22,7 +22,7 @@ Goal: scaffold the project and the onboarding page.
 - Create a Next.js (App Router) + TypeScript strict + Tailwind app in this folder, keeping the existing files.
 - Add better-sqlite3, zod, vitest and playwright. Propose anything else before adding it.
 - lib/privacy already exists: import it via an alias and make `npx tsx lib/privacy/selftest.ts` run as an npm script.
-- Build `/` with four cards (Patient, Nurse, Doctor, Interpreter) that open their routes in new windows, and empty placeholder pages for each route.
+- Build `/` with three cards (Patient, Nurse, Doctor) that open their routes in new windows, and empty placeholder pages for each route.
 - Create lib/ai.ts with a MOCK_AI mode that returns fixtures, and a seed script with synthetic visits in every column.
 - Update the Commands section of CLAUDE.md with the real commands.
 Acceptance: A1, A2 (basic), A5.
@@ -75,13 +75,17 @@ Add the rule check that flags note content not found in the transcript (E8).
 Acceptance: C8, E5, E6, E7, E8.
 ```
 
-## M6: decision, results pack, interpreter
+## M6: decision, results pack, translation agent
 
 ```
-Read CLAUDE.md and SPEC sections 5 (T10 to T13), 6 (Interpreter), 9.
-Goal: Awaiting Decision, the doctor's decision, the results pack, release, the follow-up button, and the interpreter window.
-Write failing tests first for the Safety Checker with the planted-error cases in ACCEPTANCE F1.
-Acceptance: C9, F1 to F4, G1 to G5.
+Read CLAUDE.md and SPEC sections 5 (T10 to T13), 6 (Doctor), 7, 9.
+Goal: Awaiting Decision, the doctor's decision, the results pack, release, the follow-up button, and the translation agent:
+translator, back-translator, rule checker and AI verifier (three different model families), retries with the verifier's
+feedback then hold, the doctor's Send against "The patient will read: <back-translation>", the agent trace, and escalation
+to the hospital interpreter service (held, "Interpreter needed" nurse chip, audit entry, attestation). There is no interpreter window.
+Write failing tests first for the rule checker with the planted-error cases in ACCEPTANCE F1, then for retries and holds (F2),
+consent and weak-language holds (F4), distinct model families (F7) and escalation (F9).
+Acceptance: C9, F1 to F9, G1 to G5.
 ```
 
 ## M7: polish and smoke test
@@ -89,7 +93,7 @@ Acceptance: C9, F1 to F4, G1 to G5.
 ```
 Read CLAUDE.md, docs/ACCEPTANCE.md and the rehearsal script.
 Goal: write a Playwright test that runs the full rehearsal script across separate browser windows (patient, nurse,
-doctor, interpreter), run it, fix what fails, then fix accessibility items I1 to I4.
+doctor), run it, fix what fails, then fix accessibility items I1 to I4.
 ```
 
 ## Final audit (fresh session)

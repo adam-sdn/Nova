@@ -37,7 +37,7 @@ export function WaitingFrame({ v, s, me, act, busy }: { v: VisitCard; s: Session
   const [consent, setConsent] = useState(false);
   const arrived = s.state === "ready";
   return (
-    <section aria-label="Session" className="flex flex-col gap-4 rounded-[12px] border border-border bg-surface p-4">
+    <section aria-label="Session" className="surface appear flex flex-col gap-4 rounded-[22px] p-5">
       <SessionHeader title="Session" v={v} s={s} me={me} />
       <div>
         <div className="text-[17px] font-semibold">{arrived ? "Patient is here" : "Waiting for the patient"}</div>
@@ -51,13 +51,13 @@ export function WaitingFrame({ v, s, me, act, busy }: { v: VisitCard; s: Session
         {sessionSteps(s).map((st) => (
           <li
             key={st.label}
-            className={`rounded-[8px] border px-2.5 py-1.5 text-[13px] font-semibold ${st.done ? "border-accent-border bg-accent-tint text-accent-ink" : "border-high-border bg-high-fill text-high-ink"}`}
+            className={`rounded-full border px-3 py-1.5 text-[13px] font-semibold ${st.done ? "border-accent-border bg-accent-tint text-accent-ink" : "border-high-border bg-high-fill text-high-ink"}`}
           >
             {st.label} · {st.done ? "done" : st.label === "In session" ? "not started" : "waiting"}
           </li>
         ))}
       </ol>
-      <div className="rounded-[10px] border border-border p-3">
+      <div className="rounded-[16px] bg-ground p-3.5">
         <div className="flex gap-2 text-xs font-semibold">
           <span>{v.name ?? v.initials}</span>
           <span>{langLabel(v.language)}</span>
@@ -165,7 +165,7 @@ export function InSession(props: {
   };
 
   return (
-    <section aria-label="Session in progress" className="flex flex-col gap-4 rounded-[12px] border border-border bg-surface p-4">
+    <section aria-label="Session in progress" className="surface appear flex flex-col gap-5 rounded-[22px] p-5">
       <SessionHeader title="Session in progress" v={v} s={s} me={me} capturing />
       <div className="grid gap-4 lg:grid-cols-2">
         <section aria-label="Conversation" className="flex flex-col gap-2">
@@ -175,10 +175,10 @@ export function InSession(props: {
             <MessageCard key={m.id} m={m} index={i + 1} langLabel={langLabel(v.language)} act={async (p, b) => void (await act(p, b))} />
           ))}
           {/* TODO(speech): live speech capture with typed fallback (Stage 3). Typed input only for now. */}
-          <div className="flex flex-col gap-2 rounded-[10px] border border-border p-2">
+          <div className="flex flex-col gap-2 rounded-[16px] bg-ground p-2.5">
             <textarea
               aria-label="Type a line"
-              className="min-h-16 rounded-[8px] border border-border p-2 text-[14px]"
+              className="min-h-16 rounded-[12px] border border-border-strong/50 p-2.5 text-[14px] leading-relaxed"
               placeholder={asPatient ? "Patient line (demo)" : "Type what you want to say to the patient"}
               value={line}
               onChange={(e) => setLine(e.target.value)}
@@ -204,14 +204,14 @@ export function InSession(props: {
               </Button>
             </div>
           </div>
-          <div className="rounded-[8px] border border-high-border bg-high-fill px-2 py-1.5 text-xs text-high-ink">
+          <div className="rounded-[12px] border border-high-border bg-high-fill px-3 py-2 text-xs text-high-ink">
             The AI drafts this form from the conversation. Read every section and correct it before you sign.
           </div>
           {props.noteSections.map((k) => (
             <label key={k} className="flex flex-col gap-1">
               <span className="text-[13px] font-semibold">{k}</span>
               <textarea
-                className="min-h-16 rounded-[8px] border border-border p-2 text-[14px]"
+                className="min-h-16 rounded-[12px] border border-border-strong/50 p-2.5 text-[14px] leading-relaxed"
                 placeholder="[Doctor to complete]"
                 value={sections[k] ?? ""}
                 onChange={(e) => {
@@ -235,14 +235,14 @@ export function InSession(props: {
                   key={t}
                   type="button"
                   aria-label={`Remove ${t}`}
-                  className="min-h-11 rounded-[8px] border border-accent-border bg-accent-tint px-3 text-[13px] font-semibold text-accent-ink"
+                  className="pressable min-h-11 rounded-full border border-accent-border bg-accent-tint px-3.5 text-[13px] font-semibold text-accent-ink"
                   onClick={() => setTests(tests.filter((x) => x !== t))}
                 >
                   {t} ×
                 </button>
               ))}
               {props.testCatalogue ? (
-                <select aria-label="Add test" className="min-h-11 rounded-[8px] border border-border px-2" value="" onChange={(e) => addTest(e.target.value)}>
+                <select aria-label="Add test" className="min-h-11 rounded-[12px] border border-border-strong/50 px-2.5" value="" onChange={(e) => addTest(e.target.value)}>
                   <option value="">Add test</option>
                   {props.testCatalogue.map((t) => (
                     <option key={t}>{t}</option>
@@ -253,7 +253,7 @@ export function InSession(props: {
                   {/* TODO(clinician): testCatalogue in config; free text until then. */}
                   <input
                     aria-label="Test name"
-                    className="min-h-11 rounded-[8px] border border-border px-2"
+                    className="min-h-11 rounded-[12px] border border-border-strong/50 px-2.5"
                     value={newTest}
                     onChange={(e) => setNewTest(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addTest(newTest)}

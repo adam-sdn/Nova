@@ -23,10 +23,10 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
   if (!visits.length && !pending.length) return null;
 
   return (
-    <section aria-label="Awaiting decision" className="flex flex-col gap-3 rounded-[12px] border border-border bg-surface p-4">
+    <section aria-label="Awaiting decision" className="surface flex flex-col gap-3 rounded-[22px] p-5">
       <h2 className="text-[17px] font-semibold">Awaiting decision</h2>
       {visits.map((v) => (
-        <article key={v.id} className="rounded-[10px] border border-border p-3">
+        <article key={v.id} className="rounded-[16px] bg-ground p-3.5">
           <div className="flex flex-wrap items-center gap-2">
             <Mono className="text-[16px]">{v.displayId}</Mono>
             <span className="text-xs font-semibold">{v.name ?? v.initials}</span>
@@ -42,8 +42,8 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
           </div>
           {openId === v.id && (
             <div className="mt-3 flex flex-col gap-2">
-              <textarea aria-label="Results" placeholder="Results, as you want the patient to read them" className="min-h-14 rounded-[8px] border border-border p-2" value={results} onChange={(e) => setResults(e.target.value)} />
-              <textarea aria-label="Advice" placeholder="Advice" className="min-h-14 rounded-[8px] border border-border p-2" value={advice} onChange={(e) => setAdvice(e.target.value)} />
+              <textarea aria-label="Results" placeholder="Results, as you want the patient to read them" className="min-h-14 rounded-[12px] border border-border-strong/50 p-2.5" value={results} onChange={(e) => setResults(e.target.value)} />
+              <textarea aria-label="Advice" placeholder="Advice" className="min-h-14 rounded-[12px] border border-border-strong/50 p-2.5" value={advice} onChange={(e) => setAdvice(e.target.value)} />
               <div className="flex gap-2">
                 {(["discharge", "admit"] as const).map((o) => (
                   <Button
@@ -61,7 +61,7 @@ export function DecisionPanel({ visits, act, busy }: { visits: VisitCard[]; act:
         </article>
       ))}
       {pending.map(([visitId, p]) => (
-        <article key={visitId} className="rounded-[10px] border border-accent-border bg-accent-tint p-3 text-accent-ink">
+        <article key={visitId} className="appear rounded-[16px] border border-accent-border bg-accent-tint p-3.5 text-accent-ink">
           <div className="text-[14px] font-semibold">Results pack · {p.status === "released" ? "released to the patient" : p.status}</div>
           <div className="text-[13px]">{p.content.results || "[no results entered]"}</div>
           <div className="mt-2 flex gap-2">

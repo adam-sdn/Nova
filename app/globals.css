@@ -1,52 +1,203 @@
 @import "tailwindcss";
 
-/* Design tokens from docs/SPEC.md section 13 and the approved mockups in docs/design/. */
+/*
+ * Care Loop design system: Liquid Glass.
+ * Translucent glass is for chrome (headers, navigation, session bar, side panels, popovers).
+ * Content people read or act on (cards, forms, messages) stays on opaque surfaces.
+ * Status colours are reserved for meaning and always paired with text and an icon.
+ */
 @theme {
-  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-sans: var(--font-plex-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
 
-  --color-ground: #f3f5f4;
+  /* Neutrals: cool off-whites, near-black ink, low-contrast hairlines */
+  --color-ground: #f2f4f7;
   --color-surface: #ffffff;
-  --color-ink: #14201f;
-  --color-muted: #4a5a58;
-  --color-border: #cbd5d2;
-  --color-border-strong: #7f918d;
-  --color-column: #e6ecea;
+  --color-ink: #1b1f24;
+  --color-muted: #5a6370;
+  --color-border: #e1e5ea;
+  --color-border-strong: #8b95a1;
+  --color-column: rgb(228 233 239 / 0.62);
 
-  --color-accent: #0b6b66;
-  --color-accent-tint: #d9efed;
-  --color-accent-ink: #0b4f4b;
-  --color-accent-border: #8cc8c3;
+  /* Accent: restrained teal */
+  --color-accent: #087f8c;
+  --color-accent-tint: #e2f2f4;
+  --color-accent-ink: #05606a;
+  --color-accent-border: #a3d4da;
 
-  --color-urgent-ink: #8a2b0e;
-  --color-urgent-fill: #fde7dd;
-  --color-urgent-border: #e9ae96;
+  /* Semantic states only */
+  --color-urgent-ink: #9a2b12;
+  --color-urgent-fill: #fdece5;
+  --color-urgent-border: #efbca8;
 
-  --color-high-ink: #6b4a00;
-  --color-high-fill: #fff1cc;
-  --color-high-border: #e8c873;
+  --color-high-ink: #6e4d00;
+  --color-high-fill: #fff4d6;
+  --color-high-border: #ecd18a;
 
-  --color-routine-ink: #2f3e3c;
-  --color-routine-fill: #e6ecea;
-  --color-routine-border: #b9c5c1;
+  --color-routine-ink: #3a434e;
+  --color-routine-fill: #edf0f3;
+  --color-routine-border: #cfd5dc;
 
-  --color-demo-ink: #17406e;
-  --color-demo-fill: #e4eef9;
-  --color-demo-border: #b7cde8;
+  --color-demo-ink: #1f4a7a;
+  --color-demo-fill: #e8f0fa;
+  --color-demo-border: #c3d5ec;
 
-  --radius-card: 10px;
-  --radius-column: 12px;
-  --radius-button: 8px;
-  --radius-chip: 6px;
+  --radius-card: 14px;
+  --radius-column: 18px;
+  --radius-button: 12px;
+  --radius-chip: 999px;
+
+  --shadow-soft: 0 1px 2px rgb(20 30 45 / 0.04), 0 4px 14px rgb(20 30 45 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(20 30 45 / 0.05), 0 12px 32px rgb(20 30 45 / 0.09);
+  --shadow-glass: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 0 0 0.5px rgb(255 255 255 / 0.5) inset,
+    0 8px 32px rgb(20 30 45 / 0.08), 0 1px 3px rgb(20 30 45 / 0.05);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 html,
 body {
-  background: var(--color-ground);
   color: var(--color-ink);
+  background-color: var(--color-ground);
+}
+
+/* A soft, fixed light wash behind everything, so glass has something to refract. */
+body {
+  background-image:
+    radial-gradient(1100px 600px at 8% -10%, rgb(8 127 140 / 0.09), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, rgb(120 150 200 / 0.1), transparent 55%),
+    radial-gradient(800px 600px at 50% 110%, rgb(8 127 140 / 0.05), transparent 60%);
+  background-attachment: fixed;
+  font-feature-settings: "kern", "liga";
+  letter-spacing: -0.003em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.012em;
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: rgb(8 127 140 / 0.18);
+}
+
+@layer components {
+  /* Liquid Glass: frosted, faint inner highlight, hairline edge, soft depth. */
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.6));
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow: var(--shadow-glass);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+  }
+
+  /* Opaque reading surface with gentle depth. */
+  .surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Anything pressable: quick, quiet feedback. */
+  .pressable {
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 200ms ease,
+      color 160ms ease;
+  }
+  .pressable:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Cards that open something lift a little on hover (pointer devices only). */
+  .liftable {
+    transition:
+      transform 200ms var(--ease-out),
+      box-shadow 200ms ease,
+      border-color 160ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .liftable:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+
+  /* Panels and overlays settle in instead of popping. */
+  .appear {
+    animation: appear 220ms var(--ease-out) both;
+  }
+}
+
+/* Form controls: calm, roomy, clear focus. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px rgb(8 127 140 / 0.16);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Glass needs blur support; fall back to a near-opaque surface. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgb(255 255 255 / 0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable:active:not(:disabled),
+  .liftable:hover {
+    transform: none;
+  }
+  .appear {
+    animation: fade 160ms ease both;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: rgb(255 255 255 / 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

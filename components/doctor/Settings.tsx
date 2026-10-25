@@ -25,11 +25,11 @@ export function Settings({
   onLeave: () => void;
 }) {
   const [shown, setShown] = useState(false);
-  const row = "flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 last:border-b-0";
+  const row = "flex flex-wrap items-center justify-between gap-3 border-b border-border/70 py-3.5 last:border-b-0";
   return (
     <section aria-label="Settings" className="flex max-w-[640px] flex-col gap-3" data-testid="doctor-settings">
       <h2 className="text-[20px] font-semibold">Settings</h2>
-      <div className="rounded-[12px] border border-border bg-surface px-4">
+      <div className="surface rounded-[22px] px-5">
         <div className={row}>
           <span className="text-[14px] font-semibold">Doctor</span>
           <span className="text-[14px]">
@@ -40,7 +40,7 @@ export function Settings({
           <span className="text-[14px] font-semibold">Session code</span>
           <button
             type="button"
-            className="min-h-11 rounded-[8px] border border-border-strong bg-column px-3 text-[14px] font-semibold"
+            className="pressable min-h-11 rounded-[12px] border border-border bg-ground px-3.5 text-[14px] font-semibold hover:bg-white"
             onClick={() => setShown(!shown)}
             data-testid="doctor-code"
           >
@@ -49,11 +49,18 @@ export function Settings({
         </div>
         <div className={row}>
           <span className="text-[14px] font-semibold">Text size</span>
-          <div className="flex gap-2" role="radiogroup" aria-label="Text size">
+          <div className="flex gap-1 rounded-full bg-black/[0.04] p-1" role="radiogroup" aria-label="Text size">
             {TEXT_SIZES.map((t) => (
-              <Button key={t.id} role="radio" aria-checked={textSize === t.id} variant={textSize === t.id ? "primary" : "secondary"} onClick={() => onTextSize(t.id)}>
+              <button
+                key={t.id}
+                type="button"
+                role="radio"
+                aria-checked={textSize === t.id}
+                className={`pressable min-h-11 rounded-full px-4 text-[13px] font-semibold ${textSize === t.id ? "bg-white text-accent-ink shadow-[0_1px_3px_rgb(20_30_45/0.1)]" : "text-muted hover:text-ink"}`}
+                onClick={() => onTextSize(t.id)}
+              >
                 {t.label}
-              </Button>
+              </button>
             ))}
           </div>
         </div>

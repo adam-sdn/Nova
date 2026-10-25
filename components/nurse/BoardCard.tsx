@@ -16,9 +16,13 @@ interface Props {
   act: Act;
   /** Step within a grouped column, e.g. "Ready for doctor". */
   stepLabel?: string;
+  /** Open this patient's overview. Clicks on the card's own buttons and fields do not open it. */
+  onOpen?: () => void;
 }
 
-export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focused, act, stepLabel }: Props) {
+const INTERACTIVE = "button, a, input, select, textarea, label, form";
+
+export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focused, act, stepLabel, onOpen }: Props) {
   const [triageOpen, setTriageOpen] = useState(false);
   const [priority, setPriority] = useState("");
   const [note, setNote] = useState("");
@@ -40,22 +44,32 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
     <article
       id={`card-${c.id}`}
       data-testid={`card-${c.displayId}`}
-      className={`flex flex-col gap-1.5 rounded-[10px] border bg-surface p-2.5 ${focused ? "border-accent ring-2 ring-accent" : "border-border"}`}
+      onClick={(e) => {
+        if (onOpen && !(e.target as HTMLElement).closest(INTERACTIVE)) onOpen();
+      }}
+      className={`liftable flex cursor-pointer flex-col gap-2 rounded-[16px] border bg-surface p-3 shadow-[0_1px_2px_rgb(20_30_45/0.05),0_3px_10px_rgb(20_30_45/0.04)] ${focused ? "border-accent ring-[3px] ring-accent/25" : "border-border hover:border-border-strong/50"}`}
     >
       <div className="flex items-center justify-between gap-1.5">
-        <Mono className="text-[15px]">{c.displayId}</Mono>
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={`Open overview for ${c.displayId}`}
+          className="min-h-8 rounded-[8px] text-left underline-offset-2 hover:underline"
+        >
+          <Mono className="text-[15px] tracking-[0.01em]">{c.displayId}</Mono>
+        </button>
         {stepLabel && (
-          <span data-testid="step-label" className="rounded-[6px] border border-accent-border bg-accent-tint px-1.5 py-px text-xs font-semibold text-accent-ink">
+          <span data-testid="step-label" className="rounded-full border border-accent-border bg-accent-tint px-2 py-0.5 text-xs font-semibold text-accent-ink">
             {stepLabel}
           </span>
         )}
         {c.priority !== null && (
-          <span className="rounded-[6px] border border-border-strong bg-surface px-1.5 py-px text-xs font-semibold">Priority {c.priority}</span>
+          <span className="rounded-full border border-border-strong/50 bg-white px-2 py-0.5 text-xs font-semibold tabular-nums">Priority {c.priority}</span>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-sm">{c.name ?? c.initials}</span>
-        <span className="rounded-[6px] bg-column px-1.5 py-px text-xs font-semibold uppercase text-routine-ink">{c.language}</span>
+        <span className="text-sm font-medium">{c.name ?? c.initials}</span>
+        <span className="rounded-full bg-routine-fill px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-routine-ink">{c.language}</span>
       </div>
       <div className="text-[13px] text-routine-ink">{statusText(c)}</div>
 
@@ -71,7 +85,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
       {c.tests.length > 0 && c.status !== "diagnostics" && (
         <div className="flex flex-wrap gap-1">
           {c.tests.map((t) => (
-            <span key={t.id} className="rounded-[6px] border border-border bg-ground px-1.5 py-px text-xs text-routine-ink">
+            <span key={t.id} className="rounded-full border border-border bg-ground px-2 py-0.5 text-xs text-routine-ink">
               {t.name} · {TEST_STATE_LABELS[t.state]}
             </span>
           ))}
@@ -81,11 +95,11 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
       {c.status === "diagnostics" && c.tests.length > 0 && (
         <div className="flex flex-col gap-1">
           {c.tests.map((t) => (
-            <label key={t.id} className="flex flex-wrap items-center justify-between gap-1 rounded-[6px] border border-border bg-ground px-1.5 py-1 text-xs text-routine-ink">
-              <span>{t.name}</span>
+            <label key={t.id} className="flex flex-wrap items-center justify-between gap-1 rounded-[12px] bg-ground px-2.5 py-1 text-xs text-routine-ink">
+              <span className="font-medium">{t.name}</span>
               <select
                 aria-label={`${t.name} state`}
-                className="min-h-11 rounded-[6px] border border-border-strong bg-surface px-1 text-xs"
+                className="min-h-11 rounded-[10px] border border-border-strong/60 bg-surface px-2 text-xs"
                 value={t.state}
                 onChange={(e) => act(`/api/visits/${c.id}/tests/${t.id}`, { state: e.target.value })}
               >
@@ -110,7 +124,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
       </div>
 
       {c.summary && (
-        <div className="rounded-[8px] bg-ground px-2 py-1.5 text-xs text-routine-ink">
+        <div className="rounded-[12px] bg-ground px-2.5 py-2 text-xs leading-relaxed text-routine-ink">
           <span className="font-semibold">AI summary:</span> {c.summary.summary}
         </div>
       )}
@@ -147,7 +161,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
               step={1}
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="min-h-11 rounded-[8px] border border-border-strong px-2 text-sm font-normal"
+              className="min-h-11 rounded-[12px] border border-border-strong/70 px-2.5 text-sm font-normal"
             />
           </label>
           <label className="flex flex-col gap-0.5 text-xs font-semibold">
@@ -156,7 +170,7 @@ export function BoardCard({ card: c, now, longWaitMinutes, priorityScale, focuse
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="rounded-[8px] border border-border-strong px-2 py-1 text-sm font-normal"
+              className="rounded-[12px] border border-border-strong/70 px-2.5 py-1 text-sm font-normal"
             />
           </label>
           <div className="flex flex-wrap gap-1.5">

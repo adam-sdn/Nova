@@ -44,7 +44,7 @@ function FollowUpRow({ f, now, act, busy }: { f: FollowUpView; now: string; act:
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(f.text);
   return (
-    <article data-testid={`follow-up-${f.id}`} className="flex flex-col gap-2 rounded-[10px] border border-border bg-surface p-3">
+    <article data-testid={`follow-up-${f.id}`} className="surface appear flex flex-col gap-2.5 rounded-[18px] p-4">
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <Mono className="text-[15px]">{f.displayId}</Mono>
         <span className="text-muted">Session {f.sessionNumber} · {sinceLabel(f.createdAt, now)} ago</span>
@@ -55,7 +55,7 @@ function FollowUpRow({ f, now, act, busy }: { f: FollowUpView; now: string; act:
       {editing ? (
         <textarea
           aria-label="Follow-up wording"
-          className="min-h-16 rounded-[8px] border border-border-strong p-2 text-[14px]"
+          className="min-h-16 rounded-[12px] border border-border-strong/60 p-2.5 text-[14px] leading-relaxed"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

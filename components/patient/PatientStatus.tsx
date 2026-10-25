@@ -50,17 +50,17 @@ export function PatientStatus({
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="sticky top-0 z-10 flex flex-col gap-2 rounded-[12px] border border-border bg-surface p-3">
+      <header className="glass sticky top-2 z-10 flex flex-col gap-2 rounded-[20px] p-3.5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[1.25em]" data-testid="patient-id">
             Your ID: <Mono>{v.displayId}</Mono>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2">
+          <label className="flex min-w-0 max-w-full items-center gap-2">
             <span className="text-muted">Language</span>
             <select
-              className="min-h-11 rounded-[8px] border border-border-strong bg-surface px-2 text-[1em]"
+              className="min-h-11 min-w-0 max-w-full flex-1 rounded-[12px] border border-border-strong/60 bg-surface px-2.5 text-[1em]"
               value={displayLang ?? v.language}
               onChange={(e) => setDisplayLang(e.target.value)}
               data-testid="language-switch"
@@ -78,8 +78,18 @@ export function PatientStatus({
         </div>
       </header>
 
-      {v.escortRequested && <EscortAlert key={v.status} />}
+      {v.ended && (
+        <Panel data-testid="visit-ended" className="border-accent-border bg-accent-tint text-accent-ink">
+          <p className="flex items-center gap-2 text-[1.2em] font-semibold">
+            <CheckIcon size={18} /> Your visit has ended
+          </p>
+          <p className="mt-1">Thank you. You can keep this page open to read your summary below.</p>
+        </Panel>
+      )}
 
+      {!v.ended && v.escortRequested && <EscortAlert key={v.status} />}
+
+      {!v.ended && (
       <Panel aria-live="polite" data-testid="status-feed">
         <h2 className="mb-1 font-semibold text-muted">Your status</h2>
         <p className="flex items-start gap-2 text-[1.15em]">
@@ -88,8 +98,9 @@ export function PatientStatus({
         </p>
         {v.calledForTriage && <p className="mt-2 font-semibold">A nurse is getting ready to see you.</p>}
       </Panel>
+      )}
 
-      {feelWorseVisible(v.status) && (
+      {!v.ended && feelWorseVisible(v.status) && (
         <FeelWorse visitId={session.visitId} actor={actor} onSent={refresh} />
       )}
 
@@ -97,7 +108,7 @@ export function PatientStatus({
         <Messages messages={data.messages} pendingCount={data.pendingCount} />
       )}
 
-      {enquiryBoxOpen(v.status) ? (
+      {v.ended ? null : enquiryBoxOpen(v.status) ? (
         <EnquiryBox visitId={session.visitId} actor={actor} />
       ) : (
         v.status !== "done" && (
@@ -128,7 +139,7 @@ function EscortAlert() {
   return (
     <section
       role="alert"
-      className="rounded-[12px] border border-accent-border bg-accent-tint p-3.5 text-accent-ink"
+      className="appear rounded-[20px] border border-accent-border bg-accent-tint p-4 text-accent-ink shadow-[0_4px_16px_rgb(8_127_140/0.12)]"
       data-testid="escort-alert"
     >
       <p className="flex items-center gap-2 text-[1.2em] font-semibold">
@@ -185,7 +196,7 @@ function FeelWorse({
       {wording && (
         <div
           role="alert"
-          className="mt-2 rounded-[12px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink"
+          className="appear mt-2 rounded-[20px] border border-urgent-border bg-urgent-fill p-4 text-urgent-ink"
           data-testid="urgent-wording"
         >
           <p className="flex items-center gap-2 font-semibold">
@@ -227,7 +238,7 @@ function EnquiryBox({ visitId, actor }: { visitId: string; actor: { role: "patie
         <label className="flex flex-col gap-1">
           <span className="font-semibold">Ask the nurses a question</span>
           <textarea
-            className="min-h-20 rounded-[8px] border border-border-strong bg-surface p-2 text-[1em]"
+            className="min-h-20 rounded-[14px] border border-border-strong/60 bg-surface p-3 text-[1em] leading-relaxed"
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -260,8 +271,8 @@ function Messages({ messages, pendingCount }: { messages: PatientState["messages
             key={m.id}
             className={
               m.direction === "doctor_to_patient"
-                ? "rounded-[10px] border border-border bg-surface p-3"
-                : "ml-8 rounded-[10px] border border-accent-border bg-accent-tint p-3 text-accent-ink"
+                ? "appear mr-6 rounded-[18px] rounded-bl-[6px] bg-ground p-3"
+                : "appear ml-8 rounded-[18px] rounded-br-[6px] border border-accent-border bg-accent-tint p-3 text-accent-ink"
             }
           >
             <span className="block text-[0.85em] font-semibold text-muted">
@@ -301,7 +312,7 @@ function ResultsPack({ pack }: { pack: NonNullable<PatientState["pack"]> }) {
       ) : (
         <p className="mb-2">None</p>
       )}
-      <div className="mb-3 rounded-[8px] border border-urgent-border bg-urgent-fill p-3 text-urgent-ink">
+      <div className="mb-3 rounded-[16px] border border-urgent-border bg-urgent-fill p-3.5 text-urgent-ink">
         <p className="flex items-center gap-2 font-semibold">
           <TriangleIcon size={16} /> When to get help
         </p>

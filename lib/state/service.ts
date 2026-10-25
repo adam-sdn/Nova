@@ -401,6 +401,26 @@ export async function releasePack(ctx: Ctx, visitId: string, actor: Actor): Prom
   });
 }
 
+/**
+ * A nurse ends a finished visit once the patient has their summary: the card leaves the board at once and
+ * the patient's phone shows that the visit has ended (the summary stays readable there).
+ */
+export async function closeVisit(ctx: Ctx, visitId: string, actor: Actor) {
+  return tx(ctx, () => {
+    const v = loadVisit(ctx, visitId);
+    if (actor.role !== "nurse") throw new TransitionError("forbidden_role", "Only a nurse can end a visit");
+    if (v.closed_at) throw new TransitionError("wrong_status", "This visit has already ended");
+    if (v.status !== "done") throw new TransitionError("wrong_status", "Only a visit in Disposition can be ended");
+    const pack = packFor(ctx.db, visitId);
+    if (pack && pack.status !== "released") {
+      throw new TransitionError("guard_failed", "Release the patient's summary before ending the visit");
+    }
+    ctx.db.prepare("UPDATE visits SET closed_at = ?, closed_by = ? WHERE id = ?").run(iso(ctx), actor.id, visitId);
+    audit(ctx, actor, "visit.close", visitId);
+    return { visitId, closedAt: iso(ctx) };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Enquiries. Stage 0 stubs: tiering rules (lib/rules/enquiry) are built in the nurse worktree.
 // Until then a message goes to "Needs nurse review"; "I feel worse" is always Urgent.

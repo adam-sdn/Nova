@@ -31,7 +31,7 @@ export function EntranceDisplay() {
   const link = code ? `${window.location.origin}/patient?s=${code}` : null;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-ground p-6 text-center text-ink" data-testid="entrance">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-5 p-6 text-center text-ink" data-testid="entrance">
       <div className="flex items-center gap-3">
         <LoopMark />
         <h1 className="m-0 text-xl font-semibold">Emergency department check-in</h1>

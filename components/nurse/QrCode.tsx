@@ -16,7 +16,7 @@ export function QrCode({ text, className, testId }: { text: string; className?: 
   if (!svg) return null;
   return (
     <div
-      className={`rounded-[8px] border border-border bg-white p-1 ${className ?? ""}`}
+      className={`appear rounded-[16px] border border-border bg-white p-2 shadow-[0_2px_8px_rgb(20_30_45/0.08)] ${className ?? ""}`}
       role="img"
       aria-label="QR code for the patient check-in link"
       data-testid={testId}

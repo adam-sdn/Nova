@@ -60,18 +60,18 @@ export default function PatientPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ground text-ink">
+    <main className="min-h-screen text-ink">
       <div
-        className="mx-auto flex w-full max-w-[420px] flex-col gap-3 px-4 py-4"
+        className="mx-auto flex w-full max-w-[440px] flex-col gap-3.5 px-4 pb-8 pt-4"
         style={{ fontSize: large ? 20 : 16 }}
         data-large={large ? "1" : "0"}
       >
-        <div className="flex items-center justify-between">
-          <span className="font-semibold">Care Loop</span>
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[1.05em] font-semibold tracking-tight">Care Loop</span>
           <DemoTag />
         </div>
         {justCheckedIn && (
-          <Panel role="status" data-testid="checkin-done" className="border-accent-border bg-accent-tint text-accent-ink">
+          <Panel role="status" data-testid="checkin-done" className="appear border-accent-border bg-accent-tint text-accent-ink">
             <p className="text-[1.3em] font-semibold">
               Your ID: <Mono>{justCheckedIn}</Mono>
             </p>

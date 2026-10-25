@@ -5,19 +5,19 @@ import { DemoTag, LoopMark } from "@/lib/ui";
 
 const ROLES = [
   { href: "/patient", title: "Patient", body: "Phone-width window: check-in, status, enquiries, results pack.", size: "width=420,height=860" },
-  { href: "/nurse", title: "Nurse", body: "Seven-column board, escort requests, enquiries inbox.", size: "width=1760,height=1000" },
+  { href: "/nurse", title: "Nurse", body: "Four-stage board, patient overview, escort requests, enquiries inbox.", size: "width=1760,height=1000" },
   { href: "/doctor", title: "Doctor", body: "Home, follow-ups and settings; AI-filled clinical assessment.", size: "width=1400,height=950" },
 ] as const;
 
 export default function Onboarding() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <LoopMark />
           <div>
-            <h1 className="text-lg font-semibold leading-tight">Care Loop</h1>
-            <p className="text-[13px] text-muted">Open each role in its own window</p>
+            <h1 className="text-[22px] font-semibold leading-tight tracking-tight">Care Loop</h1>
+            <p className="text-[14px] text-muted">Open each role in its own window</p>
           </div>
         </div>
         <DemoTag />
@@ -36,11 +36,11 @@ export default function Onboarding() {
                 const w = window.open(r.href, `care-loop-${r.title.toLowerCase()}`, r.size);
                 if (w) e.preventDefault();
               }}
-              className="flex min-h-32 flex-col gap-2 rounded-[10px] border border-border bg-surface p-5 hover:border-accent"
+              className="glass liftable flex min-h-40 flex-col gap-2 rounded-[24px] p-6"
             >
-              <span className="text-base font-semibold">{r.title}</span>
-              <span className="text-sm text-muted">{r.body}</span>
-              <span className="mt-auto text-[13px] font-semibold text-accent">Open in a new window</span>
+              <span className="text-[17px] font-semibold tracking-tight">{r.title}</span>
+              <span className="text-sm leading-relaxed text-muted">{r.body}</span>
+              <span className="mt-auto inline-flex items-center gap-1 text-[13px] font-semibold text-accent-ink">Open in a new window →</span>
             </a>
           </li>
         ))}

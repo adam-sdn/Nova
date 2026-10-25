@@ -94,57 +94,62 @@ export function DoctorBoard(props: {
   const zoom = TEXT_SIZES.find((t) => t.id === textSize)!.zoom;
 
   return (
-    <main className="mx-auto flex max-w-[1440px] flex-col gap-4 p-4" style={{ zoom }}>
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <main className="mx-auto flex max-w-[1440px] flex-col gap-5 px-4 pb-10 pt-4" style={{ zoom }}>
+      <header className="glass sticky top-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[22px] px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-[10px] bg-accent text-white" aria-hidden="true">
+          <div
+            className="grid size-10 place-items-center rounded-[12px] bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.3)_inset,0_4px_12px_rgb(8_127_140/0.25)]"
+            aria-hidden="true"
+          >
             <LoopMark />
           </div>
           <div>
-            <h1 className="text-[20px] font-semibold">Care Loop · Doctor</h1>
-            <div className="text-[13px] text-muted">Emergency department · {me.cubicle}</div>
+            <h1 className="text-[17px] font-semibold leading-tight">{me.name}</h1>
+            <div className="text-[13px] text-muted">
+              Care Loop · <Mono className="font-medium">{me.id}</Mono> · {me.cubicle}
+            </div>
           </div>
         </div>
+
+        <nav aria-label="Doctor" className="order-last flex w-full gap-1 rounded-full bg-black/[0.04] p-1 sm:order-none sm:w-auto" data-testid="doctor-nav">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-current={tab === t.id ? "page" : undefined}
+              onClick={() => setTab(t.id)}
+              className={`pressable inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 text-[14px] font-semibold sm:flex-none ${
+                tab === t.id ? "bg-white text-accent-ink shadow-[0_1px_3px_rgb(20_30_45/0.1),0_0_0_0.5px_rgb(20_30_45/0.04)]" : "text-muted hover:text-ink"
+              }`}
+            >
+              {t.label}
+              {t.id === "follow-ups" && toConfirm > 0 && (
+                <span className="min-w-5 rounded-full bg-accent px-1.5 text-center text-[12px] tabular-nums text-white" aria-label={`${toConfirm} to confirm`}>
+                  {toConfirm}
+                </span>
+              )}
+              {t.id === "home" && mine?.activeSession?.state === "in_session" && tab !== "home" && (
+                <span className="text-[12px] font-normal">· in session</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex min-h-11 items-center gap-2 text-[13px]">
-            <input type="checkbox" checked={showNames} onChange={(e) => setShowNames(e.target.checked)} /> Show names
+            <input type="checkbox" className="size-4" checked={showNames} onChange={(e) => setShowNames(e.target.checked)} /> Show names
           </label>
           <DemoTag />
-          <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] font-semibold">
-            {me.name} · <Mono>{me.id}</Mono>
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[13px] text-muted" data-testid="live-status">
-            <span aria-hidden="true" className={`size-2 rounded-full ${live ? "bg-accent" : "bg-border-strong"}`} />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[13px] text-muted" data-testid="live-status">
+            <span aria-hidden="true" className={`size-2 rounded-full ${live ? "bg-accent shadow-[0_0_0_3px_rgb(8_127_140/0.18)]" : "bg-border-strong"}`} />
             {live ? "Live" : "Connecting…"}
           </span>
           <Button onClick={() => onLeave()}>Leave session</Button>
         </div>
       </header>
 
-      <nav aria-label="Doctor" className="flex gap-1 border-b border-border" data-testid="doctor-nav">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            aria-current={tab === t.id ? "page" : undefined}
-            onClick={() => setTab(t.id)}
-            className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-4 text-[14px] font-semibold ${tab === t.id ? "border-accent text-accent-ink" : "border-transparent text-muted"}`}
-          >
-            {t.label}
-            {t.id === "follow-ups" && toConfirm > 0 && (
-              <span className="rounded-full bg-accent px-2 text-[12px] text-white" aria-label={`${toConfirm} to confirm`}>
-                {toConfirm}
-              </span>
-            )}
-            {t.id === "home" && mine?.activeSession?.state === "in_session" && tab !== "home" && (
-              <span className="text-[12px] font-normal">· in session</span>
-            )}
-          </button>
-        ))}
-      </nav>
-
       {(error || actionError) && (
-        <div role="alert" className="rounded-[10px] border border-urgent-border bg-urgent-fill p-3 text-[14px] text-urgent-ink">
+        <div role="alert" className="appear rounded-[16px] border border-urgent-border bg-urgent-fill p-3.5 text-[14px] text-urgent-ink">
           {actionError ?? error}
         </div>
       )}
@@ -156,7 +161,7 @@ export function DoctorBoard(props: {
       {/* Home stays mounted while another tab is open, so an assessment in progress is not lost. */}
       <div hidden={tab !== "home"} className="flex flex-col gap-4">
       {notice && (
-        <div role="status" className="flex items-center justify-between rounded-[10px] border border-accent-border bg-accent-tint p-3 text-[14px] text-accent-ink">
+        <div role="status" className="appear flex items-center justify-between gap-3 rounded-[16px] border border-accent-border bg-accent-tint p-3.5 text-[14px] text-accent-ink">
           <span>{notice}</span>
           <Button onClick={() => setNotice(null)}>Dismiss</Button>
         </div>

@@ -142,11 +142,11 @@ export function visitCard(ctx: Ctx, v: VisitRow, showNames: boolean): VisitCard 
   };
 }
 
-/** Visits still on the active board: Done cards drop off after doneRetentionMinutes (T14). */
+/** Visits still on the active board: Done cards drop off after doneRetentionMinutes (T14), or at once when a nurse ends the visit. */
 export function boardVisits(ctx: Ctx): VisitRow[] {
   const cutoff = new Date(ctx.now().getTime() - appConfig.doneRetentionMinutes * 60_000).toISOString();
   return ctx.db
-    .prepare("SELECT * FROM visits WHERE status != 'done' OR done_at > ? ORDER BY created_at, rowid")
+    .prepare("SELECT * FROM visits WHERE closed_at IS NULL AND (status != 'done' OR done_at > ?) ORDER BY created_at, rowid")
     .all(cutoff) as VisitRow[];
 }
 
@@ -199,6 +199,7 @@ export function patientState(ctx: Ctx, token: string): PatientState | null {
       escortRequested: active?.state === "waiting",
       inSession: v.status === "consultation",
       calledForTriage: v.status === "triage_waiting" && !!v.triage_claimed_by,
+      ended: v.closed_at !== null,
     },
     messages: visible.messages,
     pendingCount: visible.pendingCount,

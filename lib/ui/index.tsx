@@ -15,9 +15,10 @@ const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean)
 type ButtonVariant = "primary" | "secondary" | "danger";
 
 const buttonStyles: Record<ButtonVariant, string> = {
-  primary: "border-accent bg-accent text-white hover:bg-accent-ink",
-  secondary: "border-border-strong bg-surface text-ink hover:bg-ground",
-  danger: "border-urgent-border bg-urgent-fill text-urgent-ink hover:brightness-95",
+  primary:
+    "border-accent-ink/20 bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.25)_inset,0_1px_2px_rgb(5_96_106/0.25),0_4px_12px_rgb(8_127_140/0.18)] hover:bg-accent-ink",
+  secondary: "border-border bg-white/80 text-ink shadow-[0_1px_2px_rgb(20_30_45/0.05)] hover:border-border-strong/60 hover:bg-white",
+  danger: "border-urgent-border bg-urgent-fill text-urgent-ink hover:border-urgent-ink/40",
 };
 
 export function Button({
@@ -30,8 +31,8 @@ export function Button({
     <button
       type={type}
       className={cx(
-        "inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[8px] border px-3.5 text-[13px] font-semibold",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "pressable inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-[12px] border px-4 text-[13px] font-semibold",
+        "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none",
         buttonStyles[variant],
         className,
       )}
@@ -86,7 +87,7 @@ export function Chip({ variant, children, className }: { variant: ChipVariant; c
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded-[6px] border px-1.5 py-px text-xs font-semibold",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold",
         chipStyles[variant],
         className,
       )}
@@ -100,7 +101,8 @@ export function Chip({ variant, children, className }: { variant: ChipVariant; c
 /** The "Demo data" pill shown on every staff screen (I4). */
 export function DemoTag() {
   return (
-    <span className="rounded-full border border-demo-border bg-demo-fill px-3 py-1.5 text-[13px] font-semibold text-demo-ink">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-demo-border bg-demo-fill/80 px-3 py-1.5 text-[13px] font-semibold text-demo-ink">
+      <DotIcon />
       Demo data
     </span>
   );
@@ -110,17 +112,18 @@ export function DemoTag() {
 // Containers
 // ---------------------------------------------------------------------------
 
-export function Panel({ className, ...rest }: HTMLAttributes<HTMLElement>) {
-  return <section className={cx("rounded-[12px] border border-border bg-surface p-3.5", className)} {...rest} />;
+/** Opaque reading surface. Pass `glass` for chrome that floats over the page (bars, side panels, gates). */
+export function Panel({ className, glass, ...rest }: HTMLAttributes<HTMLElement> & { glass?: boolean }) {
+  return <section className={cx("rounded-[18px] p-4", glass ? "glass" : "surface", className)} {...rest} />;
 }
 
 export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx("rounded-[10px] border border-border bg-surface p-3", className)} {...rest} />;
+  return <div className={cx("surface rounded-[14px] p-3", className)} {...rest} />;
 }
 
-/** A board column: column fill, radius 12px. */
+/** A board column: a soft translucent well. */
 export function Column({ className, ...rest }: HTMLAttributes<HTMLElement>) {
-  return <section className={cx("flex min-w-0 flex-col gap-2.5 rounded-[12px] bg-column p-2.5", className)} {...rest} />;
+  return <section className={cx("flex min-w-0 flex-col gap-2.5 rounded-[18px] bg-column p-2.5", className)} {...rest} />;
 }
 
 /** Patient IDs and session numbers are set in IBM Plex Mono. */

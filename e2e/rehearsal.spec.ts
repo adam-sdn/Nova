@@ -178,6 +178,17 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   await expect(patient.getByTestId("results-pack"), "G4: pack after release").toBeVisible(A4);
   await expect(patient.getByTestId("follow-up")).toBeVisible();
 
+  // The nurse clicks the card, sees the overview, and ends the visit; the phone is told.
+  await card.click({ position: { x: 8, y: 40 } });
+  const overview = nurse.getByTestId("visit-overview");
+  await expect(overview, "overview opens on the right").toContainText(id, A4);
+  await expect(overview.locator('li[aria-current="step"]')).toContainText("Disposition");
+  await overview.getByRole("button", { name: "End visit" }).click();
+  await overview.getByRole("button", { name: "Confirm end visit" }).click();
+  await expect(nurse.getByTestId(`card-${id}`), "card leaves the board").toHaveCount(0, A4);
+  await expect(patient.getByTestId("visit-ended"), "the phone shows the visit has ended").toBeVisible(A4);
+  await expect(patient.getByTestId("results-pack"), "summary stays readable").toBeVisible();
+
   // 10. The audit chain verifies.
   const audit = await (await request.get("/api/demo/audit")).json();
   expect(audit.ok).toBe(true);

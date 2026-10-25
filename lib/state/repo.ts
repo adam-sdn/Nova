@@ -34,6 +34,7 @@ export interface VisitRow {
   summary_enc: string | null;
   stage_changed_at: string;
   done_at: string | null;
+  closed_at: string | null;
   created_at: string;
   consent_contact: number;
   consent_transcribe: number;

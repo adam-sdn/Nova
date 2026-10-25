@@ -383,6 +383,8 @@ export interface PatientState {
     escortRequested: boolean;
     inSession: boolean;
     calledForTriage: boolean;
+    /** A nurse ended the visit. The phone shows a goodbye; the summary stays readable. */
+    ended: boolean;
   };
   messages: PatientMessage[];
   /** Doctor lines not yet delivered (the patient sees "Your message is being checked."). */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MESSAGE_STATUSES, VISIT_STATUSES, type MessageStatus } from "@/lib/contracts";
 import * as svc from "@/lib/state/service";
-import { patientState } from "@/lib/state/views";
+import { patientState, staffState } from "@/lib/state/views";
 import { appConfig } from "@/lib/config";
 import {
   checkinFormErrors,
@@ -113,6 +113,28 @@ describe("patient state only carries delivered doctor lines (F5)", () => {
     const ps = patientState(ctx, c.token)!;
     expect(ps.messages.map((m) => m.id)).toEqual([message.id]);
     expect(ps.pendingCount).toBe(0);
+  });
+});
+
+describe("ending a visit", () => {
+  it("a nurse ends it only after the summary is released; the card leaves the board and the phone is told", async () => {
+    const ctx = testCtx();
+    const c = await toConsultation(ctx);
+    await svc.completeSession(ctx, c.sessionId, { actor: doctor, next: "decision", note: signedNote, tests: [] });
+    await svc.recordDecision(ctx, c.visitId, { actor: doctor, outcome: "discharge", results: "r", advice: "a", medicines: [] });
+    const early = await svc.closeVisit(ctx, c.visitId, nurse).then(() => null, (e) => e);
+    expect(early).toBeInstanceOf(svc.TransitionError);
+    await svc.verifyPack(ctx, c.visitId, doctor);
+    await svc.releasePack(ctx, c.visitId, doctor);
+    await expect(svc.closeVisit(ctx, c.visitId, doctor)).rejects.toThrow(/nurse/);
+    await svc.closeVisit(ctx, c.visitId, nurse);
+    expect(staffState(ctx, "nurse", false).visits.map((v) => v.id)).not.toContain(c.visitId);
+    const ps = patientState(ctx, c.token)!;
+    expect(ps.visit.ended).toBe(true);
+    expect(ps.pack).not.toBeNull();
+    await expect(svc.closeVisit(ctx, c.visitId, nurse)).rejects.toThrow(/already ended/);
+    const actions = (ctx.db.prepare("SELECT action FROM audit").all() as { action: string }[]).map((r) => r.action);
+    expect(actions).toContain("visit.close");
   });
 });
 

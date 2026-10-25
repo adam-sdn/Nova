@@ -31,7 +31,7 @@ export function SessionCodeEntry({ notice, onCode }: { notice: string | null; on
         <label className="flex flex-col gap-1">
           <span className="font-semibold">Check-in code</span>
           <input
-            className="min-h-11 w-full rounded-[8px] border border-border-strong bg-surface px-3 font-mono text-[1.3em] uppercase tracking-[0.2em] text-ink"
+            className="min-h-12 w-full rounded-[14px] border border-border-strong/60 bg-surface px-3.5 font-mono text-[1.3em] uppercase tracking-[0.2em] text-ink"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             name="sessionCode"

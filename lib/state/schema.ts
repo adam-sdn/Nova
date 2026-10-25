@@ -1,7 +1,7 @@
 // SQLite schema (SPEC section 10). Columns ending in _enc hold an EncryptedField as JSON.
 // Additions beyond SPEC are marked "guard" (needed by a section 5 guard) or "demo".
 /** Bump when a table changes shape. Older local demo databases are rebuilt (synthetic data only). */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS visits (
@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS visits (
   summary_enc TEXT,                        -- AI summary (T4), labelled as AI on screen
   stage_changed_at TEXT NOT NULL,
   done_at TEXT,                            -- T14 retention
+  closed_at TEXT,                          -- demo: a nurse ended the visit after discharge; off the board
+  closed_by TEXT,
   created_at TEXT NOT NULL,
   consent_contact INTEGER NOT NULL,
   consent_transcribe INTEGER NOT NULL DEFAULT 0,

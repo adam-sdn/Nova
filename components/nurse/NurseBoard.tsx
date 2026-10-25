@@ -8,6 +8,7 @@ import { BoardCard } from "./BoardCard";
 import { EnquiriesInbox } from "./EnquiriesInbox";
 import { EscortStrip } from "./EscortStrip";
 import { ShiftBar, StartSessionGate } from "./ShiftBar";
+import { VisitOverview } from "./VisitOverview";
 
 export const NURSE = { role: "nurse", id: "N-01" } as const;
 
@@ -61,24 +62,26 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
 
   const visits = data?.visits ?? [];
   const escorts = escortRequests(visits);
+  // The overview closes by itself when the card leaves the board (for example after End visit).
+  const focused = visits.find((v) => v.id === focusId) ?? null;
 
-  if (!shift.data) return <main className="min-h-screen bg-ground p-6 text-muted">{shift.error ?? "Loading…"}</main>;
+  if (!shift.data) return <main className="min-h-screen p-6 text-muted">{shift.error ?? "Loading…"}</main>;
   if (!open) return <StartSessionGate actor={NURSE} onStarted={() => void shift.refresh()} />;
 
   return (
-    <div className="min-h-screen bg-ground px-6 pb-8 pt-5 text-ink">
+    <div className="min-h-screen px-4 pb-10 pt-4 text-ink sm:px-6">
       <main className="mx-auto max-w-[1760px]">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <header className="glass sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3">
           <div className="flex items-center gap-3">
             <LoopMark />
             <div>
-              <h1 className="m-0 text-lg font-semibold leading-tight">Care Loop · Nurse board</h1>
-              <div className="text-[13px] text-muted">Emergency department · {visits.length} patients</div>
+              <h1 className="m-0 text-[17px] font-semibold leading-tight">Nurse board</h1>
+              <div className="text-[13px] text-muted">Care Loop · Emergency department · {visits.length} patients</div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <DemoTag />
-            <span className="rounded-full border border-border bg-surface px-3 py-1.5 text-[13px] text-routine-ink">
+            <span className="rounded-full border border-border bg-white/70 px-3 py-1.5 text-[13px] font-medium text-routine-ink">
               Nurse {NURSE.id}
             </span>
           </div>
@@ -95,7 +98,7 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
         </div>
 
         {(error || actionError) && (
-          <div role="alert" className="mb-3 rounded-[10px] border border-urgent-border bg-urgent-fill px-3 py-2 text-[13px] text-urgent-ink">
+          <div role="alert" className="appear mb-3 rounded-[14px] border border-urgent-border bg-urgent-fill px-3.5 py-2.5 text-[13px] text-urgent-ink">
             {actionError ?? error}
           </div>
         )}
@@ -108,15 +111,18 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
                 const cards = columnCards(visits, col);
                 const grouped = col.statuses.length > 1;
                 return (
-                  <section key={col.id} aria-label={col.label} data-column={col.id} className="flex min-w-0 flex-col gap-2.5 rounded-[12px] bg-column p-2.5">
-                    <div className="flex items-start justify-between gap-2 px-1 pt-0.5">
-                      <h2 className="m-0 text-sm font-semibold leading-snug">{col.label}</h2>
-                      <span className="rounded-full border border-routine-border bg-surface px-2 py-0.5 text-xs font-semibold">{cards.length}</span>
+                  <section key={col.id} aria-label={col.label} data-column={col.id} className="flex min-w-0 flex-col gap-2.5 rounded-[20px] border border-white/60 bg-column p-2.5 shadow-[0_1px_0_rgb(255_255_255/0.6)_inset]">
+                    <div className="flex items-center justify-between gap-2 px-1.5 pt-1">
+                      <h2 className="m-0 text-[14px] font-semibold leading-snug">{col.label}</h2>
+                      <span className="min-w-6 rounded-full bg-white/85 px-2 py-0.5 text-center text-xs font-semibold tabular-nums shadow-[0_1px_2px_rgb(20_30_45/0.06)]">
+                        {cards.length}
+                      </span>
                     </div>
-                    <div className="px-1 text-xs text-muted">{col.hint}</div>
+                    <div className="px-1.5 pb-0.5 text-xs text-muted">{col.hint}</div>
                     {cards.map((c) => (
                       <BoardCard
                         stepLabel={grouped ? STEP_LABELS[c.status] : undefined}
+                        onOpen={() => setFocusId(c.id)}
                         key={c.id}
                         card={c}
                         now={data!.now}
@@ -131,7 +137,18 @@ export function NurseBoard({ longWaitMinutes, priorityScale }: BoardProps) {
               })}
             </div>
           </div>
-          <EnquiriesInbox enquiries={data?.enquiries ?? []} now={data?.now ?? null} act={act} openCard={openCard} />
+          {focused && data ? (
+            <VisitOverview
+              key={focused.id}
+              card={focused}
+              enquiries={data.enquiries}
+              now={data.now}
+              act={act}
+              onClose={() => setFocusId(null)}
+            />
+          ) : (
+            <EnquiriesInbox enquiries={data?.enquiries ?? []} now={data?.now ?? null} act={act} openCard={openCard} />
+          )}
         </div>
       </main>
     </div>

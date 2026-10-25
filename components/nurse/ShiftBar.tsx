@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import type { PresenceView, ShiftStatus } from "@/lib/contracts";
 import { Button, LoopMark, Mono, Panel, postJson } from "@/lib/ui";
 
@@ -90,6 +91,15 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
 
   const { nurses, doctors, patients } = presenceSummary(status.connected);
   const patientLink = code && typeof window !== "undefined" ? `${window.location.origin}/patient?s=${code}` : null;
+  const [qr, setQr] = useState<string | null>(null);
+  useEffect(() => {
+    if (!patientLink) return setQr(null);
+    let live = true;
+    QRCode.toString(patientLink, { type: "svg", margin: 1, errorCorrectionLevel: "M" }).then((svg) => live && setQr(svg));
+    return () => {
+      live = false;
+    };
+  }, [patientLink]);
 
   return (
     <section
@@ -123,6 +133,16 @@ export function ShiftBar({ actor, status, onEnded }: { actor: Actor; status: Shi
           </button>
         )}
       </div>
+      {qr && (
+        <div
+          className="size-[120px] rounded-[8px] border border-border bg-white p-1"
+          role="img"
+          aria-label="QR code for the patient check-in link"
+          data-testid="patient-qr"
+          // Generated locally by the qrcode package from our own link; contains no user input.
+          dangerouslySetInnerHTML={{ __html: qr }}
+        />
+      )}
       {patientLink && (
         <div className="text-[13px]">
           <span className="text-muted">Patient check-in link · </span>

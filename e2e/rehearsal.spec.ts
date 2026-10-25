@@ -29,6 +29,7 @@ test("rehearsal: patient, nurse and doctor windows run the whole loop", async ({
   const code = (await nurse.getByTestId("session-code").innerText()).trim();
   expect(code).toMatch(/^[A-Z2-9]{6}$/);
   await expect(nurse.getByTestId("patient-link")).toContainText(`/patient?s=${code}`);
+  await expect(nurse.getByTestId("patient-qr").locator("svg")).toBeVisible();
 
   // The doctor joins with the code; the nurse board shows them as connected.
   const doctor = await windowFor(browser, "/doctor?doctor=D-03");
